@@ -49,9 +49,9 @@
 #include "BRAINSFitHelper.h"
 #include "BRAINSABCUtilities.h"
 #include "itkAverageImageFilter.h"
-#include "itkBinaryThresholdImageFilter.h"
 #include <string>
 
+#include "itkBinaryFillholeImageFilter.h"
 class EmptyVectorException
 {
 public:
@@ -70,11 +70,84 @@ private:
 };
 
 
+template <typename TImage>
+typename TImage::Pointer
+IntersectIntraSubjectMasks(std::map<std::string, std::vector< typename TImage::Pointer > >
+                           & mapOfiRegisteredImageList)
+{
+  muLogMacro(<< "Find intersect mask for subjects' scans" << std::endl);
+
+  typedef itk::BRAINSROIAutoImageFilter<TImage, TImage > IntersectMaskROIAutuType;
+  typename IntersectMaskROIAutuType::Pointer  ROIFilter = IntersectMaskROIAutuType::New();
+
+  ROIFilter->SetDilateSize(1);   // Only use a very small non-tissue
+  ROIFilter->SetClosingSize(5);
+
+  typedef itk::BinaryFillholeImageFilter <TImage> FillHoleFilterType;
+  typename FillHoleFilterType::Pointer filler = FillHoleFilterType::New();
+  filler->SetInput( ROIFilter->GetOutput() );
+
+  typedef itk::MultiplyImageFilter <TImage, TImage>   MultiplyFilterType;
+
+  typename TImage::Pointer intersectionMask;
+  bool firstBinarySet=false;
+  for(typename std::map<std::string, std::vector< typename TImage::Pointer > >::iterator mapOfModalImageListsIt =  mapOfiRegisteredImageList.begin();
+      mapOfModalImageListsIt != mapOfiRegisteredImageList.end();
+      ++mapOfModalImageListsIt)
+    {
+    unsigned int startIndex=0;
+    std::vector<typename TImage::Pointer> currentModalImageList = mapOfModalImageListsIt->second;
+    if( !(firstBinarySet) )
+      {
+      ROIFilter->SetInput(currentModalImageList[0]);
+      ROIFilter->Update();
+      firstBinarySet=true;
+      intersectionMask = ROIFilter->GetOutput();
+      startIndex=1;
+        {
+        typedef itk::ImageFileWriter<TImage> WriterType;
+        typename WriterType::Pointer writer = WriterType::New();
+        writer->UseCompressionOn();
+        writer->SetInput( intersectionMask );
+        writer->SetFileName( "DEBUG_firstIntersectionMask.nii.gz" );
+        writer->Update();
+        }
+      }
+    for(unsigned int i = startIndex; i < currentModalImageList.size(); ++i)
+      {
+      typename IntersectMaskROIAutuType::Pointer  myROIFilter = IntersectMaskROIAutuType::New();
+      myROIFilter->SetDilateSize(1);
+      myROIFilter->SetClosingSize(5);
+      myROIFilter->SetInput(currentModalImageList[i]);
+
+      typename FillHoleFilterType::Pointer myFiller = FillHoleFilterType::New();
+      myFiller->SetInput( myROIFilter->GetOutput() );
+
+      typename MultiplyFilterType::Pointer multIF = MultiplyFilterType::New();
+      multIF->SetInput1(intersectionMask);
+      multIF->SetInput2(myFiller->GetOutput());
+      multIF->Update();
+      intersectionMask= multIF->GetOutput();
+      }
+    }
+  {
+  typedef itk::ImageFileWriter<TImage> WriterType;
+  typename WriterType::Pointer writer = WriterType::New();
+  writer->UseCompressionOn();
+  writer->SetInput( intersectionMask);
+  writer->SetFileName( "DEBUG_intersectionMask.nii.gz" );
+  writer->Update();
+  }
+  return intersectionMask;
+}
+
+
 
 // Take a list of coregistered images, all of the same type (T1,T2) and return the average image.
 template <typename TImage>
 typename TImage::Pointer
-AverageImageList(const std::vector<typename TImage::Pointer> & inputImageList)
+AverageImageList(const std::vector<typename TImage::Pointer> & inputImageList,
+                 const typename TImage::Pointer intersectionMask)
 {
   if( inputImageList.empty() )
     {
@@ -87,31 +160,6 @@ AverageImageList(const std::vector<typename TImage::Pointer> & inputImageList)
     return inputImageList[0];
     }
 
-  typedef itk::BinaryThresholdImageFilter<TImage,TImage> BinaryThreshImageFilterType;
-  typedef itk::MultiplyImageFilter<TImage,TImage> MultiplyFilterType;
-  typename BinaryThreshImageFilterType::Pointer firstBinary = BinaryThreshImageFilterType::New();
-  firstBinary->SetLowerThreshold( 0 );
-  firstBinary->SetUpperThreshold( 0 );
-  firstBinary->SetInsideValue(0.0);
-  firstBinary->SetOutsideValue(1.0);
-  firstBinary->SetInput(inputImageList[0]);
-  firstBinary->Update();
-  typename TImage::Pointer averageMask = firstBinary->GetOutput();
-  for(unsigned int i = 1; i < inputImageList.size(); ++i)
-  {
-  typename BinaryThreshImageFilterType::Pointer myThresholder = BinaryThreshImageFilterType::New();
-  myThresholder->SetInput(inputImageList[i]);
-  myThresholder->SetLowerThreshold( 0 ); // Only valuse exactly equal to zero are to be used.
-  myThresholder->SetUpperThreshold( 0 );
-  myThresholder->SetInsideValue(0.0);
-  myThresholder->SetOutsideValue(1.0);
-  typename MultiplyFilterType::Pointer multIF = MultiplyFilterType::New();
-  multIF->SetInput1(averageMask);
-  multIF->SetInput2(myThresholder->GetOutput());
-  multIF->Update();
-  averageMask = multIF->GetOutput();
-  }
-
   typedef itk::AverageImageFilter<TImage,TImage> AvgFilterType;
   typename AvgFilterType::Pointer filter = AvgFilterType::New();
   for(unsigned int i = 0; i < inputImageList.size(); ++i)
@@ -119,8 +167,9 @@ AverageImageList(const std::vector<typename TImage::Pointer> & inputImageList)
     filter->SetInput(i,inputImageList[i]);
     }
   filter->Update();
+  typedef itk::MultiplyImageFilter<TImage,TImage> MultiplyFilterType;
   typename MultiplyFilterType::Pointer multIF = MultiplyFilterType::New();
-  multIF->SetInput1(averageMask);
+  multIF->SetInput1(intersectionMask);
   multIF->SetInput2(filter->GetOutput());
 
   return multIF->GetOutput();

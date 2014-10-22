@@ -429,6 +429,7 @@ AtlasRegistrationMethod<TOutputPixel, TProbabilityPixel>
   muLogMacro(<< "Average co-registered Intra subject images" << std::endl);
   this->m_ModalityAveragedOfIntraSubjectImages.clear(); //Ensure that pushing onto clean list
 
+  InternalImageType::Pointer intersectionMask = IntersectIntraSubjectMasks<InternalImageType>(this->m_RegisteredIntraSubjectImagesList);
   for(MapOfFloatImageVectors::iterator mapOfRegisteredModalImageListsIt = this->m_RegisteredIntraSubjectImagesList.begin();
       mapOfRegisteredModalImageListsIt != this->m_RegisteredIntraSubjectImagesList.end();
       ++mapOfRegisteredModalImageListsIt)
@@ -439,7 +440,8 @@ AtlasRegistrationMethod<TOutputPixel, TProbabilityPixel>
       {
       //
       this->m_ModalityAveragedOfIntraSubjectImages.push_back(
-        AverageImageList<InternalImageType>(mapOfRegisteredModalImageListsIt->second)
+        AverageImageList<InternalImageType>(mapOfRegisteredModalImageListsIt->second,
+                                            intersectionMask)
       );
       }
     else
@@ -581,7 +583,7 @@ AtlasRegistrationMethod<TOutputPixel, TProbabilityPixel>
     typedef itk::BRAINSROIAutoImageFilter<InternalImageType, itk::Image<unsigned char, 3> > LocalROIAutoType;
     typename LocalROIAutoType::Pointer  ROIFilter = LocalROIAutoType::New();
     ROIFilter->SetInput(this->GetFirstAtlasOriginalImage());
-    ROIFilter->SetDilateSize(1);   // Only use a very small non-tissue
+    ROIFilter->SetDilateSize(0);   // Only use a very small non-tissue
     // region outside of head during
     // initial runnings
     ROIFilter->Update();

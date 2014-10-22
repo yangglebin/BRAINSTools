@@ -1247,7 +1247,9 @@ int main(int argc, char * *argv)
         }
       }
 
+
     AtlasRegType::MapOfFloatImageVectors imgset = segfilter->GetRawCorrected();
+    FloatImagePointer intersectMask = IntersectIntraSubjectMasks<FloatImageType>(imgset);
     // Average together all the input images of a given type
     for(AtlasRegType::MapOfFloatImageVectors::iterator mapIt = imgset.begin();
         mapIt != imgset.end(); ++mapIt)
@@ -1260,7 +1262,8 @@ int main(int argc, char * *argv)
         continue;
         }
 
-      FloatImagePointer avgImage = AverageImageList<FloatImageType>(mapIt->second);
+      FloatImagePointer avgImage = AverageImageList<FloatImageType>(mapIt->second,
+                                                                    intersectMask);
       // Write out average image.
       typedef itk::CastImageFilter<FloatImageType, ShortImageType> CasterType;
       CasterType::Pointer caster = CasterType::New();
