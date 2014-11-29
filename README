@@ -38,3 +38,14 @@ silenced
 8 - Run tests that fail due to incomplete test building, these are good ideas for test that we don't have time to make robust)
 9 - Run silly tests that don't have much untility
 set(BRAINSTools_MAX_TEST_LEVEL 3 CACHE STRING "Testing level for managing test burden")
+
+## This Branch ##
+branch name: BABC_IntersectionMask
+
+This branch is an attempt to improve BRAINSABC
+by incorporating intersection mask inter and intra-scans.
+This feature would be helpful if a proper implementation can
+happen. While I was testing the code, I realized that this
+may take a several weeks of work when we needed this soon.
+I kept the code for later development.
+- Regina EY Kim
