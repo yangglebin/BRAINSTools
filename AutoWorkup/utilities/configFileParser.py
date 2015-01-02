@@ -89,7 +89,7 @@ def parseExperiment(parser, workflow_phase):
     dirname = validatePath(parser.get('EXPERIMENT', 'BASE_OUTPUT_DIR'), False, True)
     if workflow_phase == 'atlas-based-reference':
         current_suffix = '_BASE'
-    elif workflow_phase == 'subject-template-generation':
+    elif workflow_phase in ['subject-template-generation', 'population-template-generation']:
         current_suffix = '_TEMP'
     elif workflow_phase == 'subject-based-reference':
         current_suffix = '_LONG'
