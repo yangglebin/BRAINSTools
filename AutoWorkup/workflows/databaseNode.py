@@ -123,8 +123,8 @@ def OpenSubjectDatabase(ExperimentBaseDirectoryCache, single_subject, mountPrefi
     import SessionDB
     subjectDatabaseFile = os.path.join(ExperimentBaseDirectoryCache, 'InternalWorkflowSubjectDB.db')
     ## TODO:  Only make DB if db is older than subject_data_file.
-    if (not os.path.exists(subjectDatabaseFile)) or \
-      (os.path.getmtime(subjectDatabaseFile) < os.path.getmtime(subject_data_file)):
+    if ((not os.path.exists(subjectDatabaseFile)) or
+        (os.path.getmtime(subjectDatabaseFile) < os.path.getmtime(subject_data_file))):
         ExperimentDatabase = SessionDB.SessionDB(subjectDatabaseFile, single_subject)
         ExperimentDatabase.MakeNewDB(subject_data_file, mountPrefix)
         ExperimentDatabase = None

@@ -31,6 +31,7 @@ def OpenSubjectDatabase(ExperimentBaseDirectoryCache, single_subject, mountPrefi
     datafileTime = os.path.getmtime(subject_data_file)
     if (not os.path.exists(subjectDatabaseFile)) or (dbfileTime < datafileTime):
         print("Single_subject {0}: Creating database, {1}".format(single_subject,subjectDatabaseFile))
+        ExperimentDatabase = SessionDB.SessionDB(subjectDatabaseFile, single_subject)
         ExperimentDatabase.MakeNewDB(subject_data_file, mountPrefix)
     else:
         ExperimentDatabase = SessionDB.SessionDB(subjectDatabaseFile, single_subject)

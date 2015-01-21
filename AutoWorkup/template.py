@@ -1,12 +1,10 @@
-#! /usr/bin/env python
 """
 template.py
 =========
 This program is used to generate the subject- and session-specific workflows for BRAINSTool processing
 
 Usage:
-  template.py subject [--rewrite-datasinks] [--wfrun PLUGIN] [--use-sentinal] [--use-shuffle] [--dotfilename PFILE] --pe ENV --ExperimentConfig FILE SUBJECTS...
-  template.py population [--rewrite-datasinks] [--wfrun PLUGIN] [--use-sentinal] [--use-shuffle] [--dotfilename PFILE] --pe ENV --ExperimentConfig FILE -p POPFILE SUBJECTS...
+	template.py [--rewrite-datasinks] [--wfrun PLUGIN] [--use-sentinal] [--use-shuffle] [--dotfilename PFILE] [--groupFile POPFILE] --workphase PHASE --pe ENV --ExperimentConfig FILE SUBJECTS...
   template.py -v | --version
   template.py -h | --help
 
@@ -23,12 +21,14 @@ Options:
   --pe=ENV              The processing environment to use from configuration file
   --wfrun=PLUGIN        The name of the workflow plugin option (default: 'local')
   --ExperimentConfig=FILE   The configuration file
-  -p POPFILE            File containing dictionary 'groups' in Python syntax
+	--workphase=PHASE     Workphase 'subject-template-generation','population-template-generation'
+  --groupFile=POPFILE   File containing dictionary 'groups' in Python syntax
+
 
 Examples:
-  $ template.py population --pe OSX --ExperimentConfig my_baw.config -p groupfile.txt all
-  $ template.py subject --wfrun helium_all.q --pe OSX --ExperimentConfig my_baw.config 1058 1059
-  $ template.py subject --rewrite-datasinks --pe OSX --ExperimentConfig my_baw.config 2001
+  $ template.py population  population-template-generation --pe OSX --ExperimentConfig my_baw.config --groupFile groupfile.txt all
+  $ template.py --workphase subject-template-generation --wfrun helium_all.q --pe OSX --ExperimentConfig my_baw.config 1058 1059
+  $ template.py --workphase subject-template-generation --rewrite-datasinks --pe OSX --ExperimentConfig my_baw.config 2001
 
 """
 import glob
@@ -168,7 +168,7 @@ def _template_runner(argv, environment, experiment, pipeline_options, cluster):
                                                            experiment['dbfile'],
                                                            useSentinal,
                                                            argv['--use-shuffle'],
-                                                           argv['-p']
+                                                           argv['--groupFile']
                                                            ) # Build database before parallel section
     print("="*80)
     print "@*" * 50
@@ -206,7 +206,7 @@ def _template_runner(argv, environment, experiment, pipeline_options, cluster):
             continue
 
         base_output_directory = os.path.join(pipeline_options['logging']['log_directory'], group_key)
-        if argv['-p'] is None:
+        if argv['--groupFile'] is None:
             template = pe.Workflow(name='SubjectAtlas_Template_' + group_key)
         else:
             template = pe.Workflow(name='PopulationAtlas_Template_' + group_key)
@@ -422,15 +422,12 @@ if __name__ == '__main__':
     argv = docopt(__doc__, version='1.1')
     print argv
     valid_phases = ['subject-template-generation', 'population-template-generation']
-    if argv['subject']:
-        this_phase = valid_phases[0]
-    elif argv['population']:
-        this_phase = valid_phases[1]
-    else:
-        raise RuntimeError("Unknown workphase attempted!")
+    argv['--workphase'] = argv['PHASE']
+    this_phase=argv['--workphase']
+    assert this_phase in valid_phases,"Not a valid phase"
+
     print("Running {0} workphase".format(this_phase))
     print '=' * 100
-    argv['--workphase'] = this_phase
     environment, experiment, pipeline, cluster = setup_environment(argv)
     from nipype import config as nipype_config
     import nipype.pipeline.engine as pe

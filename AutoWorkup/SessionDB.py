@@ -47,6 +47,10 @@ class SessionDB():
         self.close_connection()
         if os.path.exists(self.dbName):
             os.remove(self.dbName)
+        print("MakeNewDB")
+        print("MakeNewDB")
+        print("MakeNewDB")
+        print("MakeNewDB")
         self.open_connection()
         dbColTypes = "project TEXT, subj TEXT, session TEXT, type TEXT, Qpos INT, filename TEXT"
         self.cursor.execute("CREATE TABLE {tablename}({coltypes});".format(tablename=self.MasterTableName, coltypes=dbColTypes))
