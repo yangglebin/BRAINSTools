@@ -47,6 +47,27 @@ def get_processed(resultdir):
     print("SKIPPING COMPLETED: {0}".format(processed))
     return processed
 
+def get_groups(groupfile):
+    import csv
+    reader = csv.reader(open(groupfile))
+    headers=reader.next()
+    assert set(['group','session']).issubset( set(headers) ), \
+        """header should include 'group' and 'session'
+        current header: %r""" % (headers)
+
+    result={}
+    for row in reader:
+        zippedRow  = dict(zip(headers, row))
+        key = zippedRow[ 'group' ]
+        value = zippedRow[ 'session' ]
+
+        if key in result.keys():
+            print "append " + key  + " value " + value
+            result[key].append( value )
+        else:
+            result[key] = [ value ]
+    return result
+
 def generate_group_dictionary(input_groupIDs, cache, resultdir, prefix, dbfile, useSentinal, shuffle=False, groupfile=None):
     import random
     _temp = OpenSubjectDatabase(cache, ['all'], prefix, dbfile)
@@ -54,8 +75,7 @@ def generate_group_dictionary(input_groupIDs, cache, resultdir, prefix, dbfile, 
         if groupfile is None:
             input_groupIDs=  _temp.getAllSubjects();
         else:
-            execfile(groupfile, globals())
-            assert 'groups' in globals(), "'groups' not found in {0}".format(groupfile)
+            groups = get_groups(groupfile)
             input_groupIDs = groups.keys()
 
     if useSentinal:
@@ -68,7 +88,6 @@ def generate_group_dictionary(input_groupIDs, cache, resultdir, prefix, dbfile, 
         groupIDs = input_groupIDs
 
     if groupfile is not None:
-        # *** NOTA BENE: groupfile MUST have a Python dictionary named 'groups' defined within it ***
         group_dictionary = _temp.getSessionsFromGroup(groups)
     else:
         group_dictionary = dict()
