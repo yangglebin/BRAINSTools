@@ -47,35 +47,38 @@ def get_processed(resultdir):
     print("SKIPPING COMPLETED: {0}".format(processed))
     return processed
 
-def generate_group_dictionary(input_subjects, cache, resultdir, prefix, dbfile, useSentinal, shuffle=False, groupfile=None):
+def generate_group_dictionary(input_groupIDs, cache, resultdir, prefix, dbfile, useSentinal, shuffle=False, groupfile=None):
     import random
     _temp = OpenSubjectDatabase(cache, ['all'], prefix, dbfile)
-    if "all" in input_subjects:
-        input_subjects =  _temp.getAllSubjects();
+    if "all" in input_groupIDs:
+        if groupfile is None:
+            input_groupIDs=  _temp.getAllSubjects();
+        else:
+            execfile(groupfile, globals())
+            assert 'groups' in globals(), "'groups' not found in {0}".format(groupfile)
+            input_groupIDs = groups.keys()
+
     if useSentinal:
         print("="*80)
         print("Using Sentinal Files to Limit Jobs Run")
-        _all_subjects = set(input_subjects )
+        _all_groupIDs = set(input_groupIDs )
         processed = set( get_processed( resultdir ) )
-        subjects = list( _all_subjects - processed) #NOTE - in set operation notation removes values
+        groupIDs= list( _all_groupIDs - processed) #NOTE - in set operation notation removes values
     else:
-        subjects = input_subjects
+        groupIDs = input_groupIDs
 
     if groupfile is not None:
         # *** NOTA BENE: groupfile MUST have a Python dictionary named 'groups' defined within it ***
-        execfile(groupfile, globals())
-        assert 'groups' in globals(), "'groups' not found in {0}".format(groupfile)
         group_dictionary = _temp.getSessionsFromGroup(groups)
-        subjects = groups.keys()
     else:
         group_dictionary = dict()
-        for subject in subjects:
+        for subject in groupIDs:
             group_dictionary[subject]=_temp.getSessionsFromSubject(subject)
 
     if shuffle:
-        random.shuffle(subjects)  # randomly shuffle to get max cluster efficiency
+        random.shuffle(groupIDs)  # randomly shuffle to get max cluster efficiency
 
-    return subjects, group_dictionary
+    return groupIDs, group_dictionary
 
 ## Merge the different groups together
 def MergeByExtendListElements(t1s, t2s, pds, fls, labels, posteriors, passive_intensities, passive_masks):
