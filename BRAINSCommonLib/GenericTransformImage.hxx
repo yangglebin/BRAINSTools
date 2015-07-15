@@ -25,6 +25,9 @@
 #include "itkConstantBoundaryCondition.h"
 #include "itkIO.h"
 
+//HACK
+#include "itkImageFileWriter.h"
+
 template <class InputImageType, class OutputImageType>
 typename OutputImageType::Pointer
 TransformResample(
@@ -378,6 +381,12 @@ typename OutputImageType::Pointer GenericTransformImage(
       resampleIPFilter->SetRigidTransform( tempInitializerITKTransform.GetPointer() );
       resampleIPFilter->Update();
       TransformedImage = resampleIPFilter->GetOutput();
+
+      typename itk::ImageFileWriter<OutputImageType>::Pointer wof=itk::ImageFileWriter<OutputImageType>::New();
+      wof->SetFileName("/scratch/johnsonhj/Downloads/FilterReturnOutputImage.nii.gz");
+      wof->SetInput(TransformedImage);
+      wof->Update();
+
       }
     else
       {
@@ -439,6 +448,11 @@ typename OutputImageType::Pointer GenericTransformImage(
     {
     FinalTransformedImage = TransformedImage;
     }
+
+      typename itk::ImageFileWriter<OutputImageType>::Pointer wof=itk::ImageFileWriter<OutputImageType>::New();
+      wof->SetFileName("/scratch/johnsonhj/Downloads/BeforeReturingFilterReturnOutputImage.nii.gz");
+      wof->SetInput(FinalTransformedImage);
+      wof->Update();
 
   return FinalTransformedImage;
 }

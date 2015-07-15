@@ -261,6 +261,11 @@ int main(int argc, char *argv[])
         defaultValue,
         interpolationMode,
         pixelType == "binary");
+
+      typename itk::ImageFileWriter<TBRAINSResampleInternalImageType>::Pointer wof=itk::ImageFileWriter<TBRAINSResampleInternalImageType>::New();
+      wof->SetFileName("/scratch/johnsonhj/Downloads/AFTERCALLReturnOutputImage.nii.gz");
+      wof->SetInput(TransformedImage);
+      wof->Update();
     if( gridSpacing.size() == TBRAINSResampleInternalImageType::ImageDimension )
       {
       // find min/max pixels for image

@@ -57,6 +57,33 @@ namespace itk
  * \return -- An image with the same voxels values as the input, but with differnt
  * physical space representation affected by the rigid transform.
  *
+ * The purpose of this code is to generate the new origin and direction
+ * that will remove the need for using the transform.
+ *
+ * Given a set of PhysFixedImagePoints (i.e. from the fixedImage space)
+ * those points are converted to PhysMovingImagePoints = TfmF2M( PhysFixedImagePoints )
+ * and then MovingContinuousIndexPoints=movingImage->TransformPhysicalPointToContinuousIndex ( PhysMovingImagePoints )
+ * to get image values.
+ *
+ * We desire to change the moving image DirectionCosign [DC] and Origin O  such that
+ * we can compute the MovingContinuousIndexPoints = newMovingImage->TransformPhysicalPointToContinuousIndex(PhysFixedImagePoints)
+ *
+ *Rigid Transform Notations
+ *  R-Rotation
+ *  C-Center Of Rotation
+ *  T-Translation
+ *
+ * TransformPhysicalPointToContinuousIndex
+ * CI = [SP^-1][DC^-1]( PhysMovingImagePoints - O)
+ * PhysMovingImagePoints = [R](PhysFixedImagePoints - C) + C + T
+ *
+ * After substitutions:
+ * MovingContinuousIndexPoints = [R^-1][DC][SP] * CI + [R^-1] * O - [R^-1] * C - [R^-1]*T + C
+ *                               ----------            --------------------------------------
+ *                                 NewDC                    NewOrigin
+ * NewDC=[R^-1][DC]
+ * NewOrigin = [R^-1] * ( O - C - T ) + C
+ *
  * \ingroup GeometricTransforms
  */
 template <class TInputImage, class TOutputImage>

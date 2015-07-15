@@ -30,6 +30,9 @@
 #include "itkResampleInPlaceImageFilter.h"
 #include "itkCastImageFilter.h"
 
+//HACK
+#include "itkImageFileWriter.h"
+
 namespace itk
 {
 /**
@@ -77,14 +80,7 @@ ResampleInPlaceImageFilter<TInputImage, TOutputImage>
     return;
     }
 
-  typedef typename RigidTransformType::Pointer RigidTransformPointer;
-  RigidTransformPointer invOfRigidTransform = RigidTransformType::New();
-  invOfRigidTransform->SetIdentity();
-  const InputImagePointType centerPoint = m_RigidTransform->GetCenter();
-  invOfRigidTransform->SetCenter( centerPoint );
-  invOfRigidTransform->SetIdentity();
-  this->m_RigidTransform->GetInverse( invOfRigidTransform );    // Cache the
-                                                                // inverse
+    //  SEE HEADER FILE FOR MATH DESCRIPTION
 
     {
     /** make a cast copied version of the input image **/
@@ -95,11 +91,33 @@ ResampleInPlaceImageFilter<TInputImage, TOutputImage>
     m_OutputImage = CastFilter->GetOutput();
     }
 
+  typedef typename RigidTransformType::ConstPointer RigidTransformConstPointer;
+  RigidTransformConstPointer FMTxfm= this->m_RigidTransform.GetPointer();
+  const typename RigidTransformType::MatrixType inverseRotation ( FMTxfm->GetMatrix().GetInverse() );
+
   // Modify the origin and direction info of the image to reflect the transform.
-  m_OutputImage->SetOrigin( invOfRigidTransform->GetMatrix()
-                            * this->GetInput()->GetOrigin() + invOfRigidTransform->GetOffset() );
-  m_OutputImage->SetDirection( invOfRigidTransform->GetMatrix()
+  itk::Vector<double,3> newOriginVector = inverseRotation * (
+                                                  this->GetInput()->GetOrigin().GetVectorFromOrigin()
+                                                - FMTxfm->GetCenter().GetVectorFromOrigin()
+                                                - FMTxfm->GetTranslation() )
+                            + FMTxfm->GetCenter().GetVectorFromOrigin();
+  itk::Point<double,3> newOriginPoint;
+  for(int i =0; i < 3 ; ++i)
+  {
+   newOriginPoint[i]=newOriginVector[i];
+  }
+  m_OutputImage->SetOrigin( newOriginPoint );
+  m_OutputImage->SetDirection( inverseRotation
                                * this->GetInput()->GetDirection() );
+
+  typename itk::ImageFileWriter<TInputImage>::Pointer wif=itk::ImageFileWriter<TInputImage>::New();
+  wif->SetFileName("/scratch/johnsonhj/Downloads/inputImage.nii.gz");
+  wif->SetInput(this->GetInput());
+  wif->Update();
+  typename itk::ImageFileWriter<TOutputImage>::Pointer wof=itk::ImageFileWriter<TOutputImage>::New();
+  wof->SetFileName("/scratch/johnsonhj/Downloads/outputImage.nii.gz");
+  wof->SetInput(m_OutputImage);
+  wof->Update();
 
   this->GraftOutput( m_OutputImage );
 }
