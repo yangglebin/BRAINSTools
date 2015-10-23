@@ -87,7 +87,7 @@ if( USE_BRAINSABC )
     message(FATAL_ERROR "BRAINSABC Requires C++11 compilers.  Use -DCMAKE_CXX_STANDARD:STRING=11 when configuring\n"
 "CURRENTLY: CMAKE_CXX_STANDARD=\"${CMAKE_CXX_STANDARD}\"")
   endif()
-  set(USE_TBB ON) ## BRAINSABC requires a built version of Intel's TBB
+  set(${LOCAL_PROJECT_NAME}_USE_TBB ON) ## BRAINSABC requires a built version of Intel's TBB
 endif()
 
 if(Slicer_BUILD_BRAINSTOOLS OR USE_AutoWorkup OR USE_GTRACT OR USE_BRAINSTalairach OR USE_BRAINSSurfaceTools OR USE_BRAINSConstellationDetector OR USE_BRAINSDemonWarp OR USE_ConvertBetweenFileFormats )

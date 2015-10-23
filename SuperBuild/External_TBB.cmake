@@ -25,9 +25,24 @@ if(NOT ( DEFINED "USE_SYSTEM_${proj}" AND "${USE_SYSTEM_${proj}}" ) )
 
   ### --- End Project specific additions
   #set(${proj}_REPOSITORY ${git_protocol}://github.com/BRAINSia/JPeg9A.git)
-  set(${proj}_REPOSITORY file:///Users/johnsonhj/src/intel-tbb)
+  set(${proj}_REPOSITORY ${git_protocol}://github.com/intel-tbb/intel-tbb.git)
   set(${proj}_GIT_TAG master)  # BRAINSTools_CompilerCleanup
 
+  #if(COMPLER CLNAG)
+  #set(TBB_COMPILER_FLAG compiler=clang)
+  #set(TBB_STDLIB_FLAG  stdlib=libc++)
+  #endif()
+
+#  ENV TBB_ARCH_PLATFORM - for eg. set it to "mic" for Xeon Phi builds
+#  ENV TBB_ROOT or just TBB_ROOT - root directory of tbb installation
+#  ENV TBB_BUILD_PREFIX - specifies the build prefix for user built tbb
+#                         libraries. Should be specified with ENV TBB_ROOT
+#                         and optionally...
+#  ENV TBB_BUILD_DIR - if build directory is different than ${TBB_ROOT}/build
+#
+  set(TBB_ROOT ${CMAKE_CURRENT_BINARY_DIR}/${proj})
+  set(TBB_BUILD_DIR ${CMAKE_CURRENT_BINARY_DIR}/${proj}-bld)
+  set(TBB_BUILD_PREFIX tbb)
 
   ExternalProject_Add(${proj}
     ${${proj}_EP_ARGS}
@@ -42,18 +57,13 @@ if(NOT ( DEFINED "USE_SYSTEM_${proj}" AND "${USE_SYSTEM_${proj}}" ) )
     ${cmakeversion_external_update} "${cmakeversion_external_update_value}"
     CMAKE_GENERATOR ${gen}
     CONFIGURE_COMMAND ""
-    BUILD_COMMAND make -C ${CMAKE_CURRENT_BINARY_DIR}/${proj} CC=${CMAKE_C_COMPILER} CXX=${CMAKE_CXX_COMPILER} "CFLAGS=${${proj}_CFLAGS}" "CXXFLAGS=${${proj}_CXXFLAGS}" compiler=clang stdlib=libc++ tbb_root=${CMAKE_CURRENT_BINARY_DIR}/${proj} tbb_build_dir=${CMAKE_CURRENT_BINARY_DIR}/${proj}-bld tbb_build_prefix=tbb
+    BUILD_COMMAND make -C ${CMAKE_CURRENT_BINARY_DIR}/${proj} CC=${CMAKE_C_COMPILER} CXX=${CMAKE_CXX_COMPILER} "CFLAGS=${${proj}_CFLAGS}" "CXXFLAGS=${${proj}_CXXFLAGS}" ${TBB_COMPILER_FLAG} ${TBB_STDLIB_FLAG} tbb_root=${TBB_ROOT} tbb_build_dir=${TBB_BUILD_DIR} tbb_build_prefix=${TBB_BUILD_PREFIX}
 ## We really do want to install in order to limit # of include paths INSTALL_COMMAND ""
     INSTALL_COMMAND  cp -R ${CMAKE_CURRENT_BINARY_DIR}/${proj}/include/tbb ${CMAKE_CURRENT_BINARY_DIR}/${proj}-bld/tbb_release
     INSTALL_DIR ""
     DEPENDS
       ${${proj}_DEPENDENCIES}
   )
-  set(${proj}_DIR ${CMAKE_BINARY_DIR}/${proj}-install)
-  #set(${proj}_INCLUDE_DIR ${CMAKE_BINARY_DIR}/${proj}-install/include)
-  #set(${proj}_LIB_DIR ${CMAKE_BINARY_DIR}/${proj}-install/lib)
-  #set(${proj}_LIBRARY ${${proj}_LIB_DIR}/libjpeg.a)
-
 else()
   if(${USE_SYSTEM_${proj}})
     find_package(${proj} ${${proj}_REQUIRED_VERSION} REQUIRED)

@@ -240,6 +240,18 @@ mark_as_superbuild(
   ALL_PROJECTS
   )
 
+
+
+if(${LOCAL_PROJECT_NAME}_USE_TBB)
+  mark_as_superbuild(
+    VARS
+     TBB_ROOT:PATH
+     TBB_BUILD_DIR:PATH
+     TBB_BUILD_PREFIX:STRING
+    ALL_PROJECTS
+   )
+endif()
+
 if(${LOCAL_PROJECT_NAME}_USE_QT)
   mark_as_superbuild(
     VARS

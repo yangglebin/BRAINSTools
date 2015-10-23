@@ -65,6 +65,20 @@
 #  FindTBB helper functions and macros
 #
 
+#Propogate CMAKE -D flags to environmental flags
+if(TBB_ARCH_PLATFORM)
+   set(ENV{TBB_ARCH_PLATFORM} ${TBB_ARCH_PLATFORM})
+endif()
+if(TBB_ROOT)
+   set(ENV{TBB_ROOT} ${TBB_ROOT})
+endif()
+if(TBB_BUILD_PREFIX)
+   set(ENV{TBB_BUILD_PREFIX} ${TBB_BUILD_PREFIX})
+endif()
+if(TBB_BUILD_DIR)
+   set(ENV{TBB_BUILD_DIR} ${TBB_BUILD_DIR})
+endif()
+
 #===============================================
 # Do the final processing for the package find.
 #===============================================
