@@ -73,7 +73,6 @@ include(itkCheckSourceTree)
 #-----------------------------------------------------------------------------
 if(${LOCAL_PROJECT_NAME}_SUPERBUILD)
   project(SuperBuild_${LOCAL_PROJECT_NAME} C CXX)
-  set(CMAKE_CXX_STANDARD 98)
   include("${CMAKE_CURRENT_SOURCE_DIR}/SuperBuild.cmake")
   return()
 else()

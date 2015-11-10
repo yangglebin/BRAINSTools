@@ -82,9 +82,10 @@ option(USE_DebugImageViewer "Build DebugImageViewer" OFF)
 option(BRAINS_DEBUG_IMAGE_WRITE "Enable writing out intermediate image results" OFF)
 
 option(USE_BRAINSABC                      "Build BRAINSABC"                      ON)
-if(USE_BRAINSABC )
-  if(NOT ${CMAKE_CXX_STANDARD} STREQUAL "11" )
-    message(FATAL_ERROR "BRAINSABC Requires C++11 compilers.  Use -DCMAKE_CXX_STANDARD:STRING=11 when configuring")
+if( USE_BRAINSABC )
+  if(NOT (CMAKE_CXX_STANDARD EQUAL 11 ))
+    message(FATAL_ERROR "BRAINSABC Requires C++11 compilers.  Use -DCMAKE_CXX_STANDARD:STRING=11 when configuring\n"
+"CURRENTLY: CMAKE_CXX_STANDARD=\"${CMAKE_CXX_STANDARD}\"")
   endif()
   set(USE_TBB ON) ## BRAINSABC requires a built version of Intel's TBB
 endif()
