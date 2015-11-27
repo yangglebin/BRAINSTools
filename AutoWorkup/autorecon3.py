@@ -3,7 +3,7 @@ import nipype
 from nipype.interfaces.utility import Function,IdentityInterface
 import nipype.pipeline.engine as pe  # pypeline engine
 from nipype.interfaces.freesurfer import *
-
+from ba_maps import create_ba_maps_wf
 
 def create_AutoRecon3(config):
     
@@ -756,22 +756,36 @@ def create_AutoRecon3(config):
             else:
                 hemi_wf = ar3_rh_wf
                 hemi_contrast = rh_contrast
-            for connection, meas_file, meas_name in [(hemi_wf, 'Make_Pial_Surface.out_thickness', 'thickness'),
-                                                     (inputSpec, '{0}_area'.format(
-                                                         hemisphere), 'area'),
-                                                     (hemi_wf, 'Make_Pial_Surface.out_area',
+            for connection, meas_file, meas_name in [(hemi_wf, 
+                                                      'Make_Pial_Surface.out_thickness', 
+                                                      'thickness'),
+                                                     (inputSpec, 
+                                                      '{0}_area'.format(hemisphere), 
+                                                      'area'),
+                                                     (hemi_wf, 
+                                                      'Make_Pial_Surface.out_area',
                                                       'area.pial'),
-                                                     (hemi_wf, 'Calculate_Volume.out_file',
+                                                     (hemi_wf,
+                                                      'Calculate_Volume.out_file',
                                                       'volume'),
-                                                     (inputSpec, '{0}_curv'.format(
-                                                         hemisphere), 'curv'),
-                                                     (inputSpec, '{0}_sulc'.format(
-                                                         hemisphere), 'sulc'),
-                                                     (inputSpec, '{0}_white_K'.format(
-                                                         hemisphere), 'white.K'),
-                                                     (inputSpec, '{0}_white_H'.format(
-                                                         hemisphere), 'white.H'),
-                                                     (hemi_wf, 'Jacobian.out_file',
+                                                     (inputSpec, 
+                                                      '{0}_curv'.format(
+                                                         hemisphere),
+                                                      'curv'),
+                                                     (inputSpec, 
+                                                      '{0}_sulc'.format(
+                                                         hemisphere),
+                                                      'sulc'),
+                                                     (inputSpec, 
+                                                      '{0}_white_K'.format(
+                                                         hemisphere),
+                                                      'white.K'),
+                                                     (inputSpec,
+                                                      '{0}_white_H'.format(
+                                                         hemisphere), 
+                                                      'white.H'),
+                                                     (hemi_wf, 
+                                                      'Jacobian.out_file',
                                                       'jacobian_white'),
                                                      (hemi_contrast, 'out_contrast', 'w-g.pct.mgh')]:
                 preprocess = pe.Node(MRISPreprocReconAll(), name="QCache_Preproc_{0}_{1}".format(
