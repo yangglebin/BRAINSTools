@@ -85,13 +85,12 @@ int main( int argc, char * argv[] )
            error_term += pow((lmk1iter->second[i] - lmk2iter->second[i]), 2);
            }
            error_term = pow( error_term, 0.5 );
-           if ( error_term > tolerance )
-             {
-             std::cout << "\nFAIL: lmk" << lmk1iter->first << " differ by greater than tolerance" << std::endl;
-             std::cout << "FAIL: euclidian distance  = " << error_term << " is greater than " << tolerance << std::endl;
-             allSame = false;
-             thisLmkOK = false;
-             }
+         if ( error_term > tolerance )
+           {
+           std::cout << "\nFAIL: lmk" << lmk1iter->first << " differ by greater than tolerance" << std::endl;
+           std::cout << "FAIL: euclidian distance  = " << error_term << " is greater than " << tolerance << std::endl;
+           allSame = false;
+           thisLmkOK = false;
            }
          if (thisLmkOK)
            {
