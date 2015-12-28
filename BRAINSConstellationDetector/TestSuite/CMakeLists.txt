@@ -163,7 +163,7 @@ ExternalData_add_test(${PROJECT_NAME}FetchData NAME ${BCDTestName}
   COMMAND ${LAUNCH_EXE} $<TARGET_FILE:LandmarksCompare>
   --inputLandmarkFile1 ${CMAKE_CURRENT_BINARY_DIR}/insertMidACPCpointTest_ACPCSpace_aligned.fcsv # output of the insertMidACPCpoint
   --inputLandmarkFile2 DATA{${TestData_DIR}/${BCDTestName}_standard.fcsv} # Baseline file
-  --tolerance 1.875 # The images are 1.875x1.875x2.4 in the test suite, so a large tolerance is needed
+  --tolerance 3.248 # The images are 1.875x1.875x2.4 in the test suite, so a large tolerance is needed
   )
 set_property(TEST ${BCDTestName} APPEND PROPERTY DEPENDS ${PARENT_TEST})
 
@@ -181,7 +181,7 @@ ExternalData_add_test(${PROJECT_NAME}FetchData NAME ${BCDTestName}
   COMMAND ${LAUNCH_EXE} $<TARGET_FILE:LandmarksCompare>
   --inputLandmarkFile1 ${CMAKE_CURRENT_BINARY_DIR}/landmarksConstellationAlignerTest.fcsv # output of the landmarksConstellationAlignerTest
   --inputLandmarkFile2 DATA{${TestData_DIR}/${BCDTestName}_standard.fcsv} # Baseline file
-  --tolerance 1.875 # The images are 1.875x1.875x2.4 in the test suite, so a large tolerance is needed
+  --tolerance 3.248 # The images are 1.875x1.875x2.4 in the test suite, so a large tolerance is needed
   )
 set_property(TEST ${BCDTestName} APPEND PROPERTY DEPENDS ${PARENT_TEST})
 
@@ -214,7 +214,7 @@ set(BCDTestName BCDTest_ForceRPPoint)
     COMMAND ${LAUNCH_EXE} $<TARGET_FILE:LandmarksCompare>
     --inputLandmarkFile1 ${CMAKE_CURRENT_BINARY_DIR}/BCDTest_ForceRPPoint_InputSpace.fcsv # output of the ForceRPPoint Test
     --inputLandmarkFile2 DATA{${TestData_DIR}/${BCDTestName}_standard.fcsv},DATA{${TestData_DIR}/${BCDTestName}_standard.1.fcsv}  # Baseline file
-    --tolerance 1.875 # The images are 1.875x1.875x2.4 in the test suite, so a large tolerance is needed
+    --tolerance 3.248 # The images are 1.875x1.875x2.4 in the test suite, so a large tolerance is needed
     )
   set_property(TEST ${BCDTestName} APPEND PROPERTY DEPENDS ${PARENT_TEST})
 
@@ -235,7 +235,7 @@ set(BCDTestName BCDTest_ForceACPoint)
     COMMAND ${LAUNCH_EXE} $<TARGET_FILE:LandmarksCompare>
     --inputLandmarkFile1 ${CMAKE_CURRENT_BINARY_DIR}/BCDTest_ForceACPoint_InputSpace.fcsv # output of the ForceACPoint Test
     --inputLandmarkFile2 DATA{${TestData_DIR}/${BCDTestName}_standard.fcsv},DATA{${TestData_DIR}/${BCDTestName}_standard.1.fcsv}# Baseline file
-    --tolerance 1.875 # The images are 1.875x1.875x2.4 in the test suite, so a large tolerance is needed
+    --tolerance 3.248 # The images are 1.875x1.875x2.4 in the test suite, so a large tolerance is needed
     )
   set_property(TEST ${BCDTestName} APPEND PROPERTY DEPENDS ${PARENT_TEST})
 
@@ -256,7 +256,7 @@ set(BCDTestName BCDTest_ForcePCPoint)
     COMMAND ${LAUNCH_EXE} $<TARGET_FILE:LandmarksCompare>
     --inputLandmarkFile1 ${CMAKE_CURRENT_BINARY_DIR}/BCDTest_ForcePCPoint_InputSpace.fcsv # output of the ForcePCPoint Test
     --inputLandmarkFile2 DATA{${TestData_DIR}/${BCDTestName}_standard.fcsv},DATA{${TestData_DIR}/${BCDTestName}_standard.1.fcsv}# Baseline file
-    --tolerance 1.875 # The images are 1.875x1.875x2.4 in the test suite, so a large tolerance is needed
+    --tolerance 3.248 # The images are 1.875x1.875x2.4 in the test suite, so a large tolerance is needed
     )
   set_property(TEST ${BCDTestName} APPEND PROPERTY DEPENDS ${PARENT_TEST})
 
@@ -278,7 +278,7 @@ set(BCDTestName BCDTest_ForceVN4Point)
     --inputLandmarkFile1 ${CMAKE_CURRENT_BINARY_DIR}/BCDTest_ForceVN4Point_InputSpace.fcsv # output of the ForceVN4Point Test
     --inputLandmarkFile2
     DATA{${TestData_DIR}/${BCDTestName}_standard.fcsv},DATA{${TestData_DIR}/${BCDTestName}_standard.1.fcsv} # Baseline file
-    --tolerance 1.875 # The images are 1.875x1.875x2.4 in the test suite, so a large tolerance is needed
+    --tolerance 3.248 # The images are 1.875x1.875x2.4 in the test suite, so a large tolerance is needed
     )
   set_property(TEST ${BCDTestName} APPEND PROPERTY DEPENDS ${PARENT_TEST})
 
@@ -628,7 +628,7 @@ set(BCDTestName BCDTest_ForceVN4Point)
     --inputLandmarkFile1 ${CMAKE_CURRENT_BINARY_DIR}/BCDTestForLandmarkCompare_ACPCSpace_aligned.fcsv
     --inputLandmarkFile2
     DATA{${TestData_DIR}/${BCDTestName}_standard.fcsv},DATA{${TestData_DIR}/${BCDTestName}_standard.1.fcsv} # Baseline file
-  --tolerance 1.875 # The images are 1.875x1.875x2.4 in the test suite, so a large tolerance is needed
+  --tolerance 3.248 # The images are 1.875x1.875x2.4 in the test suite, so a large tolerance is needed
     )
   set_property(TEST ${BCDTestName} APPEND PROPERTY DEPENDS ${PARENT_TEST})
 
@@ -639,7 +639,7 @@ set(BCDTestName BCDTest_ForceVN4Point)
     --inputLandmarkFile1 ${CMAKE_CURRENT_BINARY_DIR}/BCDTestForLandmarkCompare_InputSpace_aligned.fcsv
     --inputLandmarkFile2
     DATA{${TestData_DIR}/${BCDTestName}_standard.fcsv},DATA{${TestData_DIR}/${BCDTestName}_standard.1.fcsv} # Baseline file
-  --tolerance 1.875 # The images are 1.875x1.875x2.4 in the test suite, so a large tolerance is needed
+  --tolerance 3.248 # The images are 1.875x1.875x2.4 in the test suite, so a large tolerance is needed
     )
   set_property(TEST ${BCDTestName} APPEND PROPERTY DEPENDS ${PARENT_TEST})
 
