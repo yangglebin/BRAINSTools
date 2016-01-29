@@ -38,13 +38,13 @@
 #   ctest -S ~/Dashboards/Scripts/my_dashboard.cmake -V
 #
 # By default the source and build trees will be placed in the path
-# "../My Tests/" relative to your script location.
+# "../My_Tests/" relative to your script location.
 #
 # The following variables may be set before including this script
 # to configure it:
 #
 #   dashboard_model       = Nightly | Experimental | Continuous
-#   dashboard_root_name   = Change name of "My Tests" directory
+#   dashboard_root_name   = Change name of "My_Tests" directory
 #   dashboard_source_name = Name of source directory (BRAINSTools)
 #   dashboard_binary_name = Name of binary directory (BRAINSTools-build)
 #   dashboard_cache       = Initial CMakeCache.txt file content
@@ -76,7 +76,7 @@ set(CTEST_PROJECT_NAME BRAINSTools)
 
 # Select the top dashboard directory.
 if(NOT DEFINED dashboard_root_name)
-  set(dashboard_root_name "My Tests")
+  set(dashboard_root_name "My_Tests")
 endif()
 if(NOT DEFINED CTEST_DASHBOARD_ROOT)
   get_filename_component(CTEST_DASHBOARD_ROOT "${CTEST_SCRIPT_DIRECTORY}/../${dashboard_root_name}" ABSOLUTE)
