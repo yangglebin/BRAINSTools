@@ -146,6 +146,11 @@ if(NOT DEFINED CTEST_BINARY_DIRECTORY)
   endif()
 endif()
 
+# Select a test directory name.
+if(NOT DEFINED CTEST_TESTING_DIRECTORY)
+  set(CTEST_TESTING_DIRECTORY ${CTEST_BINARY_DIRECTORY}/${CTEST_PROJECT_NAME}-build)
+endif()
+
 # Select a data store.
 if(NOT DEFINED ExternalData_OBJECT_STORES)
   if(DEFINED "ENV{ExternalData_OBJECT_STORES}")
@@ -310,8 +315,7 @@ while(NOT dashboard_done)
     if(COMMAND dashboard_hook_test)
       dashboard_hook_test()
     endif()
-    ctest_test(${CTEST_TEST_ARGS})
-
+    ctest_test(BUILD ${CTEST_TESTING_DIRECTORY} ${CTEST_TEST_ARGS})
     if(dashboard_do_coverage)
       ctest_coverage()
     endif()
