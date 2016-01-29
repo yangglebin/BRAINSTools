@@ -91,8 +91,18 @@ if(NOT "${dashboard_model}" MATCHES "^(Nightly|Experimental|Continuous)$")
 endif()
 
 # Default to a Debug build.
+# CMAKE_BUILD_TYPE takes priority as it is the variable passed to the cache
 if(NOT DEFINED CMAKE_BUILD_TYPE)
-  set(CTEST_BUILD_CONFIGURATION Debug)
+  if(NOT DEFINED CTEST_BUILD_CONFIGURATION)
+    set(CTEST_BUILD_CONFIGURATION Debug)
+  endif()
+  set(CMAKE_BUILD_TYPE ${CTEST_BUILD_CONFIGURATION})
+else()
+  if(DEFINED CTEST_BUILD_CONFIGURATION)
+    message(WARNING "Both CTEST_BUILD_CONFIGURATION and CMAKE_BUILD_TYPE are set.  "
+                    "Using value of CMAKE_BUILD_TYPE:${CMAKE_BUILD_TYPE} for both variables")
+  endif()
+  set(CTEST_BUILD_CONFIGURATION ${CMAKE_BUILD_TYPE})
 endif()
 
 # NOTE: I need to figure out what launchers are
