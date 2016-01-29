@@ -105,6 +105,31 @@ else()
   set(CTEST_BUILD_CONFIGURATION ${CMAKE_BUILD_TYPE})
 endif()
 
+# Setup compiler flags for code coverage
+if(dashboard_do_coverage)
+  message("setting up code coverage")
+  if(NOT ${CMAKE_BUILD_TYPE} MATCHES "Debug")
+    message(WARNING "Coverage is only available when building the \"Debug\" Configuration")
+    message(WARNING "Setting CMAKE_BUILD_TYPE to \"Debug\"")
+    set(CMAKE_BUILD_TYPE Debug)
+    set(CTEST_BUILD_CONFIGURATION Debug)
+  endif()
+  set(COVERAGE_FLAGS "-fprofile-arcs -ftest-coverage")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS_DEBUG} ${COVERAGE_FLAGS}")
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${COVERAGE_FLAGS}")
+  set(CMAKE_LINKER_EXE_FLAGS "${CMAKE_LINKER_EXE_FLAGS} ${COVERAGE_FLAGS}")
+  set(dashboard_cache "${dashboard_cache} ${CMAKE_C_FLAGS} ${CMAKE_CXX_FLAGS} ${CMAKE_LINKER_EXE_FLAGS}")
+endif()
+
+macro(vardisp VAR)
+  message("####${VAR}:${${VAR}}")
+endmacro(vardisp)
+
+vardisp(CMAKE_BUILD_TYPE)
+vardisp(CMAKE_CXX_FLAGS)
+vardisp(CMAKE_C_FLAGS)
+vardisp(CMAKE_LINKER_EXE_FLAGS)
+
 # NOTE: I need to figure out what launchers are
 # Choose CTest reporting mode.
 if(NOT "${CTEST_CMAKE_GENERATOR}" MATCHES "Make")
@@ -309,6 +334,7 @@ while(NOT dashboard_done)
     message("Starting fresh build...")
     write_cache()
   endif()
+message(FATAL_ERROR)
 
 # Look for updates.
   ctest_update(RETURN_VALUE count)
@@ -316,7 +342,6 @@ while(NOT dashboard_done)
   if(dashboard_fresh OR NOT dashboard_continuous OR count GREATER 0)
     ctest_configure()
     ctest_read_custom_files(${CTEST_BINARY_DIRECTORY})
-
     if(COMMAND dashboard_hook_build)
       dashboard_hook_build()
     endif()

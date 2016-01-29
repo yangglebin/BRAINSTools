@@ -13,11 +13,11 @@ set(CTEST_BUILD_CONFIGURATION Release)
 set(CTEST_CMAKE_GENERATOR "Unix Makefiles")
 #set(CTEST_GIT_COMMAND /path/to/git)
 
-#set(dashboard_model Experimental)
+set(dashboard_model Experimental)
 #set(dashboard_model Continuous)
 
 #set(dashboard_do_memcheck 1)
-#set(dashboard_do_coverage 1)
+set(dashboard_do_coverage 1)
 
 #set(dashboard_cache "
 #BUILD_SHARED_LIBS:BOOL=ON
