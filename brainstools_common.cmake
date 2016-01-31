@@ -74,6 +74,13 @@ cmake_minimum_required(VERSION 2.8.2 FATAL_ERROR) # 2.8.[01] will NOT work!
 
 set(CTEST_PROJECT_NAME BRAINSTools)
 
+# Set a default host name
+if(NOT DEFINED CTEST_SITE )
+ set(CTEST_SITE $ENV{HOSTNAME} )
+endif()
+message("HOSTNAME is ${HOSTNAME}" )
+
+
 # Select the top dashboard directory.
 if(NOT DEFINED dashboard_root_name)
   set(dashboard_root_name "My_Tests")
