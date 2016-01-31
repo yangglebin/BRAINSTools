@@ -141,9 +141,9 @@ elseif(NOT DEFINED CTEST_USE_LAUNCHERS)
 endif()
 
 # Configure testing.
-#if(NOT CTEST_TEST_TIMEOUT)
-  set(CTEST_TEST_TIMEOUT 1)
-#endif()
+if(NOT CTEST_TEST_TIMEOUT)
+  set(CTEST_TEST_TIMEOUT 1500)
+endif()
 
 
 
@@ -194,6 +194,7 @@ if(dashboard_do_memcheck)
 endif()
 
 
+
 # Select a source directory name.
 if(NOT DEFINED CTEST_SOURCE_DIRECTORY)
   if(DEFINED dashboard_source_name)
@@ -204,11 +205,20 @@ if(NOT DEFINED CTEST_SOURCE_DIRECTORY)
 endif()
 
 # Select a build directory name.
+# Modifying this so multiple ctests can run simultaniously 
+# with different types but called from different scripts
+
 if(NOT DEFINED CTEST_BINARY_DIRECTORY)
   if(DEFINED dashboard_binary_name)
     set(CTEST_BINARY_DIRECTORY ${CTEST_DASHBOARD_ROOT}/${dashboard_binary_name})
   else()
-    set(CTEST_BINARY_DIRECTORY ${CTEST_SOURCE_DIRECTORY}-build)
+    set(CTEST_BINARY_DIRECTORY ${CTEST_SOURCE_DIRECTORY}-build-${CTEST_BUILD_CONFIGURATION})
+    if(dashboard_do_coverage)
+      set(CTEST_BINARY_DIRECTORY ${CTEST_BINARY_DIRECTORY}-coverage)
+    endif()
+    if(dashboard_do_memcheck)
+      set(CTEST_BINARY_DIRECTORY ${CTEST_BINARY_DIRECTORY}-memcheck)
+    endif()
   endif()
 endif()
 

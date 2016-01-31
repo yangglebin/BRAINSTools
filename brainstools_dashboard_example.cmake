@@ -6,9 +6,9 @@
 # See brainstools_common.cmake for more instructions.
 
 # Client maintainer: someone@users.sourceforge.net
-set(CTEST_SITE "machine.site")
+#set(CTEST_SITE "machine.site") the default is the hostname
 set(CTEST_BUILD_NAME "Linux-gcc")
-set(CTEST_BUILD_FLAGS "-j8") # parallel build for makefiles
+set(CTEST_BUILD_FLAGS "-j12") # parallel build for makefiles
 set(CTEST_BUILD_CONFIGURATION Release)
 set(CTEST_CMAKE_GENERATOR "Unix Makefiles")
 #set(CTEST_GIT_COMMAND /path/to/git)
@@ -16,7 +16,7 @@ set(CTEST_CMAKE_GENERATOR "Unix Makefiles")
 set(dashboard_model Experimental)
 #set(dashboard_model Continuous)
 
-#set(dashboard_do_memcheck 1)
+set(dashboard_do_memcheck 1)
 set(dashboard_do_coverage 1)
 
 #set(dashboard_cache "
