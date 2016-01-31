@@ -171,6 +171,22 @@ if(dashboard_do_coverage)
   endif()
 endif()
 
+
+#set(CTEST_MEMORYCHECK_COMMAND "/home/aleinoff/prefix/bin/valgrind" )
+
+# Look for memory checking command
+   message("CTEST_MEMORYCHECK_COMMAND:${CTEST_MEMORYCHECK_COMMAND}")
+if(dashboard_do_memcheck)
+  if(NOT DEFINED CTEST_MEMORYCHECK_COMMAND)
+    find_program(CTEST_MEMORYCHECK_COMMAND NAMES valgrind)
+  endif()
+  if(NOT DEFINED CTEST_MEMORYCHECK_COMMAND)
+    message( "No memcheck command found")
+  endif()
+    message("CTEST_MEMORYCHECK_COMMAND:${CTEST_MEMORYCHECK_COMMAND}")
+endif()
+
+
 # Select a source directory name.
 if(NOT DEFINED CTEST_SOURCE_DIRECTORY)
   if(DEFINED dashboard_source_name)
@@ -251,7 +267,7 @@ foreach(req
     CTEST_SITE
     CTEST_BUILD_NAME
     )
-  message(STATUS "${req}:${${req}}")
+  message( "${req}:${${req}}")
   if(NOT DEFINED ${req})
     message(FATAL_ERROR "The containing script must set ${req}")
   endif()
@@ -394,7 +410,12 @@ message("######### about ot do coverage")
 message("##############end of ctest_coverage")
     endif()
     if(dashboard_do_memcheck)
-      #ctest_memcheck(${CTEST_BUILD_LOCATION_ARGS})
+message("############### ctest_memcheck")
+# load the memory check suppressions file
+set(CTEST_MEMORYCHECK_SUPPRESSIONS_FILE "${CTEST_BINARY_DIRECTORY}/ITKv4/CMake/InsightValgrind.supp")
+message("CTEST_MEMORY_SUPPRESSIONS_FILE:${CTEST_MEMORY_SUPPRESSIONS_FILE}")
+      ctest_memcheck(${CTEST_BUILD_LOCATION_ARGS})
+message("############### END ctest_memcheck")
     endif()
     if(NOT dashboard_no_submit)
 #      ctest_submit()
