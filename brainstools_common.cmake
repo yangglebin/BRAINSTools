@@ -46,7 +46,7 @@
 #   dashboard_model       = Nightly | Experimental | Continuous
 #   dashboard_root_name   = Change name of "My_Tests" directory
 #   dashboard_source_name = Name of source directory (BRAINSTools)
-#   dashboard_binary_name = Name of binary directory (BRAINSTools-build)
+#   
 #   dashboard_cache       = Initial CMakeCache.txt file content
 #   dashboard_do_coverage = True to enable coverage (ex: gcov)
 #   dashboard_do_memcheck = True to enable memcheck (ex: valgrind)
@@ -115,20 +115,14 @@ if(dashboard_do_coverage)
     set(CTEST_BUILD_CONFIGURATION Debug)
   endif()
   set(COVERAGE_FLAGS "-fprofile-arcs -ftest-coverage")
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS_DEBUG} ${COVERAGE_FLAGS}")
-  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${COVERAGE_FLAGS}")
-  set(CMAKE_LINKER_EXE_FLAGS "${CMAKE_LINKER_EXE_FLAGS} ${COVERAGE_FLAGS}")
-  set(dashboard_cache "${dashboard_cache} ${CMAKE_C_FLAGS} ${CMAKE_CXX_FLAGS} ${CMAKE_LINKER_EXE_FLAGS}")
+  set(COVERAGE_DEBUG_FLAGS "-g -O0")
+  set(COVERAGE_VARS CMAKE_CXX_FLAGS CMAKE_C_FLAGS )
+  foreach(COVERAGE_VAR ${COVERAGE_VARS})
+    set(${COVERAGE_VAR} "${${COVERAGE_VAR}} ${COVERAGE_DEBUG_FLAGS} ${COVERAGE_FLAGS}")
+  endforeach()
+  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${COVERAGE_FLAGS}")
+  set(COVERAGE_VARS ${COVERAGE_VARS} CMAKE_EXE_LINKER_FLAGS)
 endif()
-
-macro(vardisp VAR)
-  message("####${VAR}:${${VAR}}")
-endmacro(vardisp)
-
-vardisp(CMAKE_BUILD_TYPE)
-vardisp(CMAKE_CXX_FLAGS)
-vardisp(CMAKE_C_FLAGS)
-vardisp(CMAKE_LINKER_EXE_FLAGS)
 
 # NOTE: I need to figure out what launchers are
 # Choose CTest reporting mode.
@@ -140,9 +134,9 @@ elseif(NOT DEFINED CTEST_USE_LAUNCHERS)
 endif()
 
 # Configure testing.
-if(NOT CTEST_TEST_TIMEOUT)
-  set(CTEST_TEST_TIMEOUT 1500)
-endif()
+#if(NOT CTEST_TEST_TIMEOUT)
+  set(CTEST_TEST_TIMEOUT 1)
+#endif()
 
 
 
@@ -161,6 +155,20 @@ endif()
 
 if(NOT DEFINED CTEST_GIT_COMMAND)
   message(FATAL_ERROR "No Git Found.")
+endif()
+
+# Look for coverage command
+    message("CTEST_COMVERAGE_COMMAND:${CTEST_COVERAGE_COMMAND}")
+if(dashboard_do_coverage)
+  if(NOT DEFINED CTEST_COVERAGE_COMMAND)
+    find_program(CTEST_COVERAGE_COMMAND NAMES gcov)
+  endif()
+
+  if(NOT DEFINED CTEST_COVERAGE_COMMAND)
+    message(FATAL_ERROR "No coverage command found")
+  else()
+    message("CTEST_COMVERAGE_COMMAND:${CTEST_COVERAGE_COMMAND}")
+  endif()
 endif()
 
 # Select a source directory name.
@@ -185,6 +193,9 @@ endif()
 if(NOT DEFINED CTEST_TESTING_DIRECTORY)
   set(CTEST_TESTING_DIRECTORY ${CTEST_BINARY_DIRECTORY}/${CTEST_PROJECT_NAME}-build)
 endif()
+
+# Ctest Build location args
+set(CTEST_BUILD_LOCATION_ARGS BUILD ${CTEST_TESTING_DIRECTORY})
 
 # Select a data store.
 if(NOT DEFINED ExternalData_OBJECT_STORES)
@@ -240,6 +251,7 @@ foreach(req
     CTEST_SITE
     CTEST_BUILD_NAME
     )
+  message(STATUS "${req}:${${req}}")
   if(NOT DEFINED ${req})
     message(FATAL_ERROR "The containing script must set ${req}")
   endif()
@@ -267,6 +279,16 @@ message("Dashboard script configuration:\n${vars}\n")
 # Avoid non-ascii characters in tool output.
 set(ENV{LC_ALL} C)
 
+# put coverage vars into dashboard_cache
+if(dashboard_do_coverage)
+  foreach(COVERAGE_VAR ${COVERAGE_VARS})
+    if(DEFINED dashboard_cache)
+      set(dashboard_cache "${dashboard_cache}\n")
+    endif()
+    set(dashboard_cache "${dashboard_cache}${COVERAGE_VAR}=${${COVERAGE_VAR}}")
+  endforeach()
+endif()
+
 # Helper macro to write the initial cache.
 macro(write_cache)
   set(cache_build_type "")
@@ -290,6 +312,7 @@ ${dashboard_cache}
 endmacro()
 
 # Start with a fresh build tree.
+set(dashboard_no_clean 1)
 if(NOT EXISTS "${CTEST_BINARY_DIRECTORY}")
   file(MAKE_DIRECTORY "${CTEST_BINARY_DIRECTORY}")
 elseif(NOT "${CTEST_SOURCE_DIRECTORY}" STREQUAL "${CTEST_BINARY_DIRECTORY}"
@@ -324,7 +347,9 @@ while(NOT dashboard_done)
   if(COMMAND dashboard_hook_start)
     dashboard_hook_start()
   endif()
-  ctest_start(${dashboard_model})
+message("############### ctest_start")
+  ctest_start(${dashboard_model} ${CTEST_SOURCE_DIRECTORY} ${CTEST_TESTING_DIRECTORY})
+message("############### END ctest_start")
   set(CTEST_CHECKOUT_COMMAND) # checkout on first iteration only
 
   # Always build if the tree is fresh.
@@ -334,31 +359,45 @@ while(NOT dashboard_done)
     message("Starting fresh build...")
     write_cache()
   endif()
-message(FATAL_ERROR)
 
 # Look for updates.
-  ctest_update(RETURN_VALUE count)
-  message("Found ${count} changed files")
+  if(NOT dashboard_model MATCHES "Experimental")
+    ctest_update(RETURN_VALUE count)
+    message("Found ${count} changed files")
+  endif()
   if(dashboard_fresh OR NOT dashboard_continuous OR count GREATER 0)
+message("####################ctest_configure")
     ctest_configure()
+message("####################END ctest_configure")
+message("#################### ctest_read_custom_files")
     ctest_read_custom_files(${CTEST_BINARY_DIRECTORY})
+message("#################### END ctest_read_custom_files")
     if(COMMAND dashboard_hook_build)
       dashboard_hook_build()
     endif()
+message("#############ctest_build")
     ctest_build()
+message("#############END ctest_build")
 
     if(COMMAND dashboard_hook_test)
       dashboard_hook_test()
     endif()
-    ctest_test(BUILD ${CTEST_TESTING_DIRECTORY} ${CTEST_TEST_ARGS})
+message("################ ctest_test")
+    #ctest_test()
+    ctest_test(${CTEST_BUILD_LOCATION_ARGS} ${CTEST_TEST_ARGS})
+message("################ END ctest_test")
     if(dashboard_do_coverage)
-      ctest_coverage()
+message("######### about ot do coverage")
+#ctest_coverage()
+      ctest_coverage(${CTEST_BUILD_LOCATION_ARGS})
+#      ctest_coverage(BUILD ${CTEST_TESTING_DIRECTORY})
+message("##############end of ctest_coverage")
     endif()
     if(dashboard_do_memcheck)
-      ctest_memcheck()
+      #ctest_memcheck(${CTEST_BUILD_LOCATION_ARGS})
     endif()
     if(NOT dashboard_no_submit)
-      ctest_submit()
+#      ctest_submit()
     endif()
     if(COMMAND dashboard_hook_end)
       dashboard_hook_end()
