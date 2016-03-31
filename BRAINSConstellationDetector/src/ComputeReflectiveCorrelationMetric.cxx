@@ -20,7 +20,6 @@
 
 #include <iostream>
 #include "itkIO.h"
-#include "itkImage.h"
 #include "itkImageFileReader.h"
 #include "itkMultiResolutionPyramidImageFilter.h"
 
@@ -115,8 +114,8 @@ int main( int argc, char * argv[] )
   const double LR_range = 5;
 
   const double LR_stepsize = 1; // mm
-  const double HA_stepsize = 1; // degree
-  const double BA_stepsize = 1; // degree
+  const double HA_stepsize = 5; // degree
+  const double BA_stepsize = 5; // degree
 
   const double degree_to_rad = 1.0F * vnl_math::pi / 180.0F;
 
@@ -131,6 +130,8 @@ int main( int argc, char * argv[] )
         current_params[2] = LR;
 
         reflectionFunctor->SetParameters(current_params);
+        reflectionFunctor->SetDoPowell(false);
+        reflectionFunctor->Update();
         const double current_cc = reflectionFunctor->GetValue();
 
         if( current_cc < opt_cc )
@@ -138,11 +139,21 @@ int main( int argc, char * argv[] )
           opt_params = current_params;
           opt_cc = current_cc;
           }
-
+/*
+#define WRITE_CSV_FILE
+#ifdef WRITE_CSV_FILE
         csvFileOfMetricValues << HA << "," << BA << "," << LR << "," << current_cc << std::endl;
+#else
+        Do something else
+#endif
+*/
         }
       }
     }
+
+  std::cout << "Optimize parameters by exhaustive search: [" << opt_params[0] << "," << opt_params[1] << "," << opt_params[2] << "]" << std::endl;
+  std::cout << "Optimize metric value by exhaustive search: " << opt_cc << std::endl;
+
   if( outputCSVFile != "" )
     {
     std::cout << "\nWriting out metric values in a csv file..." << std::endl;

@@ -64,6 +64,7 @@ public:
   m_BackgroundValue(0),
   m_CenterOfImagePoint(),
   m_Translation(),
+  m_DoPowell(true),
   m_imInterp(ITK_NULLPTR),
   m_cc(0.0),
   m_HasLocalSupport(false)
@@ -474,24 +475,26 @@ public:
     return this->m_cc;
   }
 
-  void Update(void)
+  void Update()
   {
     itk::NumberToString<double> doubleToString;
 
-    try
+    if (this->m_DoPowell)
+    {
+      try
       {
-      this->m_Optimizer->StartOptimization();
+        this->m_Optimizer->StartOptimization();
       }
-    catch( itk::ExceptionObject & e )
+      catch (itk::ExceptionObject &e)
       {
-      std::cout << "Exception thrown ! " << std::endl;
-      std::cout << "An error occurred during Optimization" << std::endl;
-      std::cout << "Location    = " << e.GetLocation()    << std::endl;
-      std::cout << "Description = " << e.GetDescription() << std::endl;
-      //return EXIT_FAILURE;
+        std::cout << "Exception thrown ! " << std::endl;
+        std::cout << "An error occurred during Optimization" << std::endl;
+        std::cout << "Location    = " << e.GetLocation() << std::endl;
+        std::cout << "Description = " << e.GetDescription() << std::endl;
+        //return EXIT_FAILURE;
       }
-
-    this->m_params = this->m_Optimizer->GetCurrentPosition();
+      this->m_params = this->m_Optimizer->GetCurrentPosition();
+    }
     this->m_cc = this->GetValue();
 
     std::cout << doubleToString(this->m_params[0] * 180.0 / vnl_math::pi) << " "
@@ -500,6 +503,9 @@ public:
               << doubleToString(m_cc) << " iters= " << this->m_Optimizer->GetCurrentIteration()
               << std::endl;
   }
+
+  itkSetMacro(DoPowell,bool);
+  itkGetConstMacro(DoPowell,bool);
 
 private:
   typedef itk::ResampleImageFilter<SImageType, SImageType> ResampleFilterType;
@@ -512,6 +518,7 @@ private:
   SImageType::PointType             m_CenterOfImagePoint;
   SImageType::PointType::VectorType m_Translation;
   OptimizerPointer                  m_Optimizer;
+  bool                              m_DoPowell;
   LinearInterpolatorType::Pointer   m_imInterp;
   double                            m_cc;
   bool                              m_HasLocalSupport;

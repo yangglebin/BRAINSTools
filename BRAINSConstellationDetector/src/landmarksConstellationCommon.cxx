@@ -59,7 +59,7 @@ typedef itk::RecursiveGaussianImageFilter<SImageType, SImageType>  GaussianFilte
 SImageType::Pointer GaussianSmoothing(const SImageType::Pointer image,
                                       const double sigma)
 {
-  typename GaussianFilterType::Pointer gaussianFilter = GaussianFilterType::New();
+  GaussianFilterType::Pointer gaussianFilter = GaussianFilterType::New();
   gaussianFilter->SetInput( image );
   gaussianFilter->SetSigma( sigma );
   gaussianFilter->Update();
