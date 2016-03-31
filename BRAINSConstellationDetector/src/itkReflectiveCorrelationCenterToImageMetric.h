@@ -198,22 +198,22 @@ public:
 
   virtual void SetParameters( ParametersType & parameters ) ITK_OVERRIDE
   {
-    m_params = parameters;
+    this->m_params = parameters;
   }
 
   virtual const ParametersType & GetParameters() const ITK_OVERRIDE
   {
-    return m_params;
+    return this->m_params;
   }
 
   virtual bool HasLocalSupport() const ITK_OVERRIDE
   {
-    return m_HasLocalSupport;
+    return this->m_HasLocalSupport;
   }
 
   void SetHasLocalSupport(bool hls)
   {
-    m_HasLocalSupport = hls;
+    this->m_HasLocalSupport = hls;
   }
 
   virtual void UpdateTransformParameters( const DerivativeType &, ParametersValueType ) ITK_OVERRIDE
