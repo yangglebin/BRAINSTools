@@ -23,35 +23,15 @@
 #include "itkImageFileReader.h"
 #include "itkMultiResolutionPyramidImageFilter.h"
 
+#include "landmarksConstellationCommon.h"
 #include "StandardizeMaskIntensity.h"
 #include "itkReflectiveCorrelationCenterToImageMetric.h"
 
 #include "ComputeReflectiveCorrelationMetricCLP.h"
 
-typedef itk::MultiResolutionPyramidImageFilter<SImageType, SImageType>  PyramidFilterType;
 typedef Rigid3DCenterReflectorFunctor< itk::PowellOptimizerv4<double> > ReflectionFunctorType;
 typedef ReflectionFunctorType::ParametersType                           ParametersType;
 typedef itk::CastImageFilter<DImageType3D, SImageType>                  CasterType;
-
-PyramidFilterType::Pointer MakeOneLevelPyramid(SImageType::Pointer refImage)
-{
-  PyramidFilterType::ScheduleType pyramidSchedule;
-
-  PyramidFilterType::Pointer MyPyramid = PyramidFilterType::New();
-
-  MyPyramid->SetInput(refImage);
-  MyPyramid->SetNumberOfLevels(1);
-  pyramidSchedule.SetSize(1, 3);
-
-  SImageType::SpacingType refImageSpacing = refImage->GetSpacing();
-  for( unsigned int c = 0; c < pyramidSchedule.cols(); ++c )
-    {
-    pyramidSchedule[0][c] = static_cast<unsigned int>( 2 * round(4.0 / refImageSpacing[c]) );
-    }
-  MyPyramid->SetSchedule(pyramidSchedule);
-  MyPyramid->Update();
-  return MyPyramid;
-}
 
 int main( int argc, char * argv[] )
 {
