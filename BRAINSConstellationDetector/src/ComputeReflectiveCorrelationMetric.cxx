@@ -29,7 +29,7 @@
 
 #include "ComputeReflectiveCorrelationMetricCLP.h"
 
-#define WRITE_CSV_FILE
+//#define WRITE_CSV_FILE
 
 typedef Rigid3DCenterReflectorFunctor< itk::PowellOptimizerv4<double> > ReflectionFunctorType;
 typedef ReflectionFunctorType::ParametersType                           ParametersType;

@@ -226,9 +226,9 @@ public:
           opt_cc = current_cc;
           }
 
-#ifdef WRITE_CSV_FILE
+//#ifdef WRITE_CSV_FILE
         csvFileOfMetricValues << HA << "," << BA << "," << LR << "," << current_cc << std::endl;
-#endif
+//#endif
         }
       }
     }
