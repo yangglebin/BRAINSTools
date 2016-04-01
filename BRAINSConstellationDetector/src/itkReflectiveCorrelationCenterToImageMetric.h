@@ -97,33 +97,20 @@ public:
     double max_cc = this->GetValue();
     const double HARange = 25.0;
     const double BARange = 15.0;
+    const double LRRange = 0.0; // don't loop over LR distance
 
     // rough search in neighborhood.
-    const double one_degree = 1.0F * vnl_math::pi / 180.0F;
-    const double HAStepSize = HARange * one_degree * .1;
-    const double BAStepSize = BARange * one_degree * .1;
-    // Let the powell optimizer do all the work for determining the proper
-    // offset
-    // Quick search just needs to get an approximate angle correct.
-      {
-      for( double HA = -HARange * one_degree; HA <= HARange * one_degree; HA += HAStepSize )
-        {
-        for( double BA = -BARange * one_degree; BA <= BARange * one_degree; BA += BAStepSize )
-          {
-          const double Offset = 0.0;
-          params[0] = HA;
-          params[1] = BA;
-          params[2] = Offset;
+    const double HAStepSize = 5;
+    const double BAStepSize = 5;
+    const double LRStepSize = 1;
 
-          const double current_cc = this->f(params);
-          if( current_cc < max_cc )
-            {
-            this->m_params = params;
-            max_cc = current_cc;
-            }
-          }
-        }
-      }
+    // Let the powell optimizer do all the work for determining the proper
+    // offset (LR distance)
+    // Quick search just needs to get an approximate angle correct.
+    this->DoExhaustiveSearch(this->m_params, max_cc,
+                             HARange, BARange, LRRange,
+                             HAStepSize, BAStepSize, LRStepSize);
+
     // DEBUGGING INFORMATION
     if( LMC::globalverboseFlag )
       {
