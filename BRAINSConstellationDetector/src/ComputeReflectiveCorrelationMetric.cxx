@@ -83,6 +83,8 @@ int main( int argc, char * argv[] )
   opt_params.set_size(ReflectionFunctorType::SpaceDimension);
   opt_params.fill(0.0);
   reflectionFunctor->SetParameters(opt_params);
+  reflectionFunctor->SetDoPowell(false);
+  reflectionFunctor->Update();
   double opt_cc = reflectionFunctor->GetValue();
 
   const double HA_range = 45.0;
