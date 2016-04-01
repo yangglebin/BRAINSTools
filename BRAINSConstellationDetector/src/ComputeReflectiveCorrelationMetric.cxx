@@ -142,11 +142,9 @@ int main( int argc, char * argv[] )
 /*
 #define WRITE_CSV_FILE
 #ifdef WRITE_CSV_FILE
-        csvFileOfMetricValues << HA << "," << BA << "," << LR << "," << current_cc << std::endl;
-#else
-        Do something else
-#endif
 */
+        csvFileOfMetricValues << HA << "," << BA << "," << LR << "," << current_cc << std::endl;
+//#endif
         }
       }
     }
