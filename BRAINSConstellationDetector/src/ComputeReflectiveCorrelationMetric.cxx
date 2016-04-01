@@ -29,6 +29,8 @@
 
 #include "ComputeReflectiveCorrelationMetricCLP.h"
 
+#define WRITE_CSV_FILE
+
 typedef Rigid3DCenterReflectorFunctor< itk::PowellOptimizerv4<double> > ReflectionFunctorType;
 typedef ReflectionFunctorType::ParametersType                           ParametersType;
 typedef itk::CastImageFilter<DImageType3D, SImageType>                  CasterType;
@@ -67,7 +69,6 @@ int main( int argc, char * argv[] )
   caster->SetInput( rescaledInputVolume );
   caster->Update();
 
-  //SImageType::Pointer inputImage = caster->GetOutput();
   PyramidFilterType::Pointer MyPyramid = MakeOneLevelPyramid( caster->GetOutput() );
   SImageType::Pointer inputImage = MyPyramid->GetOutput(0); // one-eighth image
 
@@ -81,69 +82,22 @@ int main( int argc, char * argv[] )
   reflectionFunctor->SetParameters(opt_params);
   double opt_cc = reflectionFunctor->GetValue();
 
-  // search parameters
-  ParametersType current_params;
-  current_params.set_size(ReflectionFunctorType::SpaceDimension);
-  current_params.fill(0.0);
-
-  std::stringstream csvFileOfMetricValues;
-  csvFileOfMetricValues << "#HA, BA, LR, cc" << std::endl;
-
   const double HA_range = 45.0;
   const double BA_range = 45.0;
   const double LR_range = 5;
 
-  const double LR_stepsize = 1; // mm
   const double HA_stepsize = 5; // degree
   const double BA_stepsize = 5; // degree
+  const double LR_stepsize = 1; // mm
 
-  const double degree_to_rad = 1.0F * vnl_math::pi / 180.0F;
-
-  for( double LR = -LR_range; LR <= LR_range; LR += LR_stepsize)
-    {
-    for( double HA = -HA_range; HA <= HA_range; HA += HA_stepsize )
-      {
-      for( double BA = -BA_range; BA <= BA_range; BA += BA_stepsize )
-        {
-        current_params[0] = HA * degree_to_rad;
-        current_params[1] = BA * degree_to_rad;
-        current_params[2] = LR;
-
-        reflectionFunctor->SetParameters(current_params);
-        reflectionFunctor->SetDoPowell(false);
-        reflectionFunctor->Update();
-        const double current_cc = reflectionFunctor->GetValue();
-
-        if( current_cc < opt_cc )
-          {
-          opt_params = current_params;
-          opt_cc = current_cc;
-          }
-/*
-#define WRITE_CSV_FILE
-#ifdef WRITE_CSV_FILE
-*/
-        csvFileOfMetricValues << HA << "," << BA << "," << LR << "," << current_cc << std::endl;
-//#endif
-        }
-      }
-    }
+  reflectionFunctor->DoExhaustiveSearch(opt_params, opt_cc,
+                                        HA_range, BA_range, LR_range,
+                                        HA_stepsize, BA_stepsize, LR_stepsize,
+                                        outputCSVFile);
 
   std::cout << "Optimize parameters by exhaustive search: [" << opt_params[0] << "," << opt_params[1] << "," << opt_params[2] << "]" << std::endl;
   std::cout << "Optimize metric value by exhaustive search: " << opt_cc << std::endl;
 
-  if( outputCSVFile != "" )
-    {
-    std::cout << "\nWriting out metric values in a csv file..." << std::endl;
-    std::ofstream csvFile;
-    csvFile.open( outputCSVFile.c_str() );
-    if( !csvFile.is_open() )
-      {
-      itkGenericExceptionMacro( << "Error: Can't write oputput csv file!" << std::endl );
-      }
-    csvFile << csvFileOfMetricValues.str();
-    csvFile.close();
-    }
 /*
   // Now compare find the optimal parameters using Powell Optimizer
   ReflectionFunctorType::Pointer reflectionFunctor2 = ReflectionFunctorType::New();

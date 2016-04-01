@@ -189,41 +189,61 @@ public:
   }
   ////////////////////////
 
-  void ExhaustiveSearch(const double HARange,
-                        const double BARange,
-                        const double LRRange,
-                        const double HAStepSize,
-                        const double BAStepSize,
-                        const double LRStepSize)
+  void DoExhaustiveSearch(ParametersType & opt_params,
+                          double & opt_cc,
+                          const double HARange,
+                          const double BARange,
+                          const double LRRange,
+                          const double HAStepSize,
+                          const double BAStepSize,
+                          const double LRStepSize,
+                          std::string CSVFileName = "")
   {
+  // search parameters
+  ParametersType current_params;
+  current_params.set_size(SpaceDimension);
+  current_params.fill(0.0);
+
+  std::stringstream csvFileOfMetricValues;
+
   const double degree_to_rad = 1.0F * vnl_math::pi / 180.0F;
 
-  for( double LR = -LR_range; LR <= LR_range; LR += LR_stepsize)
+  for( double LR = -LRRange; LR <= LRRange; LR += LRStepSize)
     {
-    for( double HA = -HA_range; HA <= HA_range; HA += HA_stepsize )
+    for( double HA = -HARange; HA <= HARange; HA += HAStepSize )
       {
-      for( double BA = -BA_range; BA <= BA_range; BA += BA_stepsize )
+      for( double BA = -BARange; BA <= BARange; BA += BAStepSize )
         {
         current_params[0] = HA * degree_to_rad;
         current_params[1] = BA * degree_to_rad;
         current_params[2] = LR;
 
-        reflectionFunctor->SetParameters(current_params);
-        reflectionFunctor->SetDoPowell(false);
-        reflectionFunctor->Update();
-        const double current_cc = reflectionFunctor->GetValue();
+        const double current_cc = this->f(current_params);
 
         if( current_cc < opt_cc )
           {
           opt_params = current_params;
           opt_cc = current_cc;
           }
-//#define WRITE_CSV_FILE
+
 #ifdef WRITE_CSV_FILE
         csvFileOfMetricValues << HA << "," << BA << "," << LR << "," << current_cc << std::endl;
 #endif
         }
       }
+    }
+
+  if( CSVFileName != "" )
+    {
+    std::cout << "\nWriting out metric values in a csv file..." << std::endl;
+    std::ofstream csvFile;
+    csvFile.open( CSVFileName.c_str() );
+    if( !csvFile.is_open() )
+      {
+      itkGenericExceptionMacro( << "Error: Can't write oputput csv file!" << std::endl );
+      }
+    csvFile << csvFileOfMetricValues.str();
+    csvFile.close();
     }
   }
 
