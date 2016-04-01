@@ -138,39 +138,6 @@ public:
       }
   }
 
-  double f(const ParametersType & params) const
-  {
-    const double        MaxUnpenalizedAllowedDistance = 8.0;
-    const double        DistanceFromCenterOfMass = std::abs(params[2]);
-    static const double FortyFiveDegreesAsRadians = 45.0 * vnl_math::pi / 180.0;
-    const double        cost_of_HeadingAngle = ( std::abs(params[0]) < FortyFiveDegreesAsRadians ) ? 0 :
-      ( ( std::abs(params[0]) - FortyFiveDegreesAsRadians ) * 2 );
-    const double cost_of_BankAngle = ( std::abs(params[1]) < FortyFiveDegreesAsRadians ) ? 0 :
-      ( ( std::abs(params[1]) - FortyFiveDegreesAsRadians ) * 2 );
-
-    if( ( std::abs(params[0]) > FortyFiveDegreesAsRadians ) || ( std::abs(params[1]) > FortyFiveDegreesAsRadians ) )
-      {
-      std::cout << "WARNING: ESTIMATED ROTATIONS ARE WAY TOO BIG SO GIVING A HIGH COST" << std::endl;
-      return 1;
-      }
-    const double cc = -CenterImageReflection_crossCorrelation(params);
-
-    const double cost_of_motion = ( std::abs(DistanceFromCenterOfMass) < MaxUnpenalizedAllowedDistance ) ? 0 :
-      ( std::abs(DistanceFromCenterOfMass - MaxUnpenalizedAllowedDistance) * .1 );
-    const double raw_finalcos_gamma = cc + cost_of_motion + cost_of_BankAngle + cost_of_HeadingAngle;
-
-#ifdef __USE_EXTENSIVE_DEBUGGING__
-    if( !vnl_math_isfinite(raw_finalcos_gamma) )
-      {
-      std::cout << __FILE__ << " " << __LINE__ << " "
-                << params << " : " << cc << " " << cost_of_HeadingAngle << " " << cost_of_BankAngle << " "
-                << cost_of_motion << std::endl;
-      return EXIT_FAILURE;
-      }
-#endif
-    return raw_finalcos_gamma;
-  }
-
   virtual MeasureType GetValue() const ITK_OVERRIDE
   {
     return f(this->m_params);
@@ -221,6 +188,77 @@ public:
   {
   }
   ////////////////////////
+
+  void ExhaustiveSearch(const double HARange,
+                        const double BARange,
+                        const double LRRange,
+                        const double HAStepSize,
+                        const double BAStepSize,
+                        const double LRStepSize)
+  {
+  const double degree_to_rad = 1.0F * vnl_math::pi / 180.0F;
+
+  for( double LR = -LR_range; LR <= LR_range; LR += LR_stepsize)
+    {
+    for( double HA = -HA_range; HA <= HA_range; HA += HA_stepsize )
+      {
+      for( double BA = -BA_range; BA <= BA_range; BA += BA_stepsize )
+        {
+        current_params[0] = HA * degree_to_rad;
+        current_params[1] = BA * degree_to_rad;
+        current_params[2] = LR;
+
+        reflectionFunctor->SetParameters(current_params);
+        reflectionFunctor->SetDoPowell(false);
+        reflectionFunctor->Update();
+        const double current_cc = reflectionFunctor->GetValue();
+
+        if( current_cc < opt_cc )
+          {
+          opt_params = current_params;
+          opt_cc = current_cc;
+          }
+//#define WRITE_CSV_FILE
+#ifdef WRITE_CSV_FILE
+        csvFileOfMetricValues << HA << "," << BA << "," << LR << "," << current_cc << std::endl;
+#endif
+        }
+      }
+    }
+  }
+
+  double f(const ParametersType & params) const
+  {
+  const double        MaxUnpenalizedAllowedDistance = 8.0;
+  const double        DistanceFromCenterOfMass = std::abs(params[2]);
+  static const double FortyFiveDegreesAsRadians = 45.0 * vnl_math::pi / 180.0;
+  const double        cost_of_HeadingAngle = ( std::abs(params[0]) < FortyFiveDegreesAsRadians ) ? 0 :
+  ( ( std::abs(params[0]) - FortyFiveDegreesAsRadians ) * 2 );
+  const double cost_of_BankAngle = ( std::abs(params[1]) < FortyFiveDegreesAsRadians ) ? 0 :
+  ( ( std::abs(params[1]) - FortyFiveDegreesAsRadians ) * 2 );
+
+  if( ( std::abs(params[0]) > FortyFiveDegreesAsRadians ) || ( std::abs(params[1]) > FortyFiveDegreesAsRadians ) )
+    {
+    std::cout << "WARNING: ESTIMATED ROTATIONS ARE WAY TOO BIG SO GIVING A HIGH COST" << std::endl;
+    return 1;
+    }
+  const double cc = -CenterImageReflection_crossCorrelation(params);
+
+  const double cost_of_motion = ( std::abs(DistanceFromCenterOfMass) < MaxUnpenalizedAllowedDistance ) ? 0 :
+  ( std::abs(DistanceFromCenterOfMass - MaxUnpenalizedAllowedDistance) * .1 );
+  const double raw_finalcos_gamma = cc + cost_of_motion + cost_of_BankAngle + cost_of_HeadingAngle;
+
+#ifdef __USE_EXTENSIVE_DEBUGGING__
+  if( !vnl_math_isfinite(raw_finalcos_gamma) )
+    {
+    std::cout << __FILE__ << " " << __LINE__ << " "
+    << params << " : " << cc << " " << cost_of_HeadingAngle << " " << cost_of_BankAngle << " "
+    << cost_of_motion << std::endl;
+    return EXIT_FAILURE;
+    }
+#endif
+  return raw_finalcos_gamma;
+  }
 
   void SetCenterOfHeadMass(SImageType::PointType centerOfHeadMass)
   {
