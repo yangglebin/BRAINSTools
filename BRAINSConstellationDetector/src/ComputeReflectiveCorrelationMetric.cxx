@@ -144,7 +144,7 @@ int main( int argc, char * argv[] )
     csvFile << csvFileOfMetricValues.str();
     csvFile.close();
     }
-
+/*
   // Now compare find the optimal parameters using Powell Optimizer
   ReflectionFunctorType::Pointer reflectionFunctor2 = ReflectionFunctorType::New();
   reflectionFunctor2->SetDownSampledReferenceImage(inputImage);
@@ -153,9 +153,9 @@ int main( int argc, char * argv[] )
   ParametersType powell_params = reflectionFunctor2->GetParameters();
   double powell_cc = reflectionFunctor2->GetValue();
 
-  std::cout << "Optimize parameters by exhaustive search: [" << powell_params[0] << "," << powell_params[1] << "," << powell_params[2] << "]" << std::endl;
-  std::cout << "Optimize metric value by exhaustive search: " << powell_cc << std::endl;
-
+  std::cout << "Optimize parameters by Powell search: [" << powell_params[0] << "," << powell_params[1] << "," << powell_params[2] << "]" << std::endl;
+  std::cout << "Optimize metric value by Powell search: " << powell_cc << std::endl;
+*/
   // here compare opt_params with input baseline params to return failure or success.
 
   return EXIT_SUCCESS;
