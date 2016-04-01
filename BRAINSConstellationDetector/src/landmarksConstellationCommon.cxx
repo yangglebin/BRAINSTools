@@ -72,12 +72,17 @@ void DoMultiQualityReflection(SImageType::Pointer &image,
                               const reflectionFunctorType::Pointer &reflectionFunctor)
 {
   reflectionFunctor->InitializeImage(image);
-  // itkUtil::WriteImage<SImageType>(image,"PRE_PYRAMID.nii.gz");
+  itkUtil::WriteImage<SImageType>(image,"PRE_PYRAMID.nii.gz");
   PyramidFilterType::Pointer    MyPyramid = MakeThreeLevelPyramid(image.GetPointer() );
 
+/*
   SImageType::Pointer EigthImage = GaussianSmoothing( MyPyramid->GetOutput(0), 8.0 );
   SImageType::Pointer QuarterImage = GaussianSmoothing( MyPyramid->GetOutput(1), 4.0 );
   SImageType::Pointer HalfImage = GaussianSmoothing( MyPyramid->GetOutput(2), 2.0 );
+*/
+  SImageType::Pointer EigthImage = MyPyramid->GetOutput(0);
+  SImageType::Pointer QuarterImage = MyPyramid->GetOutput(1);
+  SImageType::Pointer HalfImage = MyPyramid->GetOutput(2);
 
   if( qualityLevel >= 0 )
       {
