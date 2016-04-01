@@ -25,11 +25,14 @@
 
 #include "landmarksConstellationCommon.h"
 #include "StandardizeMaskIntensity.h"
+
+#define WRITE_CSV_FILE
 #include "itkReflectiveCorrelationCenterToImageMetric.h"
+#undef WRITE_CSV_FILE
 
 #include "ComputeReflectiveCorrelationMetricCLP.h"
 
-//#define WRITE_CSV_FILE
+
 
 typedef Rigid3DCenterReflectorFunctor< itk::PowellOptimizerv4<double> > ReflectionFunctorType;
 typedef ReflectionFunctorType::ParametersType                           ParametersType;
