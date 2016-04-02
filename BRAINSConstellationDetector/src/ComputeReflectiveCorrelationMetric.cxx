@@ -25,6 +25,7 @@
 
 #include "landmarksConstellationCommon.h"
 #include "StandardizeMaskIntensity.h"
+#include "itkFindCenterOfBrainFilter.h"
 
 #define WRITE_CSV_FILE
 #include "itkReflectiveCorrelationCenterToImageMetric.h"
@@ -33,7 +34,7 @@
 #include "ComputeReflectiveCorrelationMetricCLP.h"
 
 
-
+typedef itk::FindCenterOfBrainFilter<SImageType>                        FindCenterFilter;
 typedef Rigid3DCenterReflectorFunctor< itk::PowellOptimizerv4<double> > ReflectionFunctorType;
 typedef ReflectionFunctorType::ParametersType                           ParametersType;
 typedef itk::CastImageFilter<DImageType3D, SImageType>                  CasterType;
@@ -71,13 +72,27 @@ int main( int argc, char * argv[] )
   CasterType::Pointer caster = CasterType::New();
   caster->SetInput( rescaledInputVolume );
   caster->Update();
+  SImageType::Pointer originalImage = caster->GetOutput();
 
-  PyramidFilterType::Pointer MyPyramid = MakeOneLevelPyramid( caster->GetOutput() );
+  // Find center of head mass
+  std::cout << "\nFinding center of head mass..." << std::endl;
+  FindCenterFilter::Pointer findCenterFilter = FindCenterFilter::New();
+  findCenterFilter->SetInput( originalImage );
+  findCenterFilter->SetAxis( 2 );
+  findCenterFilter->SetOtsuPercentileThreshold( 0.01 );
+  findCenterFilter->SetClosingSize( 7 );
+  findCenterFilter->SetHeadSizeLimit( 700 );
+  findCenterFilter->SetBackgroundValue( 0 );
+  findCenterFilter->Update();
+  SImagePointType centerOfHeadMass = findCenterFilter->GetCenterOfBrain();
+
+  PyramidFilterType::Pointer MyPyramid = MakeOneLevelPyramid( originalImage );
   SImageType::Pointer inputImage = MyPyramid->GetOutput(0); // one-eighth image
 
   ReflectionFunctorType::Pointer reflectionFunctor = ReflectionFunctorType::New();
-  reflectionFunctor->InitializeImage( caster->GetOutput() ); // Initialize from the high-res image
+  reflectionFunctor->InitializeImage( originalImage ); // Initialize from the high-res image
   reflectionFunctor->SetDownSampledReferenceImage(inputImage);
+  reflectionFunctor->SetCenterOfHeadMass(centerOfHeadMass); // center of head mass must be passed
 
   // optimal parameters
   ParametersType opt_params;
