@@ -76,6 +76,7 @@ int main( int argc, char * argv[] )
   SImageType::Pointer inputImage = MyPyramid->GetOutput(0); // one-eighth image
 
   ReflectionFunctorType::Pointer reflectionFunctor = ReflectionFunctorType::New();
+  reflectionFunctor->InitializeImage( caster->GetOutput() ); // Initialize from the high-res image
   reflectionFunctor->SetDownSampledReferenceImage(inputImage);
 
   // optimal parameters
