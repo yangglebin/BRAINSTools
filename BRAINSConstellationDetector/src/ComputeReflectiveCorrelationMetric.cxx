@@ -124,6 +124,7 @@ int main( int argc, char * argv[] ) {
     const double BA_stepsize = Angle_Stepsizes[resolutionIter]; // degree
     const double LR_stepsize = Offset_Stepsizes[resolutionIter]; // mm
 
+    std::cout << "-----------------------------------" << std::endl;
     std::cout << "ANGLE RANGE: " << HA_range << " at " << HA_stepsize << " (degree) steps." << std::endl;
     std::cout << "LR RANGE: " << LR_range << " at " << LR_stepsize << " (mm) steps." << std::endl;
     itk::TimeProbe clock;

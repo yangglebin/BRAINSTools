@@ -222,9 +222,9 @@ public:
   // search parameters
   ParametersType current_params;
   current_params.set_size(SpaceDimension);
-
+#ifdef WRITE_CSV_FILE
   std::stringstream csvFileOfMetricValues;
-
+#endif
   const double degree_to_rad = vnl_math::pi / 180.0;
 
   for( double LR = -LRRange; LR <= LRRange; LR += LRStepSize)
@@ -569,22 +569,22 @@ public:
   {
     itk::NumberToString<double> doubleToString;
 
-    if (this->m_DoPowell)
-    {
+    if( this->m_DoPowell )
+      {
       try
-      {
+        {
         this->m_Optimizer->StartOptimization();
-      }
+        }
       catch (itk::ExceptionObject &e)
-      {
+        {
         std::cout << "Exception thrown ! " << std::endl;
         std::cout << "An error occurred during Optimization" << std::endl;
         std::cout << "Location    = " << e.GetLocation() << std::endl;
         std::cout << "Description = " << e.GetDescription() << std::endl;
         //return EXIT_FAILURE;
-      }
+        }
       this->m_params = this->m_Optimizer->GetCurrentPosition();
-    }
+      }
     this->m_cc = this->GetValue();
 
     std::cout << doubleToString(this->m_params[0] * 180.0 / vnl_math::pi) << " "
@@ -599,19 +599,22 @@ public:
 
   void SetCenterOfHeadMass(const SImageType::PointType & centerOfHeadMass)
   {
-    m_CenterOfHeadMass = centerOfHeadMass;
-    m_CenterOfHeadMassIsSet = true;
+    this->m_CenterOfHeadMass = centerOfHeadMass;
+    this->m_CenterOfHeadMassIsSet = true;
   }
 
 private:
 
-  const SImageType::PointType & GetCenterOfHeadMass() const {
-    if (!m_CenterOfHeadMassIsSet) {
+  const SImageType::PointType & GetCenterOfHeadMass() const
+  {
+    if( !m_CenterOfHeadMassIsSet )
+      {
       std::cout << "ERROR: m_CenterOfHeadMass is not set!" << std::endl;
       exit(-1);
-    }
+      }
     return this->m_CenterOfHeadMass;
   }
+
   typedef itk::ResampleImageFilter<SImageType, SImageType> ResampleFilterType;
 
   ParametersType                    m_params;
