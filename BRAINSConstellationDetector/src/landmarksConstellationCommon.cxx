@@ -56,30 +56,15 @@ typedef Rigid3DCenterReflectorFunctor< itk::PowellOptimizerv4<double> > reflecti
 
 typedef itk::RecursiveGaussianImageFilter<SImageType, SImageType>  GaussianFilterType;
 
-SImageType::Pointer GaussianSmoothing(const SImageType::Pointer image,
-                                      const double sigma)
-{
-  GaussianFilterType::Pointer gaussianFilter = GaussianFilterType::New();
-  gaussianFilter->SetInput( image );
-  gaussianFilter->SetSigma( sigma );
-  gaussianFilter->Update();
-  return gaussianFilter->GetOutput();
-}
-
 void DoMultiQualityReflection(SImageType::Pointer &image,
                               RigidTransformType::Pointer &Tmsp,
                               const int qualityLevel,
                               const reflectionFunctorType::Pointer &reflectionFunctor)
 {
   reflectionFunctor->InitializeImage(image);
-  //itkUtil::WriteImage<SImageType>(image,"PRE_PYRAMID.nii.gz");
+  itkUtil::WriteImage<SImageType>(image,"PRE_PYRAMID.nii.gz");
   PyramidFilterType::Pointer    MyPyramid = MakeThreeLevelPyramid(image.GetPointer() );
 
-/*
-  SImageType::Pointer EigthImage = GaussianSmoothing( MyPyramid->GetOutput(0), 8.0 );
-  SImageType::Pointer QuarterImage = GaussianSmoothing( MyPyramid->GetOutput(1), 4.0 );
-  SImageType::Pointer HalfImage = GaussianSmoothing( MyPyramid->GetOutput(2), 2.0 );
-*/
   SImageType::Pointer EigthImage = MyPyramid->GetOutput(0);
   SImageType::Pointer QuarterImage = MyPyramid->GetOutput(1);
   SImageType::Pointer HalfImage = MyPyramid->GetOutput(2);
@@ -134,7 +119,7 @@ void ComputeMSP(SImageType::Pointer image,
   else
     {
     reflectionFunctorType::Pointer reflectionFunctor = reflectionFunctorType::New();
-    reflectionFunctor->SetCenterOfHeadMass(centerOfHeadMass);
+    //reflectionFunctor->SetCenterOfHeadMass(centerOfHeadMass);
 
     DoMultiQualityReflection(image, Tmsp, qualityLevel, reflectionFunctor);
 
