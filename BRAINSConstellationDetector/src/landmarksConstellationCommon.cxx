@@ -61,8 +61,8 @@ void DoMultiQualityReflection(SImageType::Pointer &image,
                               const int qualityLevel,
                               const reflectionFunctorType::Pointer &reflectionFunctor)
 {
-  reflectionFunctor->InitializeImage(image);
   itkUtil::WriteImage<SImageType>(image,"PRE_PYRAMID.nii.gz");
+  reflectionFunctor->InitializeImage(image);
   PyramidFilterType::Pointer    MyPyramid = MakeThreeLevelPyramid(image.GetPointer() );
 
   SImageType::Pointer EigthImage = MyPyramid->GetOutput(0);

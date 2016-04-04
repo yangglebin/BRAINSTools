@@ -77,7 +77,10 @@ int main( int argc, char * argv[] ) {
   typedef ReflectionFunctorType::ParametersType                           ParametersType;
 
   ReflectionFunctorType::Pointer reflectionFunctor = ReflectionFunctorType::New();
-  reflectionFunctor->InitializeImage(inputImage);
+  reflectionFunctor->InitializeImage(originalImage); // initialize image is set to be original
+                                                     // high resolution image for consistency
+                                                     // with BCD behaviour
+  reflectionFunctor->SetDownSampledReferenceImage(inputImage);
 
   // optimal parameters
   ParametersType opt_params;
@@ -148,7 +151,8 @@ int main( int argc, char * argv[] ) {
   // Now compare find the optimal parameters using Powell Optimizer
   std::cout << "\nFind optimized parameters set by running Powell optimizer..." << std::endl;
   ReflectionFunctorType::Pointer reflectionFunctor2 = ReflectionFunctorType::New();
-  reflectionFunctor2->InitializeImage(inputImage);
+  reflectionFunctor2->InitializeImage(originalImage);
+  reflectionFunctor2->SetDownSampledReferenceImage(inputImage);
   reflectionFunctor2->Initialize();
   reflectionFunctor2->Update();
   ParametersType powell_params = reflectionFunctor2->GetParameters();
