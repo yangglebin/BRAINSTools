@@ -89,10 +89,10 @@ int main( int argc, char * argv[] ) {
   double opt_cc = reflectionFunctor->GetValue();
 
 
-  std::vector<std::string> suffix(3);
-  suffix[0]="0";
-  suffix[1]="1";
-  suffix[2]="2";
+  std::vector<std::string> prefix(3);
+  prefix[0]="0";
+  prefix[1]="1";
+  prefix[2]="2";
 
   std::vector<double> Angle_Range(3);
   Angle_Range[0] = 45.0;
@@ -132,7 +132,7 @@ int main( int argc, char * argv[] ) {
     reflectionFunctor->DoExhaustiveSearch(opt_params, opt_cc,
                                           HA_range, BA_range, LR_range,
                                           HA_stepsize, BA_stepsize, LR_stepsize,
-                                          outputCSVFile+suffix[resolutionIter]);
+                                          prefix[resolutionIter]+outputCSVFile);
     clock.Stop();
     std::cout << "Time Mean: " << clock.GetMean() << std::endl;
     std::cout << "Time Total: " << clock.GetTotal() << std::endl;
