@@ -64,7 +64,7 @@ int main( int argc, char * argv[] ) {
                                                             1, 0.95 * MAX_IMAGE_OUTPUT_VALUE,
                                                             0, MAX_IMAGE_OUTPUT_VALUE);
 
-  typedef itk::CastImageFilter<DImageType3D, SImageType>                  CasterType;
+  typedef itk::CastImageFilter<DImageType3D, SImageType>  CasterType;
   CasterType::Pointer caster = CasterType::New();
   caster->SetInput(rescaledInputVolume);
   caster->Update();
@@ -89,15 +89,15 @@ int main( int argc, char * argv[] ) {
   double opt_cc = reflectionFunctor->GetValue();
 
 
-  std::vector<std::string> suffix(4);
+  std::vector<std::string> suffix(3);
   suffix[0]="0";
   suffix[1]="1";
   suffix[2]="2";
 
   std::vector<double> Angle_Range(3);
-  Angle_Range[0]=45.0;
-  Angle_Range[1]=2.5;
-  Angle_Range[2]=0.5;
+  Angle_Range[0] = 45.0;
+  Angle_Range[1] = 2.5;
+  Angle_Range[2] = 0.5;
 
   std::vector<double> Angle_Stepsizes(3);
   Angle_Stepsizes[0] = 5.0;
@@ -105,14 +105,14 @@ int main( int argc, char * argv[] ) {
   Angle_Stepsizes[2] = 0.25;
 
   std::vector<double> Offset_Range(3);
-  Offset_Range[0]=15.0;
-  Offset_Range[1]=1.5;
-  Offset_Range[2]=0.25;
+  Offset_Range[0] = 15.0;
+  Offset_Range[1] = 1.5;
+  Offset_Range[2] = 0.5;
 
   std::vector<double> Offset_Stepsizes(3);
   Offset_Stepsizes[0] = 3.0;
   Offset_Stepsizes[1] = 0.5;
-  Offset_Stepsizes[2] = .25;
+  Offset_Stepsizes[2] = 0.25;
 
   for (unsigned int resolutionIter = 0; resolutionIter <= 2; ++resolutionIter )
   {
@@ -124,17 +124,17 @@ int main( int argc, char * argv[] ) {
     const double BA_stepsize = Angle_Stepsizes[resolutionIter]; // degree
     const double LR_stepsize = Offset_Stepsizes[resolutionIter]; // mm
 
-    std::cout << "RANGE: " << HA_range << " at " << HA_stepsize << std::endl;
-    std::cout << "LR: " << LR_range << " at " << LR_stepsize << std::endl;
+    std::cout << "ANGLE RANGE: " << HA_range << " at " << HA_stepsize << " (degree) steps." << std::endl;
+    std::cout << "LR RANGE: " << LR_range << " at " << LR_stepsize << " (mm) steps." << std::endl;
     itk::TimeProbe clock;
     clock.Start();
     reflectionFunctor->DoExhaustiveSearch(opt_params, opt_cc,
-                                        HA_range, BA_range, LR_range,
-                                        HA_stepsize, BA_stepsize, LR_stepsize,
-                                        outputCSVFile+suffix[resolutionIter]);
+                                          HA_range, BA_range, LR_range,
+                                          HA_stepsize, BA_stepsize, LR_stepsize,
+                                          outputCSVFile+suffix[resolutionIter]);
     clock.Stop();
-    std::cout << "Mean: " << clock.GetMean() << std::endl;
-    std::cout << "Total: " << clock.GetTotal() << std::endl;
+    std::cout << "Time Mean: " << clock.GetMean() << std::endl;
+    std::cout << "Time Total: " << clock.GetTotal() << std::endl;
 
     const double degree_to_rad = vnl_math::pi / 180.0;
 
