@@ -99,9 +99,9 @@ public:
     double max_cc = this->GetValue();
 
     std::vector<double> Angle_Range(3);
-    Angle_Range[0]=45.0;
-    Angle_Range[1]=2.5;
-    Angle_Range[2]=0.5;
+    Angle_Range[0] = 45.0;
+    Angle_Range[1] = 2.5;
+    Angle_Range[2] = 0.5;
 
     std::vector<double> Angle_Stepsizes(3);
     Angle_Stepsizes[0] = 5.0;
@@ -109,16 +109,17 @@ public:
     Angle_Stepsizes[2] = 0.25;
 
     std::vector<double> Offset_Range(3);
-    Offset_Range[0]=15.0;
-    Offset_Range[1]=1.5;
-    Offset_Range[2]=0.25;
+    Offset_Range[0] = 15.0;
+    Offset_Range[1] = 1.5;
+    Offset_Range[2] = 0.5;
 
     std::vector<double> Offset_Stepsizes(3);
     Offset_Stepsizes[0] = 3.0;
     Offset_Stepsizes[1] = 0.5;
-    Offset_Stepsizes[2] = .25;
+    Offset_Stepsizes[2] = 0.25;
 
-    for (unsigned int resolutionIter = 0; resolutionIter <= 2; ++resolutionIter ) {
+    for( unsigned int resolutionIter = 0; resolutionIter <= 2; ++resolutionIter )
+      {
       const double HA_range = Angle_Range[resolutionIter];
       const double BA_range = Angle_Range[resolutionIter];
       const double LR_range = Offset_Range[resolutionIter];
@@ -134,10 +135,10 @@ public:
                                HA_range, BA_range, LR_range,
                                HA_stepsize, BA_stepsize, LR_stepsize
 #ifdef WRITE_CSV_FILE
-          ,std::string("")
+                               ,std::string("")
 #endif
-      );
-    }
+                               );
+      }
 
     // DEBUGGING INFORMATION
     if( LMC::globalverboseFlag )
