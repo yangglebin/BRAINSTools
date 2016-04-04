@@ -264,7 +264,7 @@ public:
     csvFile.open( CSVFileName.c_str() );
     if( !csvFile.is_open() )
       {
-      itkGenericExceptionMacro( << "Error: Can't write oputput csv file!" << std::endl );
+      itkGenericExceptionMacro( << "Error: Can't write oputput csv file: " << CSVFileName << "!" << std::endl );
       }
     csvFile << csvFileOfMetricValues.str();
     csvFile.close();
