@@ -245,9 +245,12 @@ public:
           }
 
 #ifdef WRITE_CSV_FILE
-        csvFileOfMetricValues << current_params[0]/degree_to_rad << "," << current_params[1]/degree_to_rad << "," <<
-        current_params[2]/degree_to_rad << "," <<
-        current_cc << "," << opt_cc << std::endl;
+        csvFileOfMetricValues << current_params[0]/degree_to_rad
+                              << "," << current_params[1]/degree_to_rad
+                              << "," << current_params[2]
+                              << "," << current_cc
+                              //<< "," << opt_cc
+                              << std::endl;
 #endif
         }
         //std::cout << current_params << std::endl;
