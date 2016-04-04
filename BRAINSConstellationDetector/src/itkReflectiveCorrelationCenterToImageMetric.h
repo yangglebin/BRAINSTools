@@ -214,10 +214,9 @@ public:
                           const double BAStepSize,
                           const double LRStepSize
 #ifdef WRITE_CSV_FILE
-                          ,std::string CSVFileName)
-#else
-  )
+                          ,std::string CSVFileName
 #endif
+                          )
   {
   const ParametersType starting_params (opt_params);
   // search parameters
@@ -326,7 +325,8 @@ public:
 
   void InitializeImage(SImageType::Pointer & RefImage)
   {
-    if (!m_CenterOfHeadMassIsSet) {
+    if( !m_CenterOfHeadMassIsSet )
+      {
       // Find center of head mass
       std::cout << "\nFinding center of head mass..." << std::endl;
       typedef itk::FindCenterOfBrainFilter<SImageType>                        FindCenterFilter;
@@ -340,7 +340,11 @@ public:
       findCenterFilter->Update();
       SImagePointType centerOfHeadMass = findCenterFilter->GetCenterOfBrain();
       this->SetCenterOfHeadMass(centerOfHeadMass);
-    }
+      }
+
+    std::cout << "Center of Head Mass: [" << this->m_CenterOfHeadMass[0] << "," << this->m_CenterOfHeadMass[1] << ","
+      << this->m_CenterOfHeadMass[2] << "]" << std::endl;
+
       {
       SImageType::PixelType dummyLow;
       SImageType::PixelType dummyHigh;
