@@ -114,6 +114,8 @@ int main( int argc, char * argv[] ) {
   Offset_Stepsizes[1] = 0.5;
   Offset_Stepsizes[2] = 0.25;
 
+  const double degree_to_rad = vnl_math::pi / 180.0;
+
   for (unsigned int resolutionIter = 0; resolutionIter <= 2; ++resolutionIter )
   {
     const double HA_range =  Angle_Range[resolutionIter];
@@ -137,25 +139,25 @@ int main( int argc, char * argv[] ) {
     std::cout << "Time Mean: " << clock.GetMean() << std::endl;
     std::cout << "Time Total: " << clock.GetTotal() << std::endl;
 
-    const double degree_to_rad = vnl_math::pi / 180.0;
-
     std::cout << "Optimize parameters by exhaustive search: [" << opt_params[0]/degree_to_rad << "," <<
       opt_params[1]/degree_to_rad << "," << opt_params[2] << "]" << std::endl;
     std::cout << "Optimize metric value by exhaustive search: " << opt_cc << std::endl;
   }
 
-/*
+
   // Now compare find the optimal parameters using Powell Optimizer
+  std::cout << "\nFind optimized parameters set by running Powell optimizer..." << std::endl;
   ReflectionFunctorType::Pointer reflectionFunctor2 = ReflectionFunctorType::New();
-  reflectionFunctor2->SetDownSampledReferenceImage(inputImage);
+  reflectionFunctor2->InitializeImage(inputImage);
   reflectionFunctor2->Initialize();
   reflectionFunctor2->Update();
   ParametersType powell_params = reflectionFunctor2->GetParameters();
   double powell_cc = reflectionFunctor2->GetValue();
 
-  std::cout << "Optimize parameters by Powell search: [" << powell_params[0] << "," << powell_params[1] << "," << powell_params[2] << "]" << std::endl;
+  std::cout << "Optimize parameters by Powell search: [" << powell_params[0]/degree_to_rad << ","
+    << powell_params[1]/degree_to_rad << "," << powell_params[2] << "]" << std::endl;
   std::cout << "Optimize metric value by Powell search: " << powell_cc << std::endl;
-*/
+
   // here compare opt_params with input baseline params to return failure or success.
 
   return EXIT_SUCCESS;
