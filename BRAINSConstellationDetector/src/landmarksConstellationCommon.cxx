@@ -119,7 +119,7 @@ void ComputeMSP(SImageType::Pointer image,
   else
     {
     reflectionFunctorType::Pointer reflectionFunctor = reflectionFunctorType::New();
-    //reflectionFunctor->SetCenterOfHeadMass(centerOfHeadMass);
+    reflectionFunctor->SetCenterOfHeadMass(centerOfHeadMass);
 
     DoMultiQualityReflection(image, Tmsp, qualityLevel, reflectionFunctor);
 

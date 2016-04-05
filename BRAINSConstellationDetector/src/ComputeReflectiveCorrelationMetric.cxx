@@ -73,10 +73,24 @@ int main( int argc, char * argv[] ) {
   PyramidFilterType::Pointer MyPyramid = MakeOneLevelPyramid(originalImage);
   SImageType::Pointer inputImage = MyPyramid->GetOutput(0); // one-eighth image
 
+  // Find center of head mass
+  std::cout << "\nFinding center of head mass..." << std::endl;
+  typedef itk::FindCenterOfBrainFilter<SImageType>                        FindCenterFilter;
+  FindCenterFilter::Pointer findCenterFilter = FindCenterFilter::New();
+  findCenterFilter->SetInput(originalImage);
+  findCenterFilter->SetAxis(2);
+  findCenterFilter->SetOtsuPercentileThreshold(0.01);
+  findCenterFilter->SetClosingSize(7);
+  findCenterFilter->SetHeadSizeLimit(700);
+  findCenterFilter->SetBackgroundValue(0);
+  findCenterFilter->Update();
+  SImagePointType centerOfHeadMass = findCenterFilter->GetCenterOfBrain();
+
   typedef Rigid3DCenterReflectorFunctor< itk::PowellOptimizerv4<double> > ReflectionFunctorType;
   typedef ReflectionFunctorType::ParametersType                           ParametersType;
 
   ReflectionFunctorType::Pointer reflectionFunctor = ReflectionFunctorType::New();
+  reflectionFunctor->SetCenterOfHeadMass(centerOfHeadMass);
   reflectionFunctor->InitializeImage(originalImage); // initialize image is set to be original
                                                      // high resolution image for consistency
                                                      // with BCD behaviour

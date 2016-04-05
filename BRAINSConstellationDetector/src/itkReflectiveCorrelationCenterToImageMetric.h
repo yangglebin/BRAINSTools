@@ -327,23 +327,14 @@ public:
   {
     if( !m_CenterOfHeadMassIsSet )
       {
-      // Find center of head mass
-      std::cout << "\nFinding center of head mass..." << std::endl;
-      typedef itk::FindCenterOfBrainFilter<SImageType>                        FindCenterFilter;
-      FindCenterFilter::Pointer findCenterFilter = FindCenterFilter::New();
-      findCenterFilter->SetInput(RefImage);
-      findCenterFilter->SetAxis(2);
-      findCenterFilter->SetOtsuPercentileThreshold(0.01);
-      findCenterFilter->SetClosingSize(7);
-      findCenterFilter->SetHeadSizeLimit(700);
-      findCenterFilter->SetBackgroundValue(0);
-      findCenterFilter->Update();
-      SImagePointType centerOfHeadMass = findCenterFilter->GetCenterOfBrain();
-      this->SetCenterOfHeadMass(centerOfHeadMass);
+      std::cout << "ERROR: m_CenterOfHeadMass is not set!" << std::endl;
+      exit(-1);
       }
-
-    std::cout << "Center of Head Mass: [" << this->m_CenterOfHeadMass[0] << "," << this->m_CenterOfHeadMass[1] << ","
-      << this->m_CenterOfHeadMass[2] << "]" << std::endl;
+    else
+      {
+      std::cout << "Center of Head Mass: [" << this->m_CenterOfHeadMass[0] << "," << this->m_CenterOfHeadMass[1] << ","
+        << this->m_CenterOfHeadMass[2] << "]" << std::endl;
+      }
 
       {
       SImageType::PixelType dummyLow;
