@@ -140,16 +140,17 @@ public:
                                );
       }
 
+    this->m_cc = max_cc;
+
     // DEBUGGING INFORMATION
     if( LMC::globalverboseFlag )
       {
       itk::NumberToString<double> doubleToString;
-      std::cout << "quick search 15 deg "
+      std::cout << "Initialize exhaustive search: "
                 << " HA= " << doubleToString(this->m_params[0] * 180.0 / vnl_math::pi)
                 << " BA= " << doubleToString(this->m_params[1] * 180.0 / vnl_math::pi)
                 << " XO= " << doubleToString(this->m_params[2])
-                << " cc="  <<  doubleToString(this->GetValue())
-                << " iterations=" << this->m_Optimizer->GetCurrentIteration()
+                << " cc="  <<  doubleToString(this->m_cc)
                 << std::endl;
       }
   }
@@ -589,7 +590,7 @@ public:
     std::cout << doubleToString(this->m_params[0] * 180.0 / vnl_math::pi) << " "
               << doubleToString(this->m_params[1] * 180.0 / vnl_math::pi) << " "
               << this->m_params[2] << " cc= "
-              << doubleToString(m_cc) << " iters= " << this->m_Optimizer->GetCurrentIteration()
+              << doubleToString(this->m_cc) << " iters= " << this->m_Optimizer->GetCurrentIteration()
               << std::endl;
   }
 
