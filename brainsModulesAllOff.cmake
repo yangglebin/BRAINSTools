@@ -1,0 +1,34 @@
+set(dashboard_cache "
+    USE_ANTS=OFF
+    USE_AutoWorkup=OFF
+    USE_BRAINSABC=OFF
+    USE_BRAINSConstellationDetector=ON
+    USE_BRAINSContinuousClass=OFF
+    USE_BRAINSCreateLabelMapFromProbabilityMaps=OFF
+    USE_BRAINSCut=OFF
+    USE_BRAINSDWICleanup=OFF
+    USE_BRAINSDemonWarp=OFF
+    USE_BRAINSFit=OFF
+    USE_BRAINSInitializedControlPoints=OFF
+    USE_BRAINSLabelStats=OFF
+    USE_BRAINSLandmarkInitializer=OFF
+    USE_BRAINSMultiModeSegment=OFF
+    USE_BRAINSMultiSTAPLE=OFF
+    USE_BRAINSMush=OFF
+    USE_BRAINSPosteriorToContinuousClass=OFF
+    USE_BRAINSROIAuto=OFF
+    USE_BRAINSResample=OFF
+    USE_BRAINSSnapShotWriter=OFF
+    USE_BRAINSStripRotation=OFF
+    USE_BRAINSSurfaceTools=OFF
+    USE_BRAINSTalairach=OFF
+    USE_BRAINSTransformConvert=OFF
+    USE_ConvertBetweenFileFormats=OFF
+    USE_DWIConvert=OFF
+    USE_DebugImageViewer=OFF
+    USE_GTRACT=OFF
+    USE_ICCDEF=OFF
+    USE_ImageCalculator=OFF
+    USE_ReferenceAtlas=OFF
+")
+
