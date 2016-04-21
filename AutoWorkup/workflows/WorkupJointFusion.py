@@ -218,6 +218,9 @@ def CreateJointFusionWorkflow(WFname, onlyT1, master_config, runFixFusionLabelMa
         ## if using Registration masking, then do ROIAuto on fixed and moving images and connect to registraitons
         UseRegistrationMasking = True
         if UseRegistrationMasking == True:
+            """
+            ROI AUTO
+            """
             #from nipype.interfaces.semtools.segmentation.specialized import BRAINSROIAuto
 
             #fixedROIAuto[jointFusion_atlas_subject] = pe.Node(interface=BRAINSROIAuto(), name="fixedROIAUTOMask_"+jointFusion_atlas_subject)
@@ -233,10 +236,20 @@ def CreateJointFusionWorkflow(WFname, onlyT1, master_config, runFixFusionLabelMa
 
             #JointFusionWF.connect(fixedROIAuto[jointFusion_atlas_subject], 'outputROIMaskVolume',A2SantsRegistrationPreJointFusion_SyN[jointFusion_atlas_subject],'fixed_image_mask')
             #JointFusionWF.connect(movingROIAuto[jointFusion_atlas_subject], 'outputROIMaskVolume',A2SantsRegistrationPreJointFusion_SyN[jointFusion_atlas_subject],'moving_image_mask')
-            JointFusionWF.connect(inputsSpec, 'subj_fixed_head_labels',
-                                  A2SantsRegistrationPreJointFusion_SyN[jointFusion_atlas_subject],'fixed_image_mask')
+
+
+            """
+            BRAINSABC MASKING
+            """
+            print("Use Registration Masking")
+            print("Use Registration Masking")
+            print("Use Registration Masking")
+
             JointFusionWF.connect(jointFusionAtlases[jointFusion_atlas_subject], 'label',
                                   A2SantsRegistrationPreJointFusion_SyN[jointFusion_atlas_subject],'moving_image_mask')
+            JointFusionWF.connect(inputsSpec, 'subj_fixed_head_labels',
+                                  A2SantsRegistrationPreJointFusion_SyN[jointFusion_atlas_subject],'fixed_image_mask')
+
 
         JointFusionWF.connect(BLICreator[jointFusion_atlas_subject],'outputTransformFilename',
                        A2SantsRegistrationPreJointFusion_SyN[jointFusion_atlas_subject],'initial_moving_transform')

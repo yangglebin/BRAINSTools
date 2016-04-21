@@ -87,13 +87,17 @@ def _create_singleSession(dataDict, master_config, interpMode, pipeline_name):
     useEMSP=False
     if len( dataDict['EMSP']) >0:
         useEMSP =True
+    useBrainMask=False
+    if len( dataDict['BrainMask']) >0:
+        useBrainMask=True
     sessionWorkflow = generate_single_session_template_WF(project, subject, session, onlyT1, master_config,
                                                           phase=master_config['workflow_phase'],
                                                           interpMode=interpMode,
                                                           pipeline_name=pipeline_name,
                                                           doDenoise=doDenoise,
                                                           badT2=dataDict['BadT2'],
-                                                          useEMSP=useEMSP)
+                                                          useEMSP=useEMSP,
+                                                          useBrainMask=useBrainMask)
     sessionWorkflow.base_dir = master_config['cachedir']
 
     sessionWorkflow_inputsspec = sessionWorkflow.get_node('inputspec')
@@ -104,6 +108,10 @@ def _create_singleSession(dataDict, master_config, interpMode, pipeline_name):
     if useEMSP:
         sessionWorkflow_inputsspec.inputs.EMSP = dataDict['EMSP'][0]
     sessionWorkflow_inputsspec.inputs.OTHERs = dataDict['OTHERs']
+
+    if useBrainMask:
+        sessionWorkflow_inputsspec.inputs.BrainMask = dataDict['BrainMask'][0]
+        print ("Use this brain mask for Registration: {0}".format(dataDict['BrainMask'][0]) )
     return sessionWorkflow
 
 
@@ -156,6 +164,7 @@ def createAndRun(sessions, environment, experiment, pipeline, cluster, useSentin
             _dict['PDs'] = database.getFilenamesByScantype(session, ['PD-15', 'PD-30'])
             _dict['FLs'] = database.getFilenamesByScantype(session, ['FL-15', 'FL-30'])
             _dict['EMSP'] = database.getFilenamesByScantype(session, ['EMSP'])
+            _dict['BrainMask'] = database.getFilenamesByScantype(session, ['BrainMask'])
             _dict['OTHERs'] = database.getFilenamesByScantype(session, ['OTHER-15', 'OTHER-30'])
             sentinal_file_basedir = os.path.join(
                 master_config['resultdir'],

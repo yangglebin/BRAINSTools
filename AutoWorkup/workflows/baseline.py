@@ -238,7 +238,7 @@ def image_autounwrap(wrapped_inputfn, unwrapped_outputbasefn):
 
 
 def generate_single_session_template_WF(projectid, subjectid, sessionid, onlyT1, master_config, phase, interpMode,
-                                        pipeline_name, doDenoise=True, badT2 = False, useEMSP=False):
+                                        pipeline_name, doDenoise=True, badT2 = False, useEMSP=False, useBrainMask=False):
     """
     Run autoworkup on a single sessionid
 
@@ -272,6 +272,7 @@ def generate_single_session_template_WF(projectid, subjectid, sessionid, onlyT1,
     inputsSpec = pe.Node(interface=IdentityInterface(fields=['atlasLandmarkFilename', 'atlasWeightFilename',
                                                              'LLSModel', 'inputTemplateModel', 'template_t1_denoised_gaussian',
                                                              'atlasDefinition', 'T1s', 'T2s', 'PDs', 'FLs', 'OTHERs',
+                                                             'BrainMask',
                                                              'EMSP',
                                                              'hncma_atlas',
                                                              'template_rightHemisphere',
@@ -869,7 +870,13 @@ def generate_single_session_template_WF(projectid, subjectid, sessionid, onlyT1,
         myLocalJointFusion = CreateJointFusionWorkflow("JointFusion", onlyT1, master_config)
         baw201.connect(myLocalTCWF,'outputspec.t1_average',myLocalJointFusion,'inputspec.subj_t1_image')
         baw201.connect(myLocalTCWF,'outputspec.t2_average',myLocalJointFusion,'inputspec.subj_t2_image')
-        baw201.connect(myLocalBrainStemWF, 'outputspec.ouputTissuelLabelFilename',myLocalJointFusion,'inputspec.subj_fixed_head_labels')
+
+        if useBrainMask:
+            baw201.connect(inputsSpec, 'BrainMask',
+                           myLocalJointFusion, 'inputspec.subj_fixed_head_labels')
+        else:
+            baw201.connect(myLocalBrainStemWF, 'outputspec.ouputTissuelLabelFilename',
+                           myLocalJointFusion,'inputspec.subj_fixed_head_labels')
 
         baw201.connect(BResample['template_leftHemisphere'],'outputVolume',myLocalJointFusion,'inputspec.subj_left_hemisphere')
         baw201.connect(myLocalLMIWF, 'outputspec.outputLandmarksInACPCAlignedSpace' ,myLocalJointFusion,'inputspec.subj_lmks')
@@ -881,12 +888,22 @@ def generate_single_session_template_WF(projectid, subjectid, sessionid, onlyT1,
         baw201.connect( inputLabelFileJointFusionnameSpec, 'labelBaseFilename',
                         myLocalJointFusion, 'inputspec.labelBaseFilename')
 
-        baw201.connect(myLocalJointFusion,'outputspec.JointFusion_HDAtlas20_2015_label',DataSink,'TissueClassify.@JointFusion_HDAtlas20_2015_label')
-        baw201.connect(myLocalJointFusion,'outputspec.JointFusion_HDAtlas20_2015_CSFVBInjected_label',DataSink,'TissueClassify.@JointFusion_HDAtlas20_2015_CSFVBInjected_label')
-        baw201.connect(myLocalJointFusion,'outputspec.JointFusion_HDAtlas20_2015_fs_standard_label',DataSink,'TissueClassify.@JointFusion_HDAtlas20_2015_fs_standard_label')
-        baw201.connect(myLocalJointFusion,'outputspec.JointFusion_HDAtlas20_2015_lobar_label',DataSink,'TissueClassify.@JointFusion_HDAtlas20_2015_lobar_label')
-        baw201.connect(myLocalJointFusion,'outputspec.JointFusion_extended_snapshot',DataSink,'TissueClassify.@JointFusion_extended_snapshot')
-        baw201.connect(myLocalJointFusion,'outputspec.JointFusion_HDAtlas20_2015_dustCleaned_label', DataSink, 'TissueClassify.@JointFusion_HDAtlas20_2015_dustCleaned_label')
+
+        """
+        JointFusion to DataSink
+        """
+        baw201.connect(myLocalJointFusion,'outputspec.JointFusion_HDAtlas20_2015_label',
+                       DataSink,'TissueClassify.@JointFusion_HDAtlas20_2015_label')
+        baw201.connect(myLocalJointFusion,'outputspec.JointFusion_HDAtlas20_2015_CSFVBInjected_label',
+                       DataSink,'TissueClassify.@JointFusion_HDAtlas20_2015_CSFVBInjected_label')
+        baw201.connect(myLocalJointFusion,'outputspec.JointFusion_HDAtlas20_2015_fs_standard_label',
+                       DataSink,'TissueClassify.@JointFusion_HDAtlas20_2015_fs_standard_label')
+        baw201.connect(myLocalJointFusion,'outputspec.JointFusion_HDAtlas20_2015_lobar_label',
+                       DataSink,'TissueClassify.@JointFusion_HDAtlas20_2015_lobar_label')
+        baw201.connect(myLocalJointFusion,'outputspec.JointFusion_extended_snapshot',
+                       DataSink,'TissueClassify.@JointFusion_extended_snapshot')
+        baw201.connect(myLocalJointFusion,'outputspec.JointFusion_HDAtlas20_2015_dustCleaned_label',
+                       DataSink, 'TissueClassify.@JointFusion_HDAtlas20_2015_dustCleaned_label')
 
 
     return baw201
