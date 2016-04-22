@@ -872,7 +872,27 @@ def generate_single_session_template_WF(projectid, subjectid, sessionid, onlyT1,
         baw201.connect(myLocalTCWF,'outputspec.t2_average',myLocalJointFusion,'inputspec.subj_t2_image')
 
         if useBrainMask:
+            """
+            Resample BRAIN Mask in T1 Space
+            """
+            Resample2Subject = pe.Node(interface=BRAINSResample(), name="BRAINSResample_BrainMask")
+            Resample2Subject.plugin_args = {'qsub_args': modify_qsub_args(master_config['queue'], 1, 1, 1),
+                                     'overwrite': True}
+            Resample2Subject.inputs.outputVolume = "Subject_BrainMask_InACPC.nii.gz"
+
+            baw201.connect(myLocalTCWF, 'outputspec.t1_average',
+                           Resample2Subject, 'referenceVolume')
             baw201.connect(inputsSpec, 'BrainMask',
+                           Resample2Subject, 'inputVolume')
+            baw201.connect(myLocalLMIWF, 'outputspec.outputTransform',
+                           Resample2Subject, 'warpTransform')
+            baw201.connect(Resample2Subject, 'outputVolume',
+                           DataSink, 'TissueClassify.@Subject_BrainMask_InACPC' )
+
+            """
+            connect BrainMaskTo JointFusion
+            """
+            baw201.connect(Resample2Subject, 'outputVolume',
                            myLocalJointFusion, 'inputspec.subj_fixed_head_labels')
         else:
             baw201.connect(myLocalBrainStemWF, 'outputspec.ouputTissuelLabelFilename',
