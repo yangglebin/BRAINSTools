@@ -32,6 +32,16 @@ from .WorkupComputeLabelVolume import *
     JointFusionWF.connect(BAtlas,'ExtendedAtlasDefinition.xml',myLocalTCWF,'atlasDefinition')
     JointFusionWF.connect(BLI,'outputTransformFilename',myLocalTCWF,'atlasToSubjectInitialTransform')
 """
+
+def DilateMask( inputMaskFilename, outputMaskFilename):
+    import SimpleITK as sitk
+    inputMask = sitk.ReadImage( inputMaskFilename )
+    outputMask = sitk.BinaryDilate( (inputMask> 0), 15 )
+    sitk.WriteImage(outputMask,outputMaskFilename)
+
+    import os
+    return os.path.abspath( outputMaskFilename )
+
 def MakeVector(inFN1, inFN2=None, jointFusion =False):
     #print("inFN1: {0}".format(inFN1))
     #print("inFN2: {0}".format(inFN2))
@@ -177,6 +187,7 @@ def CreateJointFusionWorkflow(WFname, onlyT1, master_config, runFixFusionLabelMa
     jointFusionAtlases = dict()
     atlasMakeMultimodalInput = dict()
     t2Resample = dict()
+    dilateAtlasMask = dict()
     warpedAtlasLblMergeNode = pe.Node(interface=Merge(number_of_atlas_sources),name="LblMergeAtlas")
     NewwarpedAtlasLblMergeNode = pe.Node(interface=Merge(number_of_atlas_sources),name="fswmLblMergeAtlas")
 
@@ -184,6 +195,13 @@ def CreateJointFusionWorkflow(WFname, onlyT1, master_config, runFixFusionLabelMa
     "HACK NOT to use T2 for JointFusion only"
     warpedAtlasesMergeNode = pe.Node(interface=Merge(number_of_atlas_sources*1),name="MergeAtlases")
 
+    DilateSubjectMaskND = pe.Node(Function(function=DilateMask,
+                                         input_names=['inputMaskFilename', 'outputMaskFilename'],
+                                         output_names=['outputMaskFilename']),
+                                run_without_submitting=True, name="DilateJointFusionSubjectMaskND")
+    DilateSubjectMaskND.inputs.outputMaskFilename = 'subjectDilatedBrainMask.nii.gz'
+    JointFusionWF.connect( inputsSpec, 'subj_fixed_head_labels',
+                                 DilateSubjectMaskND, 'inputMaskFilename')
     for jointFusion_atlas_subject in list(jointFusionAtlasDict.keys()):
         ## Need DataGrabber Here For the Atlas
         jointFusionAtlases[jointFusion_atlas_subject] = pe.Node(interface = IdentityInterface(
@@ -223,28 +241,18 @@ def CreateJointFusionWorkflow(WFname, onlyT1, master_config, runFixFusionLabelMa
                       invert_initial_moving_transform=False)
 
 
-        ## if using Registration masking, then do ROIAuto on fixed and moving images and connect to registraitons
-        UseRegistrationMasking = True
-        if UseRegistrationMasking == True:
-            #from nipype.interfaces.semtools.segmentation.specialized import BRAINSROIAuto
+        JointFusionWF.connect( DilateSubjectMaskND, 'outputMaskFilename',
+                               A2SantsRegistrationPreJointFusion_SyN[jointFusion_atlas_subject],'fixed_image_mask')
 
-            #fixedROIAuto[jointFusion_atlas_subject] = pe.Node(interface=BRAINSROIAuto(), name="fixedROIAUTOMask_"+jointFusion_atlas_subject)
-            #fixedROIAuto[jointFusion_atlas_subject].inputs.ROIAutoDilateSize=10
-            #fixedROIAuto[jointFusion_atlas_subject].inputs.outputROIMaskVolume = "fixedImageROIAutoMask.nii.gz"
-
-            #movingROIAuto[jointFusion_atlas_subject] = pe.Node(interface=BRAINSROIAuto(), name="movingROIAUTOMask_"+jointFusion_atlas_subject)
-            #fixedROIAuto[jointFusion_atlas_subject].inputs.ROIAutoDilateSize=10
-            #movingROIAuto[jointFusion_atlas_subject].inputs.outputROIMaskVolume = "movingImageROIAutoMask.nii.gz"
-
-            #JointFusionWF.connect(inputsSpec, 'subj_t1_image',fixedROIAuto[jointFusion_atlas_subject],'inputVolume')
-            #JointFusionWF.connect(jointFusionAtlases[jointFusion_atlas_subject], 't1', movingROIAuto[jointFusion_atlas_subject],'inputVolume')
-
-            #JointFusionWF.connect(fixedROIAuto[jointFusion_atlas_subject], 'outputROIMaskVolume',A2SantsRegistrationPreJointFusion_SyN[jointFusion_atlas_subject],'fixed_image_mask')
-            #JointFusionWF.connect(movingROIAuto[jointFusion_atlas_subject], 'outputROIMaskVolume',A2SantsRegistrationPreJointFusion_SyN[jointFusion_atlas_subject],'moving_image_mask')
-            JointFusionWF.connect(inputsSpec, 'subj_fixed_head_labels',
-                                  A2SantsRegistrationPreJointFusion_SyN[jointFusion_atlas_subject],'fixed_image_mask')
-            JointFusionWF.connect(jointFusionAtlases[jointFusion_atlas_subject], 'label',
-                                  A2SantsRegistrationPreJointFusion_SyN[jointFusion_atlas_subject],'moving_image_mask')
+        dilateAtlasMask[jointFusion_atlas_subject] = pe.Node(Function(function=DilateMask,
+                                             input_names=['inputMaskFilename', 'outputMaskFilename'],
+                                             output_names=['outputMaskFilename']),
+                                    run_without_submitting=True, name="DilateJointFusionAtlasMaskND_"+jointFusion_atlas_subject)
+        dilateAtlasMask[jointFusion_atlas_subject].inputs.outputMaskFilename = 'atlasMaskDilated.nii.gz'
+        JointFusionWF.connect(jointFusionAtlases[jointFusion_atlas_subject], 'label',
+                              dilateAtlasMask[jointFusion_atlas_subject],'inputMaskFilename')
+        JointFusionWF.connect(dilateAtlasMask[jointFusion_atlas_subject],'outputMaskFilename',
+                              A2SantsRegistrationPreJointFusion_SyN[jointFusion_atlas_subject],'moving_image_mask')
 
         JointFusionWF.connect(BLICreator[jointFusion_atlas_subject],'outputTransformFilename',
                        A2SantsRegistrationPreJointFusion_SyN[jointFusion_atlas_subject],'initial_moving_transform')
