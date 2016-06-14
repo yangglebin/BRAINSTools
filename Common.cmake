@@ -123,7 +123,7 @@ bt_option(USE_ICCDEF                         "Build ICCDEF     "                
 bt_option(USE_BRAINSPosteriorToContinuousClass             "Build BRAINSPosteriorToContinuousClass" OFF)
 bt_dependent_option(USE_DebugImageViewer "Build DebugImageViewer" OFF "${PRIMARY_PROJECT_NAME}_REQUIRES_VTK" OFF)
 bt_option(BRAINS_DEBUG_IMAGE_WRITE "Enable writing out intermediate image results" OFF)
-bt_option(USE_BRAINSDeface "BRAINSDeface is still under development." OFF)
+bt_option(USE_BRAINSRefacer "BRAINSDeface is still under development." OFF)
 
 bt_option(USE_TBB "Build TBB as an internal module. This feature is still experimental and unsupported" OFF)
 mark_as_advanced(USE_TBB)
