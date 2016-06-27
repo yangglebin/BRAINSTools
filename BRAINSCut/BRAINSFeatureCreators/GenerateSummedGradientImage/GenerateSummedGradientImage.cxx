@@ -106,35 +106,49 @@ main(int argc, char * *argv)
   // Now linear rescale gradient intensity values so that 10%=25/2 and 90%=230/2
   // so that when the two images are
   // added together they will fit into unsigned char
+
+  const unsigned int minOutputRange = 1; // epsilon
+
+  // maximum is defined such that (Max - Epsilon)/2 = Q(%85)
+  unsigned int maxOutputRange = 2 * t1_histogram->Quantile(0, 0.85F) + minOutputRange;
+  if( maxOutputRange > 255 )
+  {
+  maxOutputRange = 255;
+  }
+
+  /// Delete this part, only for debugging
+  std::cout << "Quntile 50: " << t1_histogram->Quantile(0, 0.5F) << std::endl;
+  std::cout << "Quntile 65: " << t1_histogram->Quantile(0, 0.65F) << std::endl;
+  std::cout << "Quntile 75: " << t1_histogram->Quantile(0, 0.75F) << std::endl;
+  std::cout << "Quntile 85: " << t1_histogram->Quantile(0, 0.85F) << std::endl;
+  std::cout << "Quntile 86: " << t1_histogram->Quantile(0, 0.86F) << std::endl;
+  std::cout << "Quntile 87: " << t1_histogram->Quantile(0, 0.87F) << std::endl;
+  std::cout << "Quntile 88: " << t1_histogram->Quantile(0, 0.88F) << std::endl;
+  std::cout << "Quntile 89: " << t1_histogram->Quantile(0, 0.89F) << std::endl;
+  std::cout << "Quntile 90: " << t1_histogram->Quantile(0, 0.90F) << std::endl;
+  std::cout << "Quntile 95: " << t1_histogram->Quantile(0, 0.95F) << std::endl;
+  std::cout << "Quntile 100: " << t1_histogram->Quantile(0, 1.0F) << std::endl;
+  //////////////////////
+
   typedef itk::IntensityWindowingImageFilter<ImageType,
                                              OutputImageType> RescalerType;
   RescalerType::Pointer t1_rescaler = RescalerType::New();
   t1_rescaler->SetInput( t1_gradientFilter->GetOutput() );
-  t1_rescaler->SetOutputMinimum(0);
-  t1_rescaler->SetOutputMaximum(127);
-  const float T1Slope =
-    ( t1_histogram->Quantile(0,
-                             UpperPercentileMatching)
-      - t1_histogram->Quantile(0, LowerPercentileMatching) ) / 80.0F;
+  t1_rescaler->SetOutputMinimum( minOutputRange );
+  t1_rescaler->SetOutputMaximum( maxOutputRange );
   t1_rescaler->SetWindowMinimum( t1_histogram->Quantile(0,
                                                         LowerPercentileMatching) );
   t1_rescaler->SetWindowMaximum( t1_histogram->Quantile(0,
-                                                        UpperPercentileMatching) + T1Slope * 100.0
-                                 * ( 1.0 - UpperPercentileMatching ) );
+                                                        UpperPercentileMatching) );
 
   RescalerType::Pointer t2_rescaler = RescalerType::New();
   t2_rescaler->SetInput( t2_gradientFilter->GetOutput() );
-  t2_rescaler->SetOutputMinimum(0);
-  t2_rescaler->SetOutputMaximum(127);
-  const float T2Slope =
-    ( t2_histogram->Quantile(0,
-                             UpperPercentileMatching)
-      - t2_histogram->Quantile(0, LowerPercentileMatching) ) / 80.0F;
+  t2_rescaler->SetOutputMinimum( minOutputRange );
+  t2_rescaler->SetOutputMaximum( maxOutputRange );
   t2_rescaler->SetWindowMinimum( t2_histogram->Quantile(0,
                                                         LowerPercentileMatching) );
   t2_rescaler->SetWindowMaximum( t2_histogram->Quantile(0,
-                                                        UpperPercentileMatching) + T2Slope * 100.0
-                                 * ( 1.0 - UpperPercentileMatching ) );
+                                                        UpperPercentileMatching) );
 
   // Type for Adder
   typedef itk::AddImageFilter<OutputImageType, OutputImageType,
@@ -186,8 +200,10 @@ main(int argc, char * *argv)
   typedef itk::IntensityWindowingImageFilter<OutputImageType,
                                              OutputImageType> RescaleFilterType;
   RescaleFilterType::Pointer rescaler = RescaleFilterType::New();
-  rescaler->SetOutputMinimum(0);
-  rescaler->SetOutputMaximum(255);
+  //rescaler->SetWindowMinimum(minOutputRange);
+  //rescaler->SetWindowMaximum(maxOutputRange);
+  //rescaler->SetOutputMinimum(0);
+  //rescaler->SetOutputMaximum(255);
 
   if( MaximumGradient == false )
     {
@@ -198,6 +214,7 @@ main(int argc, char * *argv)
     rescaler->SetInput( myMax->GetOutput() );
     }
   rescaler->Update();
+
   writer->SetFileName(outputFileName);
   writer->SetInput( rescaler->GetOutput() );
   try
