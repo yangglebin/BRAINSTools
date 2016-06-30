@@ -7,7 +7,7 @@ import json
 def get_local_file_location(relative_file_name):
     # credit: http://stackoverflow.com/questions/7165749/open-file-in-a-relative-location-in-python
     import os
-    script_dir = os.path.dirname(__file__)  # <-- absolute dir the script is in
+    script_dir = os.path.abspath(os.path.dirname(__file__))  # <-- absolute dir the script is in
     return os.path.join(script_dir, relative_file_name)
 
 
