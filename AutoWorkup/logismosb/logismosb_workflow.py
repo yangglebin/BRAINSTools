@@ -7,7 +7,6 @@ from nipype.interfaces.io import DataSink
 from interfaces import *
 import json
 
-
 def leftorright(
         hemisphere,
         lh_wm,
@@ -26,7 +25,8 @@ def leftorright(
     return hemisphere, wm_file, mask_file, mesh_file, boundary_file
 
 
-def create_logb_workflow(name="LOGIMSOSB"):
+def create_logb_workflow(name="LOGIMSOSB_WF"):
+    logb_wf = Workflow(name=name)
 
     with open("config.json", "rb") as config_file:
         config = json.load(config_file)
@@ -43,88 +43,64 @@ def create_logb_workflow(name="LOGIMSOSB"):
                     'hncma_atlas']), name="Inputs")
     inputs_node.run_without_submitting = True
 
-    g0 = Node(interface=GenusZeroImageFilter(), name="GenusZeroImageFilter")
-    g0.inputs.connectivity = config['GenusZeroImageFilter']['connectivity']
-    g0.inputs.biggestComponent = config['GenusZeroImageFilter']['biggestComponent']
-    g0.inputs.connectedComponent = config['GenusZeroImageFilter']['connectedComponent']
-
-    BSG = Node(interface=BRAINSSurfaceGeneration(), name="BRAINSSurfaceGeneration")
-    BSG.inputs.smoothSurface = config['BRAINSSurfaceGeneration']['smoothSurface']
-    BSG.inputs.numIterations = config['BRAINSSurfaceGeneration']['numIterations']
-
-    logB = Node(interface=LOGISMOSB(), name="LOGISMOSB")
-    logB.inputs.smoothnessConstraint = config['LOGISMOSB']['smoothnessConstraint']
-    logB.inputs.nColumns = config['LOGISMOSB']['nColumns']
-    logB.inputs.columnChoice = config['LOGISMOSB']['columnChoice']
-    logB.inputs.columnHeight = config['LOGISMOSB']['columnHeight']
-    logB.inputs.nodeSpacing = config['LOGISMOSB']['nodeSpacing']
-    logB.inputs.w = config['LOGISMOSB']['w']
-    logB.inputs.a = config['LOGISMOSB']['a']
-    logB.inputs.nPropagate = config['LOGISMOSB']['nPropagate']
-    if config['LOGISMOSB']['thickRegions']:
-        logB.inputs.thick_regions = config['LOGISMOSB']['thickRegions']
-    else:
-        logB.inputs.useHNCMALabels = True
-
-    logB_outputnode = Node(IdentityInterface(fields=["gmsurface_file",
-                                                     "wmsurface_file",
-                                                     "thickness_file"]),
-                           name="Outputs")
-
-    hemi_inputs_node = Node(Function(["hemisphere",
-                                      "lh_boundary",
-                                      "rh_boundary",
-                                      "lh_wm",
-                                      "rh_wm"],
-                                     ['hemisphere',
-                                      'wm_file',
-                                      'mask_file',
-                                      'mesh_file',
-                                      'boundary_file'],
-                                     leftorright
-                                     ),
-                            name="Hemi_Inputs")
-    hemi_inputs_node.iterables = ("hemisphere", ["lh", "rh"])
-
     wmMasking_node = Node(interface=WMMasking(), name="WMMasking")
     wmMasking_node.inputs.dilation = config['WMMasking']['dilation']
     wmMasking_node.inputs.atlas_info = config['atlas_info']
 
+    logb_wf.connect([(inputs_node, wmMasking_node, [("csf_file", "csf_file"),
+                                                    ("fswm_atlas", "atlas_file"),
+                                                    ("brainlabels_file", "brainlabels_file")])])
+
     gm_labels = Node(interface=CreateGMLabelMap(), name="GM_Labelmap")
     gm_labels.inputs.atlas_info = config['atlas_info']
+    logb_wf.connect([(inputs_node, gm_labels, [('fswm_atlas', 'atlas_file')])])
 
-    ctx_thickness = Node(ComputeDistance(), name="ctx_thickness")
-    ctx_thickness.inputs.atlas_info = config['atlas_info']
+    logismosb_output_node = LOGIMOSBOutputSpec(["wmsurface_file", "gmsurface_file"], config["hemisphere_names"])
 
-    LOGB_WF = Workflow(name=name)
+    for hemisphere in config["hemisphere_names"]:
+        g0 = Node(interface=GenusZeroImageFilter(), name="{0}_GenusZeroImageFilter".format(hemisphere))
+        g0.inputs.connectivity = config['GenusZeroImageFilter']['connectivity']
+        g0.inputs.biggestComponent = config['GenusZeroImageFilter']['biggestComponent']
+        g0.inputs.connectedComponent = config['GenusZeroImageFilter']['connectedComponent']
+        g0.inputs.out_mask = "{0}_genus_zero_white_matter.nii.gz".format(hemisphere)
 
-    LOGB_WF.connect([(inputs_node, wmMasking_node, [("csf_file", "csf_file"),
-                                                    ("fswm_atlas", "atlas_file"),
-                                                    ("brainlabels_file", "brainlabels_file"),
-                                                    ]),
-                     (wmMasking_node, hemi_inputs_node, [("rh_boundary", "rh_boundary"),
-                                                         ("lh_boundary", "lh_boundary"),
-                                                         ("lh_wm", "lh_wm"),
-                                                         ("rh_wm", "rh_wm")]),
-                     (inputs_node, logB, [("t1_file", "t1_file"),
-                                          ("t2_file", "t2_file")]),
-                     (hemi_inputs_node, logB, [("hemisphere", "basename"),
-                                               ("boundary_file", "brainlabels_file")]),
-                     (hemi_inputs_node, g0, [("wm_file", "in_file"),
-                                             ("mask_file", "out_mask")]),
-                     (hemi_inputs_node, BSG, [("mesh_file", "out_file")]),
-                     (g0, BSG, [("out_file", "in_file")]),
-                     (g0, logB, [("out_file", "wm_file")]),
-                     (BSG, logB, [("out_file", "mesh_file")]),
-                     (logB, logB_outputnode, [("gmsurface_file", "gmsurface_file"),
-                                              ("wmsurface_file", "wmsurface_file")]),
-                     (logB, ctx_thickness, [("gmsurface_file", "gm_file"),
-                                            ("wmsurface_file", "wm_file")]),
-                     (gm_labels, ctx_thickness, [('out_file', 'labels_file')]),
-                     (hemi_inputs_node, ctx_thickness, [('hemisphere', 'hemisphere')]),
-                     (inputs_node, gm_labels, [('fswm_atlas', 'atlas_file')]),
-                     (inputs_node, logB, [('hncma_atlas', 'atlas_file')])
-                     ])
+        logb_wf.connect([(wmMasking_node, g0, [('{0}_wm'.format(hemisphere), 'in_file')])])
+
+        BSG = Node(interface=BRAINSSurfaceGeneration(), name="{0}_BRAINSSurfaceGeneration".format(hemisphere))
+        BSG.inputs.smoothSurface = config['BRAINSSurfaceGeneration']['smoothSurface']
+        BSG.inputs.numIterations = config['BRAINSSurfaceGeneration']['numIterations']
+        BSG.inputs.out_file = "{0}_white_matter_surface.vtk".format(hemisphere)
+
+        logb_wf.connect([(g0, BSG, [('out_file', 'in_file')])])
+
+        logB = Node(interface=LOGISMOSB(), name="{0}_LOGISMOSB".format(hemisphere))
+        logB.inputs.smoothnessConstraint = config['LOGISMOSB']['smoothnessConstraint']
+        logB.inputs.nColumns = config['LOGISMOSB']['nColumns']
+        logB.inputs.columnChoice = config['LOGISMOSB']['columnChoice']
+        logB.inputs.columnHeight = config['LOGISMOSB']['columnHeight']
+        logB.inputs.nodeSpacing = config['LOGISMOSB']['nodeSpacing']
+        logB.inputs.w = config['LOGISMOSB']['w']
+        logB.inputs.a = config['LOGISMOSB']['a']
+        logB.inputs.nPropagate = config['LOGISMOSB']['nPropagate']
+        logB.inputs.basename = hemisphere
+        if config['LOGISMOSB']['thickRegions']:
+            logB.inputs.thick_regions = config['LOGISMOSB']['thickRegions']
+        else:
+            logB.inputs.useHNCMALabels = True
+
+        logb_wf.connect([(inputs_node, logB, [("t1_file", "t1_file"),
+                                              ("t2_file", "t2_file"),
+                                              ('hncma_atlas', 'atlas_file')]),
+                         (g0, logB, [("out_file", "wm_file")]),
+                         (BSG, logB, [("out_file", "mesh_file")]),
+                         (wmMasking_node, logB, [('{0}_boundary'.format(hemisphere), 'brainlabels_file')]),
+                         (logB, logismosb_output_node, [("gmsurface_file", "{0}_gmsurface_file".format(hemisphere)),
+                                                        ("wmsurface_file", "{0}_wmsurface_file".format(hemisphere))])])
+
+        ctx_thickness = Node(ComputeDistance(), name="ctx_thickness")
+        ctx_thickness.inputs.atlas_info = config['atlas_info']
+        ctx_thickness.inputs.hemisphere = hemisphere
+        logb_wf.connect([(gm_labels, ctx_thickness, [('out_file', 'labels_file')])])
 
     if config['Results_Directory']:
         # datasink the workflow
@@ -150,7 +126,7 @@ def create_logb_workflow(name="LOGIMSOSB"):
                 substitutions.append(my_sub)
         data_sink.inputs.substitutions = substitutions
 
-        LOGB_WF.connect([(base_dir_name, data_sink, [('base_dir', 'base_directory')]),
+        logb_wf.connect([(base_dir_name, data_sink, [('base_dir', 'base_directory')]),
                          (inputs_node, base_dir_name, [('subject_id', 'subject_id'),
                                                        ('session_id', 'session')]),
                          (logB, data_sink, [('gmsurface_file', 'LOGISMOSB'),
@@ -161,16 +137,15 @@ def create_logb_workflow(name="LOGIMSOSB"):
                          (gm_labels, data_sink, [('out_file', 'LOGISMOSB.@c')]),
                          (g0, data_sink, [('out_file', 'LOGISMOSB.@e')]),
                          (BSG, data_sink, [('out_file', 'LOGISMOSB.@f')]),
-                         (hemi_inputs_node, data_sink, [("boundary_file", "LOGISMOSB.@h")]),
                          ])
 
-        if config['copy_BAW']:
-            LOGB_WF.connect([(inputs_node, data_sink, [('subject_id', 'BAW'),
-                                                       ('session_id', 'BAW.@a'),
-                                                       ('t1_file', 'BAW.@b'),
-                                                       ('t2_file', 'BAW.@c'),
-                                                       ('csf_file', 'BAW.@d'),
-                                                       ('fswm_atlas', 'BAW.@e'),
-                                                       ('brainlabels_file', 'BAW.@f')])])
+    return logb_wf
 
-    return LOGB_WF
+
+class LOGIMOSBOutputSpec(IdentityInterface):
+    def __init__(self, outputs, hemisphere_names, **inputs):
+        final_output_names = list()
+        for output in outputs:
+            for hemisphere in hemisphere_names:
+                final_output_names.append("{0}_".format(hemisphere) + output)
+        super(LOGIMOSBOutputSpec, self).__init__(fields=final_output_names, **inputs)

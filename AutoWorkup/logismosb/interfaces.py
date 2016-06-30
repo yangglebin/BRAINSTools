@@ -437,55 +437,30 @@ class ComputeDistance(BaseInterface):
 
 
 class LOGISMOSBInputSpec(CommandLineInputSpec):
-
-    t1_file = File(exists=True,
-                   desc='T1 scan output by BAW',
-                   argstr='--inputT1 %s', mandatory=True)
-
-    t2_file = File(exists=True, genfile=True,
-                   desc='T2 scan output by BAW',
-                   argstr='--inputT2 %s', mandatory=False)
-
-    mesh_file = File(exists=True,
-                     desc='final mesh of the white matter surface (must have a genus equal to 0)',
+    t1_file = File(exists=True, desc='T1 scan output by BAW', argstr='--inputT1 %s', mandatory=True)
+    t2_file = File(exists=True, genfile=True, desc='T2 scan output by BAW', argstr='--inputT2 %s', mandatory=False)
+    mesh_file = File(exists=True, desc='final mesh of the white matter surface (must have a genus equal to 0)',
                      argstr='-m %s', mandatory=True)
-
-    wm_file = File(exists=True,
-                   desc='final binary image of the white matter surface (must have a genus equal to 0)',
+    wm_file = File(exists=True, desc='final binary image of the white matter surface (must have a genus equal to 0)',
                    argstr='-b %s', mandatory=True)
-
-    atlas_file = File(exists=True,
-                      desc='hcnma atlas to define brain regions',
+    atlas_file = File(exists=True, desc='hcnma atlas to define brain regions. If different atlas is used, thick ' +
+                                        'regions must be defined',
                       argstr='-z %s', mandatory=False)
-
-    brainlabels_file = File(exists=True,
-                            desc='skullstripped brainlabels file',
-                            argstr='--inputABCLabels %s', mandatory=True)
-
+    brainlabels_file = File(exists=True, desc='skullstripped brainlabels file', argstr='--inputABCLabels %s',
+                            mandatory=True)
     smoothnessConstraint = traits.Int(desc='smoothness constraint',
                                       argstr='--smoothnessConstraint %d', mandatory=True)
-
     nColumns = traits.Int(desc="number of vertices", argstr="--nColumns %d", Mandatory=False)
-
     columnChoice = traits.String(desc="some parameter", argstr="--columnChoice %s", Mandatory=False)
-
     columnHeight = traits.Int(desc="column height", argstr="--columnHeight %d", Mandatory=False)
-
     nodeSpacing = traits.Float(desc="node spacing", argstr="--nodeSpacing %.2f", Mandatory=False)
-
     w = traits.Float(desc="w", argstr="-w %.2f", Mandatory=False)
-
     a = traits.Float(desc="a", argstr="-a %.2f", Mandatory=False)
-
     nPropagate = traits.Int(desc="number of propagations", argstr="--nPropagate %d", Mandatory=False)
-
     basename = traits.String(desc="basename for output files", argstr="--outputBase %s", Mandatory=True)
-
-    thick_regions = traits.List(
-        traits.Int(), argstr="-r %s", mandatory=False, sep=',',
-        desc="List of regions in the atlas file to that will be thicker")
-    useHNCMALabels = traits.Bool(argstr="--useHNCMALabels",
-                                 desc="Uses HCNMA label map to define thick regions")
+    thick_regions = traits.List(traits.Int(), argstr="-r %s", mandatory=False, sep=',',
+                                desc="List of regions in the atlas file to that will be thicker")
+    useHNCMALabels = traits.Bool(argstr="--useHNCMALabels", desc="Uses HCNMA label map to define thick regions")
 
 
 class LOGISMOSBOutputSpec(TraitedSpec):

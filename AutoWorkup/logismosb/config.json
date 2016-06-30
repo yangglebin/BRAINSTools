@@ -1,4 +1,5 @@
 {
+  "hemisphere_names": ["lh", "rh"],
   "copy_BAW": false,
   "Results_Directory": null,
   "Cache_Directory": null,
