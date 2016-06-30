@@ -4,11 +4,25 @@ from interfaces import *
 import json
 
 
+def get_local_file_location(relative_file_name):
+    # credit: http://stackoverflow.com/questions/7165749/open-file-in-a-relative-location-in-python
+    import os
+    script_dir = os.path.dirname(__file__)  # <-- absolute dir the script is in
+    return os.path.join(script_dir, relative_file_name)
+
+
+def read_json_config(relative_file_name):
+    # HACK: read the json file in this folder
+    config_file_path = get_local_file_location(relative_file_name)
+    with open(config_file_path, "rb") as config_file:
+        config = json.load(config_file)
+    return config
+
+
 def create_logb_workflow(name="LOGISMOSB_WF"):
     logb_wf = Workflow(name=name)
 
-    with open("config.json", "rb") as config_file:
-        config = json.load(config_file)
+    config = read_json_config("config.json")
 
     inputs_node = Node(
         IdentityInterface(
@@ -29,7 +43,7 @@ def create_logb_workflow(name="LOGISMOSB_WF"):
                                                                ("brainlabels_file", "brainlabels_file")])])
 
     gm_labels = Node(interface=CreateGMLabelMap(), name="GM_Labelmap")
-    gm_labels.inputs.atlas_info = config['atlas_info']
+    gm_labels.inputs.atlas_info = get_local_file_location(config['atlas_info'])
     logb_wf.connect([(inputs_node, gm_labels, [('joint_fusion_file', 'atlas_file')])])
 
     logismosb_output_node = LOGIMOSBOutputSpec(["wmsurface_file", "gmsurface_file"], config["hemisphere_names"],

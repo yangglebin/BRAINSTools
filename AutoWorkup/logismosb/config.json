@@ -3,7 +3,7 @@
   "copy_BAW": false,
   "Results_Directory": null,
   "Cache_Directory": null,
-  "atlas_info": "/Shared/johnsonhj/HDNI/20141021_LOGISMOBTEST/logismos-b/fswm_label_info.xml",
+  "atlas_info": "fswm_label_info.xml",
   "WMMasking": { "dilation": 0 },
   "GenusZeroImageFilter": {
     "connectivity": 6,
