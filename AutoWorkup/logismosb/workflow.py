@@ -12,29 +12,28 @@ def create_logb_workflow(name="LOGISMOSB_WF"):
 
     inputs_node = Node(
         IdentityInterface(
-            fields=['subject_id',
-                    'session_id',
-                    't1_file',
+            fields=['t1_file',
                     't2_file',
-                    'csf_file',
-                    'fswm_atlas',
+                    'posterior_files',
+                    'joint_fusion_file',
                     'brainlabels_file',
-                    'hncma_atlas']), name="Inputs")
+                    'hncma_atlas']), name="inputspec")
     inputs_node.run_without_submitting = True
 
     white_matter_masking_node = Node(interface=WMMasking(), name="WMMasking")
     white_matter_masking_node.inputs.dilation = config['WMMasking']['dilation']
     white_matter_masking_node.inputs.atlas_info = config['atlas_info']
 
-    logb_wf.connect([(inputs_node, white_matter_masking_node, [("csf_file", "csf_file"),
-                                                               ("fswm_atlas", "atlas_file"),
+    logb_wf.connect([(inputs_node, white_matter_masking_node, [("posterior_files", "posterior_files"),
+                                                               ("joint_fusion_file", "atlas_file"),
                                                                ("brainlabels_file", "brainlabels_file")])])
 
     gm_labels = Node(interface=CreateGMLabelMap(), name="GM_Labelmap")
     gm_labels.inputs.atlas_info = config['atlas_info']
-    logb_wf.connect([(inputs_node, gm_labels, [('fswm_atlas', 'atlas_file')])])
+    logb_wf.connect([(inputs_node, gm_labels, [('joint_fusion_file', 'atlas_file')])])
 
-    logismosb_output_node = LOGIMOSBOutputSpec(["wmsurface_file", "gmsurface_file"], config["hemisphere_names"])
+    logismosb_output_node = LOGIMOSBOutputSpec(["wmsurface_file", "gmsurface_file"], config["hemisphere_names"],
+                                               name="outputspec")
 
     for hemisphere in config["hemisphere_names"]:
         genus_zero_filter = Node(interface=GenusZeroImageFilter(), name="{0}_GenusZeroImageFilter".format(hemisphere))

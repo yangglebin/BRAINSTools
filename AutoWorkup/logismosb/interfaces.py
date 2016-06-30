@@ -28,8 +28,7 @@ class WMMaskingInputSpec(BaseInterfaceInputSpec):
     atlas_file = File(
         exists=True, mandatory=True,
         desc='Label map used to divide hemispheres')
-    csf_file = File(exists=True, mandatory=True,
-                    desc='Posterior probability map of CSF')
+    posterior_files = traits.Dict(mandatory=True, desc='Posterior probability files')
     brainlabels_file = File(exists=True, mandatory=True,
                             desc='BRAINSABC brain labels')
     atlas_info = File(exists=True, mandatory=True,
@@ -74,7 +73,7 @@ class WMMasking(BaseInterface):
 
     def _run_interface(self, runtime):
         atlas_file = self.inputs.atlas_file
-        csf_file = self.inputs.csf_file
+        csf_file = self.inputs.posterior_files['CSF']
         brainlabels_file = self.inputs.brainlabels_file
         atlas_info = self.inputs.atlas_info
 
@@ -188,7 +187,7 @@ class WMMasking(BaseInterface):
         # Define CSF regions
         # Threshold for CSF
         Thresh = .9
-        CSFMask = CSFImage > Thresh
+        CSFMask = sitk.BinaryThreshold(CSFImage, Thresh, 1.1)
         CSFMask = CSFMask * (1 - preservedRegions)
 
         # Remove mask around cerebellum and brain stem

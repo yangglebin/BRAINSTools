@@ -952,4 +952,25 @@ def generate_single_session_template_WF(projectid, subjectid, sessionid, onlyT1,
         baw201.connect(myLocalJointFusion,'outputspec.JointFusion_lobe_volumes_csv', DataSink, 'JointFusion.lobeVol.@JointFusion_lobe_volumesCSV')
         baw201.connect(myLocalJointFusion,'outputspec.JointFusion_lobe_volumes_json', DataSink, 'JointFusion.lobeVol.@JointFusion_lobe_volumesJSON')
 
+        if 'LOGIMSOS-B' in master_config['components']:
+            print("LOGIMSOS-B Workflow")
+            from AutoWorkup.logismosb import create_logb_workflow
+
+            # connect LOGISMOSB inputs
+            myLocalLOGISMOSBWF = create_logb_workflow()
+            baw201.connect(myLocalTCWF, 'outputspec.t1_average', myLocalLOGISMOSBWF, 'inputspec.t1_file')
+            baw201.connect(myLocalTCWF, 'outputspec.t2_average', myLocalLOGISMOSBWF, 'inputspec.t2_file')
+            baw201.connect(myLocalJointFusion, 'outputspec.JointFusion_HDAtlas20_2015_fs_standard_label',
+                           myLocalLOGISMOSBWF, 'inputspec.joint_fusion_file')
+            baw201.connect(BResample['hncma_atlas'], 'outputVolume', myLocalLOGISMOSBWF, 'inputspec.hncma_atlas')
+            baw201.connect(myLocalBrainStemWF, 'outputspec.ouputTissuelLabelFilename', myLocalLOGISMOSBWF,
+                           'inputspec.brainlabels_file')
+            baw201.connect(myLocalTCWF, 'outputspec.posteriorImages', myLocalLOGISMOSBWF, 'inputspec.posterior_files')
+
+            # connect LOGISMOSB outputs to the data sink
+            baw201.connect(myLocalLOGISMOSBWF, 'outputspec.lh_gmsurface_file', DataSink, 'LOGISMOSB.@lh_gm_surf')
+            baw201.connect(myLocalLOGISMOSBWF, 'outputspec.lh_wmsurface_file', DataSink, 'LOGISMOSB.@lh_wm_surf')
+            baw201.connect(myLocalLOGISMOSBWF, 'outputspec.rh_wmsurface_file', DataSink, 'LOGISMOSB.@rh_wm_surf')
+            baw201.connect(myLocalLOGISMOSBWF, 'outputspec.rh_gmsurface_file', DataSink, 'LOGISMOSB.@rh_gm_surf')
+
     return baw201
