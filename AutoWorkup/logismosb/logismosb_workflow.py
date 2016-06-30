@@ -5,6 +5,7 @@ from nipype.interfaces.utility import Function, IdentityInterface
 from nipype.pipeline import Node, Workflow
 from nipype.interfaces.io import DataSink
 from interfaces import *
+import json
 
 
 def leftorright(
@@ -25,7 +26,10 @@ def leftorright(
     return hemisphere, wm_file, mask_file, mesh_file, boundary_file
 
 
-def create_logb_workflow(config):
+def create_logb_workflow(name="LOGIMSOSB"):
+
+    with open("config.json", "rb") as config_file:
+        config = json.load(config_file)
 
     inputs_node = Node(
         IdentityInterface(
@@ -57,9 +61,10 @@ def create_logb_workflow(config):
     logB.inputs.w = config['LOGISMOSB']['w']
     logB.inputs.a = config['LOGISMOSB']['a']
     logB.inputs.nPropagate = config['LOGISMOSB']['nPropagate']
-    if config['LOGISMOSB']['useHNCMALabels']:
+    if config['LOGISMOSB']['thickRegions']:
+        logB.inputs.thick_regions = config['LOGISMOSB']['thickRegions']
+    else:
         logB.inputs.useHNCMALabels = True
-        logB.inputs.thick_regions = config['LOGISMOSB']['HNCMAThickRegions']
 
     logB_outputnode = Node(IdentityInterface(fields=["gmsurface_file",
                                                      "wmsurface_file",
@@ -91,7 +96,7 @@ def create_logb_workflow(config):
     ctx_thickness = Node(ComputeDistance(), name="ctx_thickness")
     ctx_thickness.inputs.atlas_info = config['atlas_info']
 
-    LOGB_WF = Workflow(name="LOGB_WF")
+    LOGB_WF = Workflow(name=name)
 
     LOGB_WF.connect([(inputs_node, wmMasking_node, [("csf_file", "csf_file"),
                                                     ("fswm_atlas", "atlas_file"),
@@ -120,7 +125,6 @@ def create_logb_workflow(config):
                      (inputs_node, gm_labels, [('fswm_atlas', 'atlas_file')]),
                      (inputs_node, logB, [('hncma_atlas', 'atlas_file')])
                      ])
-
 
     if config['Results_Directory']:
         # datasink the workflow
