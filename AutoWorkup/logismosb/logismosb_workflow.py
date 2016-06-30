@@ -45,7 +45,8 @@ def create_logb_workflow(name="LOGISMOSB_WF"):
 
         logb_wf.connect([(white_matter_masking_node, genus_zero_filter, [('{0}_wm'.format(hemisphere), 'in_file')])])
 
-        surface_generation = Node(interface=BRAINSSurfaceGeneration(), name="{0}_BRAINSSurfaceGeneration".format(hemisphere))
+        surface_generation = Node(interface=BRAINSSurfaceGeneration(),
+                                  name="{0}_BRAINSSurfaceGeneration".format(hemisphere))
         surface_generation.inputs.smoothSurface = config['BRAINSSurfaceGeneration']['smoothSurface']
         surface_generation.inputs.numIterations = config['BRAINSSurfaceGeneration']['numIterations']
         surface_generation.inputs.out_file = "{0}_white_matter_surface.vtk".format(hemisphere)
@@ -68,13 +69,16 @@ def create_logb_workflow(name="LOGISMOSB_WF"):
             logismosb.inputs.useHNCMALabels = True
 
         logb_wf.connect([(inputs_node, logismosb, [("t1_file", "t1_file"),
-                                              ("t2_file", "t2_file"),
-                                              ('hncma_atlas', 'atlas_file')]),
+                                                   ("t2_file", "t2_file"),
+                                                   ('hncma_atlas', 'atlas_file')]),
                          (genus_zero_filter, logismosb, [("out_file", "wm_file")]),
                          (surface_generation, logismosb, [("out_file", "mesh_file")]),
-                         (white_matter_masking_node, logismosb, [('{0}_boundary'.format(hemisphere), 'brainlabels_file')]),
-                         (logismosb, logismosb_output_node, [("gmsurface_file", "{0}_gmsurface_file".format(hemisphere)),
-                                                        ("wmsurface_file", "{0}_wmsurface_file".format(hemisphere))])])
+                         (white_matter_masking_node, logismosb, [('{0}_boundary'.format(hemisphere),
+                                                                  'brainlabels_file')]),
+                         (logismosb, logismosb_output_node, [("gmsurface_file",
+                                                              "{0}_gmsurface_file".format(hemisphere)),
+                                                             ("wmsurface_file",
+                                                              "{0}_wmsurface_file".format(hemisphere))])])
 
         ctx_thickness = Node(ComputeDistance(), name="ctx_thickness")
         ctx_thickness.inputs.atlas_info = config['atlas_info']
