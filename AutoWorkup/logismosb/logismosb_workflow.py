@@ -1,13 +1,11 @@
 # LOGISMOS-B Workflow
 # Import Nipype classes
 
-from nipype.interfaces.semtools.registration.brainsresample import BRAINSResample
 from nipype.interfaces.utility import Function, IdentityInterface
 from nipype.pipeline import Node, Workflow
-from nipype import config, logging
 from nipype.interfaces.io import DataSink
-from logismosb import *
-import os
+from interfaces import *
+
 
 def leftorright(
         hemisphere,
@@ -26,6 +24,7 @@ def leftorright(
     mesh_file = hemisphere + '_g0_wm.vtk'
     return hemisphere, wm_file, mask_file, mesh_file, boundary_file
 
+
 def create_logb_workflow(config):
 
     inputs_node = Node(
@@ -37,14 +36,8 @@ def create_logb_workflow(config):
                     'csf_file',
                     'fswm_atlas',
                     'brainlabels_file',
-                    'atlas_to_subject']), name="Inputs")
+                    'hncma_atlas']), name="Inputs")
     inputs_node.run_without_submitting = True
-
-    resample = Node(interface=BRAINSResample(), name="Resample_HNCMA")
-    resample.inputs.interpolationMode = config['BRAINSResample']['mode']
-    resample.inputs.pixelType = config['BRAINSResample']['pixelType']
-    resample.inputs.inputVolume = config['BRAINSResample']['atlas']
-    resample.inputs.outputVolume = config['BRAINSResample']['out_file']
 
     g0 = Node(interface=GenusZeroImageFilter(), name="GenusZeroImageFilter")
     g0.inputs.connectivity = config['GenusZeroImageFilter']['connectivity']
@@ -125,55 +118,55 @@ def create_logb_workflow(config):
                      (gm_labels, ctx_thickness, [('out_file', 'labels_file')]),
                      (hemi_inputs_node, ctx_thickness, [('hemisphere', 'hemisphere')]),
                      (inputs_node, gm_labels, [('fswm_atlas', 'atlas_file')]),
-                     (inputs_node, resample, [('t1_file', 'referenceVolume'),
-                                              ('atlas_to_subject', 'warpTransform')]),
-                     (resample, logB, [('outputVolume', 'atlas_file')])
+                     (inputs_node, logB, [('hncma_atlas', 'atlas_file')])
                      ])
 
-    def myBaseDir(results_dir, subject_id, session):
-        import os
-        base_dir = os.path.abspath(os.path.join(results_dir, subject_id, session))
-        return base_dir
 
-    # DataSink
-    base_dir_name = Node(Function(['results_dir', 'subject_id', 'session'],
-                                  ['base_dir'],
-                                  myBaseDir),
-                         name="Base_Dir_Name")
-    base_dir_name.inputs.results_dir = config['Results_Directory']
-    base_dir_name.run_without_submitting = True
+    if config['Results_Directory']:
+        # datasink the workflow
+        def myBaseDir(results_dir, subject_id, session):
+            import os
+            base_dir = os.path.abspath(os.path.join(results_dir, subject_id, session))
+            return base_dir
 
-    data_sink = Node(DataSink(), name="LOGISMOSB_DataSink")
-    substitutions = [('_hemisphere_lh', ''),
-                     ('_hemisphere_rh', '')]
-    if config['BAW_Directories'] != None and len(config['BAW_Directories']) > 0:
-        for sub in config['BAW_Directories']:
-            my_sub = ('_baw_dir_{0}'.format(sub.replace('/', '..')), '')
-            substitutions.append(my_sub)
-    data_sink.inputs.substitutions = substitutions
-    LOGB_WF.connect([(base_dir_name, data_sink, [('base_dir', 'base_directory')]),
-                     (inputs_node, base_dir_name, [('subject_id', 'subject_id'),
-                                                   ('session_id', 'session')]),
-                     (logB, data_sink, [('gmsurface_file', 'LOGISMOSB'),
-                                        ('wmsurface_file', 'LOGISMOSB.@a'),
-                                        ('profile_file', 'LOGISMOSB.@g'),
-                                        ]),
-                     (ctx_thickness, data_sink, [('out_file', 'LOGISMOSB.@b')]),
-                     (gm_labels, data_sink, [('out_file', 'LOGISMOSB.@c')]),
-                     (resample, data_sink, [('outputVolume', 'LOGISMOSB.@d')]),
-                     (g0, data_sink, [('out_file', 'LOGISMOSB.@e')]),
-                     (BSG, data_sink, [('out_file', 'LOGISMOSB.@f')]),
-                     (hemi_inputs_node, data_sink, [("boundary_file", "LOGISMOSB.@h")]),
+        # DataSink
+        base_dir_name = Node(Function(['results_dir', 'subject_id', 'session'],
+                                      ['base_dir'],
+                                      myBaseDir),
+                             name="Base_Dir_Name")
+        base_dir_name.inputs.results_dir = config['Results_Directory']
+        base_dir_name.run_without_submitting = True
 
-                     ])
+        data_sink = Node(DataSink(), name="LOGISMOSB_DataSink")
+        substitutions = [('_hemisphere_lh', ''),
+                         ('_hemisphere_rh', '')]
+        if config['BAW_Directories'] != None and len(config['BAW_Directories']) > 0:
+            for sub in config['BAW_Directories']:
+                my_sub = ('_baw_dir_{0}'.format(sub.replace('/', '..')), '')
+                substitutions.append(my_sub)
+        data_sink.inputs.substitutions = substitutions
 
-    if config['copy_BAW']:
-        LOGB_WF.connect([(inputs_node, data_sink, [('subject_id', 'BAW'),
-                                                   ('session_id', 'BAW.@a'),
-                                                   ('t1_file', 'BAW.@b'),
-                                                   ('t2_file', 'BAW.@c'),
-                                                   ('csf_file', 'BAW.@d'),
-                                                   ('fswm_atlas', 'BAW.@e'),
-                                                   ('brainlabels_file', 'BAW.@f')])])
+        LOGB_WF.connect([(base_dir_name, data_sink, [('base_dir', 'base_directory')]),
+                         (inputs_node, base_dir_name, [('subject_id', 'subject_id'),
+                                                       ('session_id', 'session')]),
+                         (logB, data_sink, [('gmsurface_file', 'LOGISMOSB'),
+                                            ('wmsurface_file', 'LOGISMOSB.@a'),
+                                            ('profile_file', 'LOGISMOSB.@g'),
+                                            ]),
+                         (ctx_thickness, data_sink, [('out_file', 'LOGISMOSB.@b')]),
+                         (gm_labels, data_sink, [('out_file', 'LOGISMOSB.@c')]),
+                         (g0, data_sink, [('out_file', 'LOGISMOSB.@e')]),
+                         (BSG, data_sink, [('out_file', 'LOGISMOSB.@f')]),
+                         (hemi_inputs_node, data_sink, [("boundary_file", "LOGISMOSB.@h")]),
+                         ])
+
+        if config['copy_BAW']:
+            LOGB_WF.connect([(inputs_node, data_sink, [('subject_id', 'BAW'),
+                                                       ('session_id', 'BAW.@a'),
+                                                       ('t1_file', 'BAW.@b'),
+                                                       ('t2_file', 'BAW.@c'),
+                                                       ('csf_file', 'BAW.@d'),
+                                                       ('fswm_atlas', 'BAW.@e'),
+                                                       ('brainlabels_file', 'BAW.@f')])])
 
     return LOGB_WF

@@ -1,6 +1,6 @@
 from nipype.interfaces.base import (BaseInterface, BaseInterfaceInputSpec,
                                     traits, File, TraitedSpec, InputMultiPath,
-                                    CommandLineInputSpec, CommandLine)
+                                    CommandLineInputSpec, CommandLine, isdefined)
 from scipy.spatial import distance
 import os
 import csv
@@ -44,6 +44,7 @@ class WMMaskingInputSpec(BaseInterfaceInputSpec):
         Posterior probabilities above this threshold will be considered CSF
         """)
 
+
 class WMMaskingOutputSpec(TraitedSpec):
     lh_boundary = File(
         desc="""
@@ -58,6 +59,7 @@ class WMMaskingOutputSpec(TraitedSpec):
         desc="Binary mask of the white matter for the left hemisphere")
     rh_wm = File(
         desc="Binary mask of the white matter for the right hemisphere")
+
 
 class WMMasking(BaseInterface):
 
