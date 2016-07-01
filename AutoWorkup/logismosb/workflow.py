@@ -19,7 +19,7 @@ def read_json_config(relative_file_name):
     return config
 
 
-def create_logb_workflow(name="LOGISMOSB_WF"):
+def create_logb_workflow(name="LOGISMOSB_WF", master_config=None):
     logb_wf = Workflow(name=name)
 
     config = read_json_config("config.json")
@@ -36,7 +36,10 @@ def create_logb_workflow(name="LOGISMOSB_WF"):
 
     white_matter_masking_node = Node(interface=WMMasking(), name="WMMasking")
     white_matter_masking_node.inputs.dilation = config['WMMasking']['dilation']
-    white_matter_masking_node.inputs.atlas_info = config['atlas_info']
+    if master_config['labelmap_colorlookup_table']:
+        white_matter_masking_node.inputs.atlas_info = master_config['labelmap_colorlookup_table']
+    else:
+        white_matter_masking_node.inputs.atlas_info = get_local_file_location(config['atlas_info'])
 
     logb_wf.connect([(inputs_node, white_matter_masking_node, [("posterior_files", "posterior_files"),
                                                                ("joint_fusion_file", "atlas_file"),

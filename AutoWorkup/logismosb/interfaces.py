@@ -24,6 +24,73 @@ def parse_labels_xml(xml_file):
     return labels_dict
 
 
+def parse_lookup_table(lookup_table_file):
+    """Parses a lookup table to determine regions.
+    This allows the hemisphere splitting to adapt with updated lookup tables."""
+    labels_dict = dict()
+    with open(lookup_table_file, 'r') as lookup_table:
+        for line in lookup_table:
+
+            # parse line for label code
+            row = line.split(' ')
+            for i in range(row.count('')):
+                row.remove('')
+            code = row[0]
+
+            # continue if the code is a number
+            if code.isalnum():
+                name = row[1]
+
+                # determine hemisphere
+                if 'Left' in name or 'lh' in name:
+                    hemisphere = 'lh'
+                elif 'Right' in name or 'rh' in name:
+                    hemisphere = 'rh'
+                else:
+                    hemisphere = 'N/A'
+
+                # determine location
+                # set location to None. Then update it depending on the name.
+                location = None
+
+                if 'wm' in name:
+                    location = 'wm'
+                elif 'ctx' in name or 'gyrus' in name:
+                    location = 'gm'
+                elif 'CC' in name:
+                    location = "cc"
+                elif 'Ventricle' in name:
+                    location = "ventricle"
+
+                cerebellum_names = ['Cbm', 'Cerebellum', 'Cerebellum', 'Cerebellar', '4th-Ventricle', 'Brain-Stem',
+                                    'VentralDC']
+                subcortical_names = ['Thalamus', 'Caudate', 'Putamen', 'Pallidum', 'Hippocampus', 'Amygdala',
+                                     'Accumbens', 'Inf-Lat-Vent']
+
+                for designated_name, list_of_locations in [('cerebellum', cerebellum_names),
+                                                           ('subcortical', subcortical_names)]:
+                    for location_name in list_of_locations:
+                        if location_name in name:
+                            location = designated_name
+
+                if not location:
+                    location = "UNKNOWN"
+
+                labels_dict[code] = dict(name=name, hemisphere=hemisphere, location=location)
+
+    return labels_dict
+
+
+def parse_atlas_info(in_file):
+    _, ext = os.path.splitext(in_file)
+    if ext == '.txt':
+        return parse_lookup_table(in_file)
+    elif ext == '.xml':
+        return parse_labels_xml(in_file)
+    else:
+        print("Could not parse {0}".format(in_file))
+
+
 class WMMaskingInputSpec(BaseInterfaceInputSpec):
     atlas_file = File(
         exists=True, mandatory=True,
@@ -86,7 +153,6 @@ class WMMasking(BaseInterface):
         import os
 
         # Helpful methods
-
         # method to find largest connected component
         def largestConnectedComponent(image, minSize=1000):
             return sitk.RelabelComponent(sitk.ConnectedComponent(image), minSize) == 1
@@ -124,7 +190,7 @@ class WMMasking(BaseInterface):
         subcorticalRegions = (brainlabelsImage == 23) + (brainlabelsImage == 24) + \
             (brainlabelsImage == 25) + (brainlabelsImage == 21)
 
-        atlas_dict = parse_labels_xml(atlas_info)
+        atlas_dict = parse_atlas_info(atlas_info)
         for code in atlas_dict.iterkeys():
             location = atlas_dict[code]['location']
             hemi = atlas_dict[code]['hemisphere']

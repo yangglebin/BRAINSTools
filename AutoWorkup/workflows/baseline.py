@@ -957,7 +957,7 @@ def generate_single_session_template_WF(projectid, subjectid, sessionid, onlyT1,
             from AutoWorkup.logismosb import create_logb_workflow
 
             # connect LOGISMOSB inputs
-            myLocalLOGISMOSBWF = create_logb_workflow()
+            myLocalLOGISMOSBWF = create_logb_workflow(master_config=master_config)
             baw201.connect(myLocalTCWF, 'outputspec.t1_average', myLocalLOGISMOSBWF, 'inputspec.t1_file')
             baw201.connect(myLocalTCWF, 'outputspec.t2_average', myLocalLOGISMOSBWF, 'inputspec.t2_file')
             baw201.connect(myLocalJointFusion, 'outputspec.JointFusion_HDAtlas20_2015_fs_standard_label',

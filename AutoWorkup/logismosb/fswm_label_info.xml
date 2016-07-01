@@ -5730,6 +5730,18 @@
     <Hemisphere>lh</Hemisphere>
     <Location>gm</Location>
   </Label>
+    <Label>
+    <Name>ctx-lh-frontal</Name>
+    <Number>9007</Number>
+    <Hemisphere>lh</Hemisphere>
+    <Location>gm</Location>
+  </Label>
+    <Label>
+    <Name>ctx-lh-parietal</Name>
+    <Number>9008</Number>
+    <Hemisphere>lh</Hemisphere>
+    <Location>gm</Location>
+  </Label>
   <Label>
     <Name>ctx-rh-prefrontal</Name>
     <Number>9500</Number>
