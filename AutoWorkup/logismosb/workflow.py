@@ -36,7 +36,7 @@ def create_logb_workflow(name="LOGISMOSB_WF", master_config=None):
 
     white_matter_masking_node = Node(interface=WMMasking(), name="WMMasking")
     white_matter_masking_node.inputs.dilation = config['WMMasking']['dilation']
-    if master_config['labelmap_colorlookup_table']:
+    if master_config and master_config['labelmap_colorlookup_table']:
         white_matter_masking_node.inputs.atlas_info = master_config['labelmap_colorlookup_table']
     else:
         white_matter_masking_node.inputs.atlas_info = get_local_file_location(config['atlas_info'])

@@ -952,7 +952,7 @@ def generate_single_session_template_WF(projectid, subjectid, sessionid, onlyT1,
         baw201.connect(myLocalJointFusion,'outputspec.JointFusion_lobe_volumes_csv', DataSink, 'JointFusion.lobeVol.@JointFusion_lobe_volumesCSV')
         baw201.connect(myLocalJointFusion,'outputspec.JointFusion_lobe_volumes_json', DataSink, 'JointFusion.lobeVol.@JointFusion_lobe_volumesJSON')
 
-        if 'LOGISMOSB' in master_config['components']:
+        if 'logismosb' in master_config['components']:
             print("LOGISMOSB Workflow")
             from AutoWorkup.logismosb import create_logb_workflow
 
