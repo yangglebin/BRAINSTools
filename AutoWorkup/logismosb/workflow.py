@@ -97,7 +97,7 @@ def create_logb_workflow(name="LOGISMOSB_WF", master_config=None):
                                                              ("wmsurface_file",
                                                               "{0}_wmsurface_file".format(hemisphere))])])
 
-        ctx_thickness = Node(ComputeDistance(), name="ctx_thickness")
+        ctx_thickness = Node(ComputeDistance(), name="{0}_ctx_thickness".format(hemisphere))
         ctx_thickness.inputs.atlas_info = config['atlas_info']
         ctx_thickness.inputs.hemisphere = hemisphere
         logb_wf.connect([(gm_labels, ctx_thickness, [('out_file', 'labels_file')])])
