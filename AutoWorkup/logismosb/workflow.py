@@ -49,7 +49,7 @@ def create_logb_workflow(name="LOGISMOSB_WF", master_config=None):
     gm_labels.inputs.atlas_info = get_local_file_location(config['atlas_info'])
     logb_wf.connect([(inputs_node, gm_labels, [('joint_fusion_file', 'atlas_file')])])
 
-    logismosb_output_node = LOGIMOSBOutputSpec(["wmsurface_file", "gmsurface_file"], config["hemisphere_names"],
+    logismosb_output_node = create_output_spec(["wmsurface_file", "gmsurface_file"], config["hemisphere_names"],
                                                name="outputspec")
 
     for hemisphere in config["hemisphere_names"]:
@@ -104,10 +104,9 @@ def create_logb_workflow(name="LOGISMOSB_WF", master_config=None):
     return logb_wf
 
 
-class LOGIMOSBOutputSpec(IdentityInterface):
-    def __init__(self, outputs, hemisphere_names, **inputs):
-        final_output_names = list()
-        for output in outputs:
-            for hemisphere in hemisphere_names:
-                final_output_names.append("{0}_".format(hemisphere) + output)
-        super(LOGIMOSBOutputSpec, self).__init__(fields=final_output_names, **inputs)
+def create_output_spec(outputs, hemisphere_names, name):
+    final_output_names = list()
+    for output in outputs:
+        for hemisphere in hemisphere_names:
+            final_output_names.append("{0}_".format(hemisphere) + output)
+    return Node(IdentityInterface(final_output_names), name)

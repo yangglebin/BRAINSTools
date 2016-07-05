@@ -954,7 +954,7 @@ def generate_single_session_template_WF(projectid, subjectid, sessionid, onlyT1,
 
         if 'logismosb' in master_config['components']:
             print("LOGISMOSB Workflow")
-            from AutoWorkup.logismosb import create_logb_workflow
+            from logismosb import create_logb_workflow
 
             # connect LOGISMOSB inputs
             myLocalLOGISMOSBWF = create_logb_workflow(master_config=master_config)
