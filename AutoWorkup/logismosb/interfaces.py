@@ -101,12 +101,12 @@ class WMMaskingInputSpec(BaseInterfaceInputSpec):
     atlas_info = File(exists=True, mandatory=True,
                       desc='input label information in xml format')
     dilation = traits.Int(
-        0, desc="""
+        default_value=0, desc="""
         Parameter to adjust the dilation of the boundary mask (default=0)
         A negative value will erode the boundary mask.
         """)
-    csf_threshold = traits.Int(
-        0.9, desc="""
+    csf_threshold = traits.Float(
+        default_value=0.9, desc="""
         Posterior probabilities above this threshold will be considered CSF
         """)
 
@@ -172,9 +172,9 @@ class WMMasking(BaseInterface):
 
         # Read input images
         # Read images
-        fswmImage = sitk.Cast(sitk.ReadImage(atlas_file), sitk.sitkUInt32)
-        CSFImage = sitk.Cast(sitk.ReadImage(csf_file), sitk.sitkUInt32)
-        brainlabelsImage = sitk.Cast(sitk.ReadImage(brainlabels_file), sitk.sitkUInt32)
+        fswmImage = sitk.ReadImage(atlas_file, sitk.sitkUInt32)
+        CSFImage = sitk.ReadImage(csf_file, sitk.sitkFloat64)
+        brainlabelsImage = sitk.ReadImage(brainlabels_file, sitk.sitkUInt32)
 
         # Create label dictionary, hemisphere, and cerebellum masks
         RightTemplate = fswmImage < 0
@@ -252,8 +252,8 @@ class WMMasking(BaseInterface):
 
         # Define CSF regions
         # Threshold for CSF
-        Thresh = .9
-        CSFMask = sitk.BinaryThreshold(CSFImage, Thresh, 1.1)
+        Thresh = self.inputs.csf_threshold
+        CSFMask = sitk.BinaryThreshold(CSFImage, Thresh)
         CSFMask = CSFMask * (1 - preservedRegions)
 
         # Remove mask around cerebellum and brain stem
