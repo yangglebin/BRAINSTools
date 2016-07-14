@@ -4,7 +4,11 @@
   "Results_Directory": null,
   "Cache_Directory": null,
   "atlas_info": "fswm_label_info.xml",
-  "WMMasking": { "dilation": 0 },
+  "WMMasking": {
+    "dilation": 0 ,
+    "csf_threshold": 0.9
+
+  },
   "GenusZeroImageFilter": {
     "connectivity": 6,
     "biggestComponent" : true,
