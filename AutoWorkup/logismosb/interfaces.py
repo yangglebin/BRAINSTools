@@ -154,40 +154,40 @@ class WMMasking(BaseInterface):
 
         # Helpful methods
         # method to find largest connected component
-        def largestConnectedComponent(image, minSize=1000):
+        def largest_connected_component(image, minSize=1000):
             return sitk.RelabelComponent(sitk.ConnectedComponent(image), minSize) == 1
 
         # method to fill holes in the mask
-        def fillMaskHoles(image, minSize=0):
-            negConnected = largestConnectedComponent(1 - image, minSize)
+        def fill_mask_holes(image, minSize=0):
+            negConnected = largest_connected_component(1 - image, minSize)
             return 1 - negConnected
 
         def fillLateralVentricle(ventricle, boundary, ventricleDilation=1, dilationFactor=1):
-            ventTemp = largestConnectedComponent(ventricle)
+            ventTemp = largest_connected_component(ventricle)
             # Fill the ventricle region
             for i in range(ventricleDilation):
                 ventTemp = sitk.DilateObjectMorphology(ventTemp, dilationFactor) * boundary
-                ventTemp = largestConnectedComponent(ventTemp)
+                ventTemp = largest_connected_component(ventTemp)
             return ventTemp
 
         # Read input images
         # Read images
-        fswmImage = sitk.ReadImage(atlas_file, sitk.sitkUInt32)
-        CSFImage = sitk.ReadImage(csf_file, sitk.sitkFloat64)
+        malf_image = sitk.ReadImage(atlas_file, sitk.sitkUInt32)
+        csf_posteriors_image = sitk.ReadImage(csf_file, sitk.sitkFloat64)
         brainlabelsImage = sitk.ReadImage(brainlabels_file, sitk.sitkUInt32)
 
         # Create label dictionary, hemisphere, and cerebellum masks
-        RightTemplate = fswmImage < 0
-        LeftTemplate = fswmImage < 0
-        CerebellumMask = fswmImage < 0
-        LeftInsulaGM = fswmImage < 0
-        RightInsulaGM = fswmImage < 0
+        RightTemplate = malf_image < 0
+        LeftTemplate = malf_image < 0
+        CerebellumMask = malf_image < 0
+        LeftInsulaGM = malf_image < 0
+        RightInsulaGM = malf_image < 0
         # Define regions not to subtract from hemisphere mask
         # preserve the ventricle boundary mask
-        preservedRegions = fswmImage < 0
+        preservedRegions = malf_image < 0
 
         # Brain labels subcortical regions
-        subcorticalRegions = (brainlabelsImage == 23) + (brainlabelsImage == 24) + \
+        subcortical_regions = (brainlabelsImage == 23) + (brainlabelsImage == 24) + \
             (brainlabelsImage == 25) + (brainlabelsImage == 21)
 
         atlas_dict = parse_atlas_info(atlas_info)
@@ -196,33 +196,36 @@ class WMMasking(BaseInterface):
             hemi = atlas_dict[code]['hemisphere']
             name = atlas_dict[code]['name']
             if location == 'subcortical':
-                subcorticalRegions = subcorticalRegions + (fswmImage == code)
+                subcortical_regions = subcortical_regions + (malf_image == code)
             if location == 'cerebellum':
-                CerebellumMask = CerebellumMask + (fswmImage == code)
+                CerebellumMask = CerebellumMask + (malf_image == code)
             elif hemi == 'lh':
-                LeftTemplate = LeftTemplate + (fswmImage == code)
+                LeftTemplate = LeftTemplate + (malf_image == code)
                 if location == 'ventricle':
-                    LVentLabelMask = fswmImage == code
+                    LVentLabelMask = malf_image == code
                 elif 'insula' in name and location == 'gm':
-                    LeftInsulaGM = LeftInsulaGM + (fswmImage == code)
+                    LeftInsulaGM = LeftInsulaGM + (malf_image == code)
             elif hemi == 'rh':
-                RightTemplate = RightTemplate + (fswmImage == code)
+                RightTemplate = RightTemplate + (malf_image == code)
                 if location == 'ventricle':
-                    RVentLabelMask = fswmImage == code
+                    right_ventricle_label_mask = malf_image == code
                 elif 'insula' in name and location == 'gm':
-                    RightInsulaGM = RightInsulaGM + (fswmImage == code)
+                    RightInsulaGM = RightInsulaGM + (malf_image == code)
             elif location == 'ventricle' or location == 'cc':
-                preservedRegions = preservedRegions + (fswmImage == code)
+                preservedRegions = preservedRegions + (malf_image == code)
 
-        FilledRightTemplate = fillMaskHoles(RightTemplate, 1000)
-        FilledLeftTemplate = fillMaskHoles(LeftTemplate, 1000)
+        filled_right_template = fill_mask_holes(RightTemplate, 1000)
+        sitk.WriteImage(filled_right_template, "filled_right_template.nii.gz")
+        FilledLeftTemplate = fill_mask_holes(LeftTemplate, 1000)
 
         # Create left and right hemisphere WM masks
 
         # Define the latereral ventricles
         # Extract the right lateral and inferior ventricle from the label map
-        RVentBoundary = FilledRightTemplate
-        RVentFinal = fillLateralVentricle(RVentLabelMask, RVentBoundary)
+        RVentBoundary = filled_right_template
+        sitk.WriteImage(right_ventricle_label_mask, "right_ventricle_label_mask.nii.gz")
+        right_ventricle_final = fillLateralVentricle(right_ventricle_label_mask, RVentBoundary)
+        sitk.WriteImage(right_ventricle_final, "right_ventricle_final.nii.gz")
 
         # Extract the left lateral and inferior ventricle from the label map
         LVentBoundary = FilledLeftTemplate
@@ -230,18 +233,18 @@ class WMMasking(BaseInterface):
 
         # Add subcortical regions and lateral ventricles to the WM mask
         WhiteMatter = brainlabelsImage == 1
-        CompleteWhiteMatter = (WhiteMatter + subcorticalRegions + RVentFinal + LVentFinal) > 0
-        WhiteMatterFinal = largestConnectedComponent(fillMaskHoles(CompleteWhiteMatter, 1000))
+        CompleteWhiteMatter = (WhiteMatter + subcortical_regions + right_ventricle_final + LVentFinal) > 0
+        WhiteMatterFinal = largest_connected_component(fill_mask_holes(CompleteWhiteMatter, 1000))
 
         # Regions not included in white matter
         LeftWMTemplate = FilledLeftTemplate - LeftInsulaGM
-        RightWMTemplate = FilledRightTemplate - RightInsulaGM
+        RightWMTemplate = filled_right_template - RightInsulaGM
 
         # Split the hemispheres
         # left hemisphere white matter mask
-        LeftWhiteMatter = largestConnectedComponent(WhiteMatterFinal * LeftWMTemplate)
+        LeftWhiteMatter = largest_connected_component(WhiteMatterFinal * LeftWMTemplate)
         # right hemisphere white matter mask
-        RightWhiteMatter = largestConnectedComponent(WhiteMatterFinal * RightWMTemplate)
+        RightWhiteMatter = largest_connected_component(WhiteMatterFinal * RightWMTemplate)
 
         # Create right and left boundary masks
         # dilate preserved regions
@@ -253,16 +256,16 @@ class WMMasking(BaseInterface):
         # Define CSF regions
         # Threshold for CSF
         Thresh = self.inputs.csf_threshold
-        CSFMask = sitk.BinaryThreshold(CSFImage, Thresh)
+        CSFMask = sitk.BinaryThreshold(csf_posteriors_image, Thresh)
         CSFMask = CSFMask * (1 - preservedRegions)
 
         # Remove mask around cerebellum and brain stem
         cerebellumDilation = 1
         cerebellumMaskDilated = sitk.DilateObjectMorphology(CerebellumMask, cerebellumDilation)
         leftBoundaryMask = FilledLeftTemplate * (1 - cerebellumMaskDilated)
-        leftBoundaryMask = largestConnectedComponent(leftBoundaryMask)
-        rightBoundaryMask = FilledRightTemplate * (1 - cerebellumMaskDilated)
-        rightBoundaryMask = largestConnectedComponent(rightBoundaryMask)
+        leftBoundaryMask = largest_connected_component(leftBoundaryMask)
+        rightBoundaryMask = filled_right_template * (1 - cerebellumMaskDilated)
+        rightBoundaryMask = largest_connected_component(rightBoundaryMask)
 
         # Dilate or erode boundary masks
         boundaryDilation = self.inputs.dilation
@@ -279,9 +282,9 @@ class WMMasking(BaseInterface):
 
         # Remove CSF from hemisphere masks
         leftBoundaryMask = leftBoundaryMask * (1 - CSFMask)
-        leftBoundaryMask = largestConnectedComponent(leftBoundaryMask)
+        leftBoundaryMask = largest_connected_component(leftBoundaryMask)
         rightBoundaryMask = rightBoundaryMask * (1 - CSFMask)
-        rightBoundaryMask = largestConnectedComponent(rightBoundaryMask)
+        rightBoundaryMask = largest_connected_component(rightBoundaryMask)
 
         # Convert mask to brains label map
         leftBrainLabels = sitk.Cast(leftBoundaryMask, sitk.sitkUInt32) * brainlabelsImage
