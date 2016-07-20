@@ -983,6 +983,8 @@ def generate_single_session_template_WF(projectid, subjectid, sessionid, onlyT1,
                                                                                        maxThreads=num_threads),
                                                          'overwrite': True})
         baw201.connect([(inputsSpec, reconall, [('T1s', 'inputspec.T1_files')])])
+        if not os.path.exists(subject_dir):
+            os.makedirs(subject_dir)
         reconall.inputs.inputspec.subjects_dir = subject_dir
         reconall.inputs.inputspec.num_threads = num_threads
         reconall.inputs.inputspec.subject_id = "FreeSurfer"
