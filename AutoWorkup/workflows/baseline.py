@@ -988,7 +988,7 @@ def generate_single_session_template_WF(projectid, subjectid, sessionid, onlyT1,
         if not os.path.exists(subject_dir):
             os.makedirs(subject_dir)
         print(type(subject_dir))
-        reconall.inputs.inputspec.subjects_dir = str(subject_dir)
+        reconall.inputs.inputspec.subjects_dir = subject_dir
         reconall.inputs.inputspec.num_threads = num_threads
         reconall.inputs.inputspec.subject_id = "FreeSurfer"
 
