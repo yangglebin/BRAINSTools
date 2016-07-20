@@ -982,7 +982,7 @@ def generate_single_session_template_WF(projectid, subjectid, sessionid, onlyT1,
                                                                                        minThreads=num_threads,
                                                                                        maxThreads=num_threads),
                                                          'overwrite': True})
-        baw201.connect([(myLocalTCWF, reconall, [('T1s', 'inputspec.T1_files')])])
+        baw201.connect([(inputsSpec, reconall, [('T1s', 'inputspec.T1_files')])])
         reconall.inputs.inputspec.subjects_dir = subject_dir
         reconall.inputs.inputspec.num_threads = num_threads
         reconall.inputs.inputspec.subject_id = "FreeSurfer"
