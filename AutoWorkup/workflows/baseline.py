@@ -973,4 +973,18 @@ def generate_single_session_template_WF(projectid, subjectid, sessionid, onlyT1,
             baw201.connect(myLocalLOGISMOSBWF, 'outputspec.rh_wmsurface_file', DataSink, 'LOGISMOSB.@rh_wm_surf')
             baw201.connect(myLocalLOGISMOSBWF, 'outputspec.rh_gmsurface_file', DataSink, 'LOGISMOSB.@rh_gm_surf')
 
+    if 'fs_nipype' in master_config['components']:
+        from nipype.workflows.smri.freesurfer import create_reconall_workflow
+        num_threads = 12
+        subject_dir = os.path.join(master_config['resultdir'], projectid, subjectid, sessionid)
+        reconall = create_reconall_workflow(plugin_args={'qsub_args': modify_qsub_args(queue=master_config['queue'],
+                                                                                       memoryGB=8,
+                                                                                       minThreads=num_threads,
+                                                                                       maxThreads=num_threads),
+                                                         'overwrite': True})
+        baw201.connect([(myLocalTCWF, reconall, [('T1s', 'inputspec.T1_files')])])
+        reconall.inputs.inputspec.subjects_dir = subject_dir
+        reconall.inputs.inputspec.num_threads = num_threads
+        reconall.inputs.inputspec.subject_id = "FreeSurfer"
+
     return baw201
