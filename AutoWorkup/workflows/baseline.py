@@ -976,7 +976,9 @@ def generate_single_session_template_WF(projectid, subjectid, sessionid, onlyT1,
     if 'fs_nipype' in master_config['components']:
         from nipype.workflows.smri.freesurfer import create_reconall_workflow
         num_threads = 12
-        subject_dir = os.path.join(master_config['resultdir'], projectid, subjectid, sessionid)
+        # HACK to convert subject_dir to supported string type
+        old_str = type("")
+        subject_dir = old_str(os.path.join(master_config['resultdir'], projectid, subjectid, sessionid))
         reconall = create_reconall_workflow(plugin_args={'qsub_args': modify_qsub_args(queue=master_config['queue'],
                                                                                        memoryGB=8,
                                                                                        minThreads=num_threads,
@@ -985,7 +987,8 @@ def generate_single_session_template_WF(projectid, subjectid, sessionid, onlyT1,
         baw201.connect([(inputsSpec, reconall, [('T1s', 'inputspec.T1_files')])])
         if not os.path.exists(subject_dir):
             os.makedirs(subject_dir)
-        reconall.inputs.inputspec.subjects_dir = subject_dir
+        print(type(subject_dir))
+        reconall.inputs.inputspec.subjects_dir = str(subject_dir)
         reconall.inputs.inputspec.num_threads = num_threads
         reconall.inputs.inputspec.subject_id = "FreeSurfer"
 
