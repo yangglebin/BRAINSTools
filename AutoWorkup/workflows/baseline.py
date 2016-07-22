@@ -1000,8 +1000,8 @@ def generate_single_session_template_WF(projectid, subjectid, sessionid, onlyT1,
                                                            maxThreads=num_threads),
                              'overwrite': True})
             baw201.connect([(reconall, myLocalFSLOGISMOSBWF, [('outputspec.aseg_presurf', 'inputspec.aseg_presurf'),
-                                                              ('outputspec.rawavg', 'inputspec.t1_file'),
-                                                              ('outputspec.t2_raw', 'inputspec.t2_file'),
+                                                              ('outputspec.rawavg', 'inputspec.rawavg'),
+                                                              ('outputspec.t2_raw', 'inputspec.t2_raw'),
                                                               ('outputspec.lh_white', 'inputspec.lh_white'),
                                                               ('outputspec.rh_white', 'inputspec.rh_white')]),
                             (BResample['hncma_atlas'], myLocalFSLOGISMOSBWF, [('outputVolume', 'inputspec.hncma_atlas')])
