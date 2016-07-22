@@ -21,7 +21,7 @@ def read_json_config(relative_file_name):
     return config
 
 
-def create_logb_workflow(name="LOGISMOSB_WF", master_config=None):
+def create_logb_workflow(name="LOGISMOSB_WF", master_config=None, plugin_args=None):
     logb_wf = Workflow(name=name)
 
     config = read_json_config("config.json")
@@ -87,6 +87,9 @@ def create_logb_workflow(name="LOGISMOSB_WF", master_config=None):
             logismosb.inputs.thick_regions = config['LOGISMOSB']['thickRegions']
         else:
             logismosb.inputs.useHNCMALabels = True
+
+        if plugin_args:
+            logismosb.plugin_args = plugin_args
 
         logb_wf.connect([(inputs_node, logismosb, [("t1_file", "t1_file"),
                                                    ("t2_file", "t2_file"),
