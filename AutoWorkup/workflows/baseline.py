@@ -987,9 +987,30 @@ def generate_single_session_template_WF(projectid, subjectid, sessionid, onlyT1,
         baw201.connect([(inputsSpec, reconall, [('T1s', 'inputspec.T1_files')])])
         if not os.path.exists(subject_dir):
             os.makedirs(subject_dir)
-        print(type(subject_dir))
         reconall.inputs.inputspec.subjects_dir = subject_dir
         reconall.inputs.inputspec.num_threads = num_threads
         reconall.inputs.inputspec.subject_id = "FreeSurfer"
+
+        if 'logismosb' in master_config['components']:
+            from logismosb import create_fs_logb_workflow_for_both_hemispheres
+            myLocalFSLOGISMOSBWF = create_fs_logb_workflow_for_both_hemispheres(
+                plugin_args={'qsub_args': modify_qsub_args(queue=master_config['queue'],
+                                                           memoryGB=8,
+                                                           minThreads=num_threads,
+                                                           maxThreads=num_threads),
+                             'overwrite': True})
+            baw201.connect([(reconall, myLocalFSLOGISMOSBWF, [('outputspec.aseg_presurf', 'inputspec.aseg_presurf'),
+                                                              ('outputspec.rawavg', 'inputspec.t1_file'),
+                                                              ('outputspec.t2_raw', 'inputspec.t2_file'),
+                                                              ('outputspec.lh_white', 'inputspec.lh_white'),
+                                                              ('outputspec.rh_white', 'inputspec.rh_white')]),
+                            (BResample['hncma_atlas'], myLocalFSLOGISMOSBWF, [('outputVolume', 'inputspec.hncma_atlas')])
+                            ])
+
+            baw201.connect([(myLocalFSLOGISMOSBWF, DataSink,
+                             [('outputspec.lh_gm_surf_file', 'LOGISMOSB.FreeSurfer.@lh_gm_surface_file'),
+                              ('outputspec.lh_wm_surf_file', 'LOGISMOSB.FreeSurfer.@lh_wm_surface_file'),
+                              ('outputspec.rh_gm_surf_file', 'LOGISMOSB.FreeSurfer.@rh_gm_surface_file'),
+                              ('outputspec.rh_wm_surf_file', 'LOGISMOSB.FreeSurfer.@rh_wm_surface_file')])])
 
     return baw201

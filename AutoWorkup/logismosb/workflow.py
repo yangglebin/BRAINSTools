@@ -118,13 +118,16 @@ def create_output_spec(outputs, hemisphere_names, name):
     return Node(IdentityInterface(final_output_names), name)
 
 
-def create_fs_compatible_logb_workflow(config, name="LOGISMOSB", plugin_args=None):
+def create_fs_compatible_logb_workflow(name="LOGISMOSB", plugin_args=None, config=None):
     """Create a workflow to run LOGISMOS-B from FreeSurfer Inputs"""
+
+    if not config:
+        config = read_json_config("fs_logb_config.json")
 
     wf = Workflow(name)
 
     inputspec = Node(IdentityInterface(['t1_file', 't2_file', 'white', 'aseg', 'hemi', 'recoding_file', 'gm_proba',
-                                        'wm_proba', 'lut_file']), name="inputspec")
+                                        'wm_proba', 'lut_file', 'hncma_atlas']), name="inputspec")
 
     # convert the white mesh to a vtk file with scanner coordinates
     to_vtk = Node(MRIsConvert(), name="WhiteVTK")
@@ -243,3 +246,39 @@ def create_fs_compatible_logb_workflow(config, name="LOGISMOSB", plugin_args=Non
                                     ('wmsurface_file', 'wm_surface_file')])])
 
     return wf
+
+
+def create_fs_logb_workflow_for_both_hemispheres(name="FSLOGB", plugin_args=None, ml=False, config=None):
+    """Creates a workflow that connects FreeSurfer with LOGISMOS-B"""
+
+    fslogb_wf = Workflow(name=name)
+
+    inputspec = Node(IdentityInterface(['recoding_file', 'lut_file', 'aseg_presurf', 'rawavg', 't2_raw', 'lh_white',
+                                        'rh_white', 'hncma_atlas']),
+                     name="inputspec")
+
+    inputspec.inputs.recoding_file = get_local_file_location("abc_fs_equivelants.json")
+    inputspec.inputs.lut_file = get_local_file_location("FreeSurferColorLUT.csv")
+
+    # create outputspec with gm and wm surfaces
+    outputs = ['lh_gm_surf_file', 'lh_wm_surf_file', 'rh_gm_surf_file', 'rh_wm_surf_file']
+    outputspec = Node(IdentityInterface(outputs), name="outputspec")
+
+    for hemi in ('lh', 'rh'):
+        hemi_logb_wf = create_fs_compatible_logb_workflow("{0}_LOGBWF".format(hemi), plugin_args=plugin_args,
+                                                          config=config)
+        hemi_logb_wf.inputs.inputspec.hemi = hemi
+        fslogb_wf.connect([(inputspec, hemi_logb_wf, [('aseg_presurf', 'inputspec.aseg'),
+                                                      ('rawavg', 'inputspec.t1_file'),
+                                                      ('t2_raw', 'inputspec.t2_file'),
+                                                      ('hncma_atlas', 'inputspec.hncma_atals'),
+                                                      ('{0}_white'.format(hemi), 'inputspec.white')]),
+                           (inputspec, hemi_logb_wf, [('recoding_file', 'inputspec.recoding_file'),
+                                                      ('lut_file', 'inputspec.lut_file')])])
+
+        # move the outputs from logb to the outputspec
+        fslogb_wf.connect([(hemi_logb_wf, outputspec, [('outputspec.gm_surface_file', '{0}_gm_surf_file'.format(hemi)),
+                                                       ('outputspec.wm_surface_file',
+                                                        '{0}_wm_surf_file'.format(hemi))])])
+
+    return fslogb_wf
