@@ -338,7 +338,7 @@ def vtkPoint_to_label(point, labelmap):
 # As advised on the ITK mailing list, label dilation can be implemented via
 # distance transforms and watershed transforms. This algorithm is illustrated
 # in SimpleITK python code below (courtesy of Bradely Lowekamp)
-def MultilabelDilation(img, radius=1, kernel=sitk.BinaryDilateImageFilter.Ball):
+def multilabel_dilation(img, radius=1, kernel=sitk.BinaryDilateImageFilter.Ball):
     distImg = sitk.SignedMaurerDistanceMap(img != 0,
                                            insideIsPositive=False,
                                            squaredDistance=False,
@@ -380,7 +380,7 @@ class CreateGMLabelMap(BaseInterface):
                 gm_mask = gm_mask + (atlas_img == code)
         gm_mask = gm_mask > 0
         gm_labels = sitk.Cast(gm_mask, sitk.sitkUInt64) * atlas_img
-        out_img = MultilabelDilation(sitk.Cast(gm_labels, sitk.sitkUInt64))
+        out_img = multilabel_dilation(sitk.Cast(gm_labels, sitk.sitkUInt64))
         sitk.WriteImage(out_img, self._list_outputs()['out_file'])
 
         return runtime

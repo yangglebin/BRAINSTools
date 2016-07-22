@@ -1,6 +1,8 @@
-from nipype.interfaces.utility import IdentityInterface
+from nipype.interfaces.utility import IdentityInterface, Function
 from nipype.pipeline import Node, Workflow
+from nipype.interfaces.freesurfer import MRIConvert, MRIsConvert
 from interfaces import *
+from freesurfer_utils import SplitLabels, SurfaceMask, recode_labelmap, create_ones_image, MultiLabelDilation
 import json
 
 
@@ -114,3 +116,130 @@ def create_output_spec(outputs, hemisphere_names, name):
         for hemisphere in hemisphere_names:
             final_output_names.append("{0}_".format(hemisphere) + output)
     return Node(IdentityInterface(final_output_names), name)
+
+
+def create_fs_compatible_logb_workflow(config, name="LOGISMOSB", plugin_args=None):
+    """Create a workflow to run LOGISMOS-B from FreeSurfer Inputs"""
+
+    wf = Workflow(name)
+
+    inputspec = Node(IdentityInterface(['t1_file', 't2_file', 'white', 'aseg', 'hemi', 'recoding_file', 'gm_proba',
+                                        'wm_proba', 'lut_file']), name="inputspec")
+
+    # convert the white mesh to a vtk file with scanner coordinates
+    to_vtk = Node(MRIsConvert(), name="WhiteVTK")
+    to_vtk.inputs.out_file = "white.vtk"
+    to_vtk.inputs.to_scanner = True
+
+    wf.connect(inputspec, 'white', to_vtk, 'in_file')
+
+    # convert brainslabels to nifti
+    aseg_to_nifti = Node(MRIConvert(), "ABCtoNIFTI")
+    aseg_to_nifti.inputs.out_file = "aseg.nii.gz"
+    aseg_to_nifti.inputs.out_orientation = "LPS"
+    wf.connect(inputspec, 'aseg', aseg_to_nifti, 'in_file')
+
+    # create brainslabels from aseg
+    aseg2brains = Node(Function(['in_file', 'recode_file', 'out_file'],
+                                ['out_file'],
+                                recode_labelmap), name="ConvertAseg2BRAINSLabels")
+    aseg2brains.inputs.out_file = "brainslabels.nii.gz"
+
+    wf.connect([(inputspec, aseg2brains, [('recoding_file', 'recode_file')]),
+                (aseg_to_nifti, aseg2brains, [('out_file', 'in_file')])])
+
+    t1_to_nifti = Node(MRIConvert(), "T1toNIFTI")
+    t1_to_nifti.inputs.out_file = "t1.nii.gz"
+    t1_to_nifti.inputs.out_orientation = "LPS"
+    wf.connect(inputspec, 't1_file', t1_to_nifti, 'in_file')
+
+    def t2_convert(in_file=None, out_file=None):
+        import os
+        from nipype.interfaces.freesurfer import MRIConvert
+        from nipype.interfaces.traits_extension import Undefined
+        from nipype import Node
+        if in_file:
+            t2_to_nifti = Node(MRIConvert(), "T2toNIFTI")
+            t2_to_nifti.inputs.in_file = in_file
+            t2_to_nifti.inputs.out_file = os.path.abspath(out_file)
+            t2_to_nifti.inputs.out_orientation = "LPS"
+            result = t2_to_nifti.run()
+            out_file = os.path.abspath(result.outputs.out_file)
+        else:
+            out_file = Undefined
+        return out_file
+
+    t2_node = Node(Function(['in_file', 'out_file'], ['out_file'], t2_convert), name="T2Convert")
+    t2_node.inputs.out_file = "t2.nii.gz"
+    wf.connect(inputspec, 't2_file', t2_node, 'in_file')
+
+    # convert raw t1 to lia
+    t1_to_ras = Node(MRIConvert(), "T1toRAS")
+    t1_to_ras.inputs.out_orientation = "LIA"
+    t1_to_ras.inputs.out_file = "t1_lia.mgz"
+    wf.connect(inputspec, 't1_file', t1_to_ras, 'in_file')
+
+    # Create ones image for use when masking the white matter
+    ones = Node(Function(['in_volume', 'out_file'],
+                         ['out_file'],
+                         create_ones_image),
+                name="Ones_Image")
+    ones.inputs.out_file = "ones.mgz"
+
+    wf.connect(t1_to_ras, 'out_file', ones, 'in_volume')
+
+    # use the ones image to obtain a white matter mask
+    surfmask = Node(SurfaceMask(), name="WhiteMask")
+    surfmask.inputs.out_file = "white_ras.mgz"
+
+    wf.connect(ones, 'out_file', surfmask, 'in_volume')
+    wf.connect(inputspec, 'white', surfmask, 'in_surface')
+
+    surfmask_to_nifti = Node(MRIConvert(), "MasktoNIFTI")
+    surfmask_to_nifti.inputs.out_file = "white.nii.gz"
+    surfmask_to_nifti.inputs.out_orientation = "LPS"
+
+    wf.connect(surfmask, 'out_file', surfmask_to_nifti, 'in_file')
+
+    # create hemi masks
+
+    split = Node(SplitLabels(), name="SplitLabelMask")
+    split.inputs.out_file = "HemiBrainLabels.nii.gz"
+    wf.connect([(aseg2brains, split, [('out_file', 'in_file')]),
+                (inputspec, split, [('lut_file', 'lookup_table')]),
+                (aseg_to_nifti, split, [('out_file', 'labels_file')]),
+                (inputspec, split, [('hemi', 'hemi')])])
+
+    dilate = Node(MultiLabelDilation(), "DilateLabels")
+    dilate.inputs.out_file = "DilatedBrainLabels.nii.gz"
+    dilate.inputs.radius = 1
+    wf.connect(split, 'out_file', dilate, 'in_file')
+
+    logb = Node(LOGISMOSB(), name="LOGISMOS-B")
+    logb.inputs.smoothnessConstraint = config['LOGISMOSB']['smoothnessConstraint']
+    logb.inputs.nColumns = config['LOGISMOSB']['nColumns']
+    logb.inputs.columnChoice = config['LOGISMOSB']['columnChoice']
+    logb.inputs.columnHeight = config['LOGISMOSB']['columnHeight']
+    logb.inputs.nodeSpacing = config['LOGISMOSB']['nodeSpacing']
+    logb.inputs.w = config['LOGISMOSB']['w']
+    logb.inputs.a = config['LOGISMOSB']['a']
+    logb.inputs.nPropagate = config['LOGISMOSB']['nPropagate']
+
+    if plugin_args:
+        logb.plugin_args = plugin_args
+
+    wf.connect([(t1_to_nifti, logb, [('out_file', 't1_file')]),
+                (t2_node, logb, [('out_file', 't2_file')]),
+                (inputspec, logb, [('hemi', 'basename'),
+                                   ('wm_proba', 'wm_proba_file'),
+                                   ('gm_proba', 'gm_proba_file')]),
+                (to_vtk, logb, [('converted', 'mesh_file')]),
+                (surfmask_to_nifti, logb, [('out_file', 'wm_file')]),
+                (dilate, logb, [('out_file', 'brainlabels_file')])])
+
+    outputspec = Node(IdentityInterface(['gm_surface_file', 'wm_surface_file']), name="outputspec")
+
+    wf.connect([(logb, outputspec, [('gmsurface_file', 'gm_surface_file'),
+                                    ('wmsurface_file', 'wm_surface_file')])])
+
+    return wf
