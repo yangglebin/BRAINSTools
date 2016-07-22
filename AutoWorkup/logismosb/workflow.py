@@ -271,7 +271,7 @@ def create_fs_logb_workflow_for_both_hemispheres(name="FSLOGB", plugin_args=None
         fslogb_wf.connect([(inputspec, hemi_logb_wf, [('aseg_presurf', 'inputspec.aseg'),
                                                       ('rawavg', 'inputspec.t1_file'),
                                                       ('t2_raw', 'inputspec.t2_file'),
-                                                      ('hncma_atlas', 'inputspec.hncma_atals'),
+                                                      ('hncma_atlas', 'inputspec.hncma_atlas'),
                                                       ('{0}_white'.format(hemi), 'inputspec.white')]),
                            (inputspec, hemi_logb_wf, [('recoding_file', 'inputspec.recoding_file'),
                                                       ('lut_file', 'inputspec.lut_file')])])
