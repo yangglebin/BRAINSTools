@@ -109,6 +109,7 @@ def create_label_watershed(labels_image, markWatershedLine=False):
 class MultiLabelDilationInputSpec(BaseInterfaceInputSpec):
     in_file = traits.File(exists=True, mandatory=True)
     out_file = traits.File(mandatory=True)
+    radius = traits.Int(1, use_default=True)
 
 
 class MultiLabelDilationOutputSpec(TraitedSpec):
@@ -120,7 +121,7 @@ class MultiLabelDilation(BaseInterface):
     output_spec = MultiLabelDilationOutputSpec
 
     def _run_interface(self, runtime):
-        self.output_spec.out_file = multilabel_dilation(self.inputs.in_file, self.inputs.out_file)
+        self.output_spec.out_file = multilabel_dilation(self.inputs.in_file, self.inputs.out_file, self.inputs.radius)
         return runtime
 
     def _list_outputs(self):
