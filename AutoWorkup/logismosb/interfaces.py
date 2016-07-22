@@ -529,6 +529,8 @@ class LOGISMOSBInputSpec(CommandLineInputSpec):
     thick_regions = traits.List(traits.Int(), argstr="-r %s", mandatory=False, sep=',',
                                 desc="List of regions in the atlas file to that will be thicker")
     useHNCMALabels = traits.Bool(argstr="--useHNCMALabels", desc="Uses HCNMA label map to define thick regions")
+    wm_proba_file = File(exist=True, argstr='--wmProbaMap %s', desc="White matter pobability map.")
+    gm_proba_file = File(exist=True, argstr='--gmProbaMap %s', desc="Gray matter pobability map.")
 
 
 class LOGISMOSBOutputSpec(TraitedSpec):
