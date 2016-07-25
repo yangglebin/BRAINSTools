@@ -985,13 +985,23 @@ def generate_single_session_template_WF(projectid, subjectid, sessionid, onlyT1,
         # HACK to convert subject_dir to supported string type
         old_str = type("")
         subject_dir = old_str(os.path.join(master_config['resultdir'], projectid, subjectid, sessionid))
+
+        # HACK: Select first T2 from the list of input T2s
+        def select_t2_file(T2s):
+            T2_file = T2s[0]
+            return T2_file
+
+        select_t2_node = pe.Node(Function(['T2s'], ['T2_file'], select_t2_file), "SelectSingleT2")
+        baw201.connect(inputsSpec, 'T2s', select_t2_node, 'T2s')
+
         reconall = create_reconall_workflow(plugin_args={'qsub_args': modify_qsub_args(queue=master_config['queue'],
                                                                                        memoryGB=8,
                                                                                        minThreads=num_threads,
                                                                                        maxThreads=num_threads),
                                                          'overwrite': True})
-        baw201.connect([(inputsSpec, reconall, [('T1s', 'inputspec.T1_files'),
-                                                ('T2s', 'inputspec.T2_file')])])
+
+        baw201.connect([(inputsSpec, reconall, [('T1s', 'inputspec.T1_files')]),
+                        (select_t2_node, reconall, [('T2_file', 'T2_file')])])
         if not os.path.exists(subject_dir):
             os.makedirs(subject_dir)
         reconall.inputs.inputspec.subjects_dir = subject_dir
