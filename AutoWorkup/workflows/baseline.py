@@ -990,7 +990,8 @@ def generate_single_session_template_WF(projectid, subjectid, sessionid, onlyT1,
                                                                                        minThreads=num_threads,
                                                                                        maxThreads=num_threads),
                                                          'overwrite': True})
-        baw201.connect([(inputsSpec, reconall, [('T1s', 'inputspec.T1_files')])])
+        baw201.connect([(inputsSpec, reconall, [('T1s', 'inputspec.T1_files'),
+                                                ('T2s', 'inputspec.T2_file')])])
         if not os.path.exists(subject_dir):
             os.makedirs(subject_dir)
         reconall.inputs.inputspec.subjects_dir = subject_dir
