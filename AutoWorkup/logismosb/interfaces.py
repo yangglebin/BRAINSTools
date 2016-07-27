@@ -108,7 +108,8 @@ class WMMaskingInputSpec(BaseInterfaceInputSpec):
     csf_threshold = traits.Float(
         default_value=0.9, desc="""
         Posterior probabilities above this threshold will be considered CSF
-        """)
+        """, use_default=True)
+    hncma_file = File(exists=True, desc="HNCMA atlas is used to define ventricles.")
 
 
 class WMMaskingOutputSpec(TraitedSpec):
@@ -202,7 +203,7 @@ class WMMasking(BaseInterface):
             elif hemi == 'lh':
                 LeftTemplate = LeftTemplate + (malf_image == code)
                 if location == 'ventricle':
-                    LVentLabelMask = malf_image == code
+                    left_ventricle_label_mask = malf_image == code
                 elif 'insula' in name and location == 'gm':
                     LeftInsulaGM = LeftInsulaGM + (malf_image == code)
             elif hemi == 'rh':
@@ -215,25 +216,29 @@ class WMMasking(BaseInterface):
                 preservedRegions = preservedRegions + (malf_image == code)
 
         filled_right_template = fill_mask_holes(RightTemplate, 1000)
-        sitk.WriteImage(filled_right_template, "filled_right_template.nii.gz")
         FilledLeftTemplate = fill_mask_holes(LeftTemplate, 1000)
 
         # Create left and right hemisphere WM masks
 
         # Define the latereral ventricles
         # Extract the right lateral and inferior ventricle from the label map
+        if isdefined(self.inputs.hncma_file):
+            hncma_left_ventricle_code = 4
+            hncma_right_ventricle_code = 43
+            hncma_atlas = sitk.ReadImage(self.inputs.hncma_file)
+            right_ventricle_label_mask = right_ventricle_label_mask + (hncma_atlas == hncma_right_ventricle_code)
+            left_ventricle_label_mask = left_ventricle_label_mask + (hncma_atlas == hncma_left_ventricle_code)
+
         RVentBoundary = filled_right_template
-        sitk.WriteImage(right_ventricle_label_mask, "right_ventricle_label_mask.nii.gz")
         right_ventricle_final = fillLateralVentricle(right_ventricle_label_mask, RVentBoundary)
-        sitk.WriteImage(right_ventricle_final, "right_ventricle_final.nii.gz")
 
         # Extract the left lateral and inferior ventricle from the label map
-        LVentBoundary = FilledLeftTemplate
-        LVentFinal = fillLateralVentricle(LVentLabelMask, LVentBoundary)
+        left_ventricle_boundary = FilledLeftTemplate
+        left_ventricle_final = fillLateralVentricle(left_ventricle_label_mask, left_ventricle_boundary)
 
         # Add subcortical regions and lateral ventricles to the WM mask
         WhiteMatter = brainlabelsImage == 1
-        CompleteWhiteMatter = (WhiteMatter + subcortical_regions + right_ventricle_final + LVentFinal) > 0
+        CompleteWhiteMatter = (WhiteMatter + subcortical_regions + right_ventricle_final + left_ventricle_final) > 0
         WhiteMatterFinal = largest_connected_component(fill_mask_holes(CompleteWhiteMatter, 1000))
 
         # Regions not included in white matter

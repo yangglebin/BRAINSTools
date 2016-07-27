@@ -47,7 +47,8 @@ def create_logb_workflow(name="LOGISMOSB_WF", master_config=None, plugin_args=No
 
     logb_wf.connect([(inputs_node, white_matter_masking_node, [("posterior_files", "posterior_files"),
                                                                ("joint_fusion_file", "atlas_file"),
-                                                               ("brainlabels_file", "brainlabels_file")])])
+                                                               ("brainlabels_file", "brainlabels_file"),
+                                                               ("hncma_atlas", "hncma_file")])])
 
     gm_labels = Node(interface=CreateGMLabelMap(), name="GM_Labelmap")
     gm_labels.inputs.atlas_info = config['atlas_info']
