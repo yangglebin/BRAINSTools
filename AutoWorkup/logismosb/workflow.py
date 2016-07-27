@@ -1,6 +1,7 @@
 from nipype.interfaces.utility import IdentityInterface, Function
 from nipype.pipeline import Node, Workflow
 from nipype.interfaces.freesurfer import MRIConvert, MRIsConvert
+from nipype.interfaces.semtools import BRAINSResample
 from interfaces import *
 from freesurfer_utils import SplitLabels, SurfaceMask, recode_labelmap, create_ones_image, MultiLabelDilation
 import json
@@ -36,6 +37,15 @@ def create_logb_workflow(name="LOGISMOSB_WF", master_config=None, plugin_args=No
                     'brainlabels_file',
                     'hncma_atlas']), name="inputspec")
     inputs_node.run_without_submitting = True
+
+    # ensure that t1 and t2 are in the same voxel lattice
+    input_t2 = Node(BRAINSResample(), "ResampleInputT2Volume")
+    input_t2.inputs.outputVolume = "t2_resampled.nii.gz"
+    input_t2.inputs.pixelType = 'ushort'
+    input_t2.inputs.interpolationMode = "Linear"
+
+    logb_wf.connect([(inputs_node, input_t2, [('t1_file', 'referenceVolume'),
+                                              ('t2_file', 'inputVolume')])])
 
     white_matter_masking_node = Node(interface=WMMasking(), name="WMMasking")
     white_matter_masking_node.inputs.dilation = config['WMMasking']['dilation']
