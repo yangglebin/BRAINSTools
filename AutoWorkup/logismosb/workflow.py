@@ -103,8 +103,8 @@ def create_logb_workflow(name="LOGISMOSB_WF", master_config=None, plugin_args=No
             logismosb.plugin_args = plugin_args
 
         logb_wf.connect([(inputs_node, logismosb, [("t1_file", "t1_file"),
-                                                   ("t2_file", "t2_file"),
                                                    ('hncma_atlas', 'atlas_file')]),
+                         (input_t2, logismosb, [("outputVolume", "t2_file")]),
                          (genus_zero_filter, logismosb, [("out_file", "wm_file")]),
                          (surface_generation, logismosb, [("out_file", "mesh_file")]),
                          (white_matter_masking_node, logismosb, [('{0}_boundary'.format(hemisphere),
