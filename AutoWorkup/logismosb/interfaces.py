@@ -8,6 +8,7 @@ import vtk
 import numpy as np
 from os.path import abspath, isfile
 import SimpleITK as sitk
+from freesurfer_utils import create_label_watershed
 
 
 # method to parse the labels xml info
@@ -216,7 +217,16 @@ class WMMasking(BaseInterface):
                 preservedRegions = preservedRegions + (malf_image == code)
 
         filled_right_template = fill_mask_holes(RightTemplate, 1000)
-        FilledLeftTemplate = fill_mask_holes(LeftTemplate, 1000)
+        filled_left_template = fill_mask_holes(LeftTemplate, 1000)
+
+        def create_hemisphere_splits(right_template, left_template):
+            template = (right_template > 0) + (left_template > 0)*2
+            splits = create_label_watershed(template)
+            right_split = splits == 1
+            left_split = splits == 2
+            return right_split, left_split
+
+        right_hemisphere, left_hemisphere = create_hemisphere_splits(filled_right_template, filled_left_template)
 
         # Create left and right hemisphere WM masks
 
@@ -229,27 +239,27 @@ class WMMasking(BaseInterface):
             right_ventricle_label_mask = right_ventricle_label_mask + (hncma_atlas == hncma_right_ventricle_code)
             left_ventricle_label_mask = left_ventricle_label_mask + (hncma_atlas == hncma_left_ventricle_code)
 
-        RVentBoundary = filled_right_template
-        right_ventricle_final = fillLateralVentricle(right_ventricle_label_mask, RVentBoundary)
+        right_ventricle_boundary = right_hemisphere
+        right_ventricle_final = fillLateralVentricle(right_ventricle_label_mask, right_ventricle_boundary)
 
         # Extract the left lateral and inferior ventricle from the label map
-        left_ventricle_boundary = FilledLeftTemplate
+        left_ventricle_boundary = left_hemisphere
         left_ventricle_final = fillLateralVentricle(left_ventricle_label_mask, left_ventricle_boundary)
 
         # Add subcortical regions and lateral ventricles to the WM mask
-        WhiteMatter = brainlabelsImage == 1
-        CompleteWhiteMatter = (WhiteMatter + subcortical_regions + right_ventricle_final + left_ventricle_final) > 0
-        WhiteMatterFinal = largest_connected_component(fill_mask_holes(CompleteWhiteMatter, 1000))
+        white_matter = brainlabelsImage == 1
+        complete_white_matter = (white_matter + subcortical_regions + right_ventricle_final + left_ventricle_final) > 0
+        white_matter_final = largest_connected_component(fill_mask_holes(complete_white_matter, 1000))
 
         # Regions not included in white matter
-        LeftWMTemplate = FilledLeftTemplate - LeftInsulaGM
-        RightWMTemplate = filled_right_template - RightInsulaGM
+        left_white_matter_template = left_hemisphere
+        right_white_matter_template = right_hemisphere
 
         # Split the hemispheres
         # left hemisphere white matter mask
-        LeftWhiteMatter = largest_connected_component(WhiteMatterFinal * LeftWMTemplate)
+        LeftWhiteMatter = largest_connected_component(white_matter_final * left_white_matter_template)
         # right hemisphere white matter mask
-        RightWhiteMatter = largest_connected_component(WhiteMatterFinal * RightWMTemplate)
+        RightWhiteMatter = largest_connected_component(white_matter_final * right_white_matter_template)
 
         # Create right and left boundary masks
         # dilate preserved regions
@@ -267,9 +277,9 @@ class WMMasking(BaseInterface):
         # Remove mask around cerebellum and brain stem
         cerebellumDilation = 1
         cerebellumMaskDilated = sitk.DilateObjectMorphology(CerebellumMask, cerebellumDilation)
-        leftBoundaryMask = FilledLeftTemplate * (1 - cerebellumMaskDilated)
+        leftBoundaryMask = left_hemisphere * (1 - cerebellumMaskDilated)
         leftBoundaryMask = largest_connected_component(leftBoundaryMask)
-        rightBoundaryMask = filled_right_template * (1 - cerebellumMaskDilated)
+        rightBoundaryMask = right_hemisphere * (1 - cerebellumMaskDilated)
         rightBoundaryMask = largest_connected_component(rightBoundaryMask)
 
         # Dilate or erode boundary masks
