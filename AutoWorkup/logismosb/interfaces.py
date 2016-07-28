@@ -236,8 +236,8 @@ class WMMasking(BaseInterface):
             hncma_left_ventricle_code = 4
             hncma_right_ventricle_code = 43
             hncma_atlas = sitk.ReadImage(self.inputs.hncma_file)
-            right_ventricle_label_mask = right_ventricle_label_mask + (hncma_atlas == hncma_right_ventricle_code)
-            left_ventricle_label_mask = left_ventricle_label_mask + (hncma_atlas == hncma_left_ventricle_code)
+            right_ventricle_label_mask = (right_ventricle_label_mask + (hncma_atlas == hncma_right_ventricle_code)) > 0
+            left_ventricle_label_mask = (left_ventricle_label_mask + (hncma_atlas == hncma_left_ventricle_code)) > 0
 
         right_ventricle_boundary = right_hemisphere
         right_ventricle_final = fillLateralVentricle(right_ventricle_label_mask, right_ventricle_boundary)
