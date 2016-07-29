@@ -105,7 +105,7 @@ class WMMaskingInputSpec(BaseInterfaceInputSpec):
         default_value=0, desc="""
         Parameter to adjust the dilation of the boundary mask (default=0)
         A negative value will erode the boundary mask.
-        """)
+        """, use_default=True)
     csf_threshold = traits.Float(
         default_value=0.9, desc="""
         Posterior probabilities above this threshold will be considered CSF
@@ -216,6 +216,8 @@ class WMMasking(BaseInterface):
             elif location == 'ventricle' or location == 'cc':
                 preservedRegions = preservedRegions + (malf_image == code)
 
+        sitk.WriteImage(CerebellumMask, "Cerebellum.nii.gz")
+
         filled_right_template = fill_mask_holes(RightTemplate, 1000)
         filled_left_template = fill_mask_holes(LeftTemplate, 1000)
 
@@ -252,8 +254,8 @@ class WMMasking(BaseInterface):
         white_matter_final = largest_connected_component(fill_mask_holes(complete_white_matter, 1000))
 
         # Regions not included in white matter
-        left_white_matter_template = left_hemisphere
-        right_white_matter_template = right_hemisphere
+        left_white_matter_template = left_hemisphere * (CerebellumMask == 0)
+        right_white_matter_template = right_hemisphere * (CerebellumMask == 0)
 
         # Split the hemispheres
         # left hemisphere white matter mask
