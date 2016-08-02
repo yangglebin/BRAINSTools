@@ -163,7 +163,7 @@ def create_fs_compatible_logb_workflow(name="LOGISMOSB", plugin_args=None, confi
     t1_to_nifti.inputs.out_orientation = "LPS"
     wf.connect(inputspec, 't1_file', t1_to_nifti, 'in_file')
 
-    def t2_convert(in_file=None, out_file=None):
+    def t2_convert(in_file=None, reference_file=None, out_file=None):
         import os
         from nipype.interfaces.freesurfer import MRIConvert
         from nipype.interfaces.traits_extension import Undefined
@@ -173,15 +173,18 @@ def create_fs_compatible_logb_workflow(name="LOGISMOSB", plugin_args=None, confi
             t2_to_nifti.inputs.in_file = in_file
             t2_to_nifti.inputs.out_file = os.path.abspath(out_file)
             t2_to_nifti.inputs.out_orientation = "LPS"
+            if reference_file:
+                t2_to_nifti.inputs.reslice_like = reference_file
             result = t2_to_nifti.run()
             out_file = os.path.abspath(result.outputs.out_file)
         else:
             out_file = Undefined
         return out_file
 
-    t2_node = Node(Function(['in_file', 'out_file'], ['out_file'], t2_convert), name="T2Convert")
+    t2_node = Node(Function(['in_file', 'reference_file', 'out_file'], ['out_file'], t2_convert), name="T2Convert")
     t2_node.inputs.out_file = "t2.nii.gz"
     wf.connect(inputspec, 't2_file', t2_node, 'in_file')
+    wf.connect(t1_to_nifti, 'out_file', t2_node, 'reference_file')
 
     # convert raw t1 to lia
     t1_to_ras = Node(MRIConvert(), "T1toRAS")
