@@ -1029,7 +1029,7 @@ def generate_single_session_template_WF(projectid, subjectid, sessionid, onlyT1,
 
             resample_hncma = pe.Node(BRAINSResample(), name="ResampleHNCMA")
 
-            baw201.connect(BRAINSResample['hncma_atlas'], 'outputVolume', resample_hncma, 'inputVolume')
+            baw201.connect(BResample['hncma_atlas'], 'outputVolume', resample_hncma, 'inputVolume')
             baw201.connect(myLocalLMIWF, 'outputspec.outputTransform', resample_hncma, 'warpTransform')
             baw201.connect(select_t1_node, 'first_file', resample_hncma, 'referenceVolume')
             resample_hncma.inputs.outputVolume = "hncma_in_original_space.nii.gz"
