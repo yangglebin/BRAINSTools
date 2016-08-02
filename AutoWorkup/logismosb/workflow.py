@@ -225,6 +225,12 @@ def create_fs_compatible_logb_workflow(name="LOGISMOSB", plugin_args=None, confi
     dilate.inputs.radius = 1
     wf.connect(split, 'out_file', dilate, 'in_file')
 
+    convert_label_map = Node(MRIConvert(), "ConvertLabelMapToMatchT1")
+    convert_label_map.inputs.resample_type = "nearest"
+    convert_label_map.inputs.out_file = "BrainLabelsFromAsegInT1Space.nii.gz"
+    wf.connect(t1_to_nifti, 'out_file', convert_label_map, 'reslice_like')
+    wf.connect(dilate, 'out_file', convert_label_map, 'in_file')
+
     logb = Node(LOGISMOSB(), name="LOGISMOS-B")
     logb.inputs.smoothnessConstraint = config['LOGISMOSB']['smoothnessConstraint']
     logb.inputs.nColumns = config['LOGISMOSB']['nColumns']
@@ -241,11 +247,12 @@ def create_fs_compatible_logb_workflow(name="LOGISMOSB", plugin_args=None, confi
     wf.connect([(t1_to_nifti, logb, [('out_file', 't1_file')]),
                 (t2_node, logb, [('out_file', 't2_file')]),
                 (inputspec, logb, [('hemi', 'basename'),
+                                   ('hncma_atlas', 'atlas_file'),
                                    ('wm_proba', 'wm_proba_file'),
                                    ('gm_proba', 'gm_proba_file')]),
                 (to_vtk, logb, [('converted', 'mesh_file')]),
                 (surfmask_to_nifti, logb, [('out_file', 'wm_file')]),
-                (dilate, logb, [('out_file', 'brainlabels_file')])])
+                (convert_label_map, logb, [('out_file', 'brainlabels_file')])])
 
     outputspec = Node(IdentityInterface(['gm_surface_file', 'wm_surface_file']), name="outputspec")
 

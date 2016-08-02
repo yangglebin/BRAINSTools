@@ -987,12 +987,12 @@ def generate_single_session_template_WF(projectid, subjectid, sessionid, onlyT1,
         subject_dir = old_str(os.path.join(master_config['resultdir'], projectid, subjectid, sessionid))
 
         # HACK: Select first T2 from the list of input T2s
-        def select_t2_file(T2s):
-            T2_file = T2s[0]
-            return T2_file
+        def select_first_file(file_list):
+            first_file = file_list[0]
+            return first_file
 
-        select_t2_node = pe.Node(Function(['T2s'], ['T2_file'], select_t2_file), "SelectSingleT2")
-        baw201.connect(inputsSpec, 'T2s', select_t2_node, 'T2s')
+        select_t2_node = pe.Node(Function(['file_list'], ['first_file'], select_first_file), "SelectSingleT2")
+        baw201.connect(inputsSpec, 'T2s', select_t2_node, 'file_list')
 
         reconall = create_reconall_workflow(plugin_args={'qsub_args': modify_qsub_args(queue=master_config['queue'],
                                                                                        memoryGB=8,
@@ -1001,7 +1001,7 @@ def generate_single_session_template_WF(projectid, subjectid, sessionid, onlyT1,
                                                          'overwrite': True})
 
         baw201.connect([(inputsSpec, reconall, [('T1s', 'inputspec.T1_files')]),
-                        (select_t2_node, reconall, [('T2_file', 'inputspec.T2_file')])])
+                        (select_t2_node, reconall, [('first_file', 'inputspec.T2_file')])])
         if not os.path.exists(subject_dir):
             os.makedirs(subject_dir)
         reconall.inputs.inputspec.subjects_dir = subject_dir
@@ -1009,6 +1009,7 @@ def generate_single_session_template_WF(projectid, subjectid, sessionid, onlyT1,
         reconall.inputs.inputspec.subject_id = "FreeSurfer"
 
         if 'logismosb' in master_config['components']:
+            # this workflow assumes that the input t1 and t2 files are in the same space!!!
             from logismosb import create_fs_logb_workflow_for_both_hemispheres
             myLocalFSLOGISMOSBWF = create_fs_logb_workflow_for_both_hemispheres(
                 plugin_args={'qsub_args': modify_qsub_args(queue=master_config['queue'],
@@ -1020,9 +1021,23 @@ def generate_single_session_template_WF(projectid, subjectid, sessionid, onlyT1,
                                                               ('outputspec.rawavg', 'inputspec.rawavg'),
                                                               ('outputspec.t2_raw', 'inputspec.t2_raw'),
                                                               ('outputspec.lh_white', 'inputspec.lh_white'),
-                                                              ('outputspec.rh_white', 'inputspec.rh_white')]),
-                            (BResample['hncma_atlas'], myLocalFSLOGISMOSBWF, [('outputVolume', 'inputspec.hncma_atlas')])
+                                                              ('outputspec.rh_white', 'inputspec.rh_white')])
                             ])
+            # before connecting to the fs_logb workflow, the hncma needs to be resampled to the original space
+            select_t1_node = pe.Node(Function(['file_list'], ['first_file'], select_first_file), "SelectSingleT1")
+            baw201.connect(inputsSpec, 'T1s', select_t1_node, 'file_list')
+
+            resample_hncma = pe.Node(BRAINSResample(), name="ResampleHNCMA")
+
+            baw201.connect(BRAINSResample['hncma_atlas'], 'outputVolume', resample_hncma, 'inputVolume')
+            baw201.connect(myLocalLMIWF, 'outputspec.outputTransform', resample_hncma, 'warpTransform')
+            baw201.connect(select_t1_node, 'first_file', resample_hncma, 'referenceVolume')
+            resample_hncma.inputs.outputVolume = "hncma_in_original_space.nii.gz"
+            resample_hncma.inputs.pixelType = "short"
+            resample_hncma.inputs.interpolationMode = "NearestNeighbor"
+            resample_hncma.inputs.inverseTransform = True
+
+            baw201.connect(resample_hncma, 'outputVolume', myLocalFSLOGISMOSBWF, 'inputspec.hncma_atlas')
 
             baw201.connect([(myLocalFSLOGISMOSBWF, DataSink,
                              [('outputspec.lh_gm_surf_file', 'LOGISMOSB.FreeSurfer.@lh_gm_surface_file'),
