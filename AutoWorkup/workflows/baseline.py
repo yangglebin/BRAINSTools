@@ -972,7 +972,8 @@ def generate_single_session_template_WF(projectid, subjectid, sessionid, onlyT1,
                     first_file = file_list[0]
                     return first_file
 
-                select_t1_node = pe.Node(Function(['file_list'], ['first_file'], select_first_file), "SelectSingleT1")
+                select_t1_node = pe.Node(Function(['file_list'], ['first_file'], select_first_file),
+                                         "SelectSingleT14LOGB")
                 baw201.connect(inputsSpec, 'T1s', select_t1_node, 'file_list')
 
                 resample_brain_labels = pe.Node(BRAINSResample(), name="ResampleBrainLabels4LOGB")
