@@ -32,17 +32,6 @@ from .WorkupComputeLabelVolume import *
     JointFusionWF.connect(BAtlas,'ExtendedAtlasDefinition.xml',myLocalTCWF,'atlasDefinition')
     JointFusionWF.connect(BLI,'outputTransformFilename',myLocalTCWF,'atlasToSubjectInitialTransform')
 """
-def NormalizeZeroOne( inputVolume, outputVolumeFilename ):
-    import SimpleITK as sitk
-    import os
-    inputImg = sitk.ReadImage(inputVolume)
-    float_inputImg = sitk.Cast(inputImg, sitk.sitkFloat32)
-    rescaled_inputImg = sitk.RescaleIntensity(float_inputImg, 0.0, 1.0)
-    sitk.WriteImage(rescaled_inputImg, outputVolumeFilename)
-
-    outputVolume = os.path.abspath(outputVolumeFilename)
-    return( outputVolume )
-
 def MakeIntensityOutputListFunc(n_modality, intensityFilenameFormat):
     temp_list = list()
     import os
@@ -163,6 +152,7 @@ def CreateJointFusionWorkflow(WFname, onlyT1, master_config, runFixFusionLabelMa
                                                        'JointFusion_HDAtlas20_2015_CSFVBInjected_label',
                                                        'JointFusion_HDAtlas20_2015_fs_standard_label',
                                                        'JointFusion_HDAtlas20_2015_lobe_label',
+                                                       'JointFusion_HDAtlas20_2016_intensityVolumes',
                                                        'JointFusion_extended_snapshot',
                                                        'JointFusion_HDAtlas20_2015_dustCleaned_label',
                                                        'JointFusion_volumes_csv',
@@ -438,6 +428,19 @@ def CreateJointFusionWorkflow(WFname, onlyT1, master_config, runFixFusionLabelMa
     jointFusion.inputs.dimension=3
     jointFusion.inputs.search_radius=[3]
     #jointFusion.inputs.method='Joint[0.1,2]'
+    if 'intensityoutputjointfusion' in master_config['components']:
+        jointFusion.inputs.out_intensity_fusion_name_format='JointFusion_HDAtlas20_2016_intensity_%d.nii.gz'
+        MakeIntensityOutputDictionaryNode= pe.Node(Function(function=MakeIntensityOutputDictionaryFunc,
+                                                   input_names=['n_modality'],
+                                                   output_names=['intensityOutputDictionary']),
+                                                   run_without_submitting=True, name="99_makeIntensityDictionary")
+        MakeIntensityOutputDictionaryNode.inputs.n_modality = n_modality
+        JointFusionWF.connect( MakeIntensityOutputDictionaryNode, 'intensityOutputDictionary',
+                               outputsSpec, 'JointFusion_HDAtlas20_2016_intensityVolumes')
+
+    else:
+        print ("No intensity output")
+
     jointFusion.inputs.out_label_fusion='JointFusion_HDAtlas20_2015_label.nii.gz'
     #JointFusionWF.connect(inputsSpec, 'subj_fixed_head_labels', jointFusion, 'mask_image')
     JointFusionWF.connect(fixedROIAuto, 'outputROIMaskVolume', jointFusion, 'mask_image')

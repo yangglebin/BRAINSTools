@@ -943,6 +943,7 @@ def generate_single_session_template_WF(projectid, subjectid, sessionid, onlyT1,
         baw201.connect(myLocalJointFusion,'outputspec.JointFusion_HDAtlas20_2015_lobe_label',DataSink,'JointFusion.@JointFusion_HDAtlas20_2015_lobe_label')
         #baw201.connect(myLocalJointFusion,'outputspec.JointFusion_extended_snapshot',DataSink,'JointFusion.@JointFusion_extended_snapshot')
         baw201.connect(myLocalJointFusion,'outputspec.JointFusion_HDAtlas20_2015_dustCleaned_label', DataSink, 'JointFusion.@JointFusion_HDAtlas20_2015_dustCleaned_label')
+        baw201.connect(myLocalJointFusion,'outputspec.JointFusion_HDAtlas20_2016_intensityVolumes', DataSink, 'JointFusion.@JointFusion_HDAtlas20_2016_intensityVolumes')
 
         baw201.connect(myLocalJointFusion,'outputspec.JointFusion_volumes_csv', DataSink, 'JointFusion.allVol.@JointFusion_volumesCSV')
         baw201.connect(myLocalJointFusion,'outputspec.JointFusion_volumes_json', DataSink, 'JointFusion.allVol.@JointFusion_volumesJSON')
