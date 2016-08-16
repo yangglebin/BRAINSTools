@@ -1103,7 +1103,7 @@ def generate_single_session_template_WF(projectid, subjectid, sessionid, onlyT1,
             gm_classifier_file = master_config['gm_edge_classifier']
 
             edge_prediction_workflow = create_logismosb_machine_learning_workflow()
-            edge_prediction_workflow.inputs.Inputs.classifier_file = gm_classifier_file
+            edge_prediction_workflow.inputs.input_spec.classifier_file = gm_classifier_file
 
             select_t1_node = pe.Node(Function(['file_list'], ['first_file'], select_first_file), "SelectSingleT1")
             baw201.connect(inputsSpec, 'T1s', select_t1_node, 'file_list')

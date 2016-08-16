@@ -13,7 +13,7 @@ def read_machine_learning_config():
 def create_machine_learning_workflow(name="CreateEdgeProbabilityMap", edge_name="gm", resample=True):
     workflow = Workflow(name)
     input_spec = Node(IdentityInterface(["rho", "phi", "theta", "posteriors", "t1_file", "acpc_transform",
-                                         "classifier_file"]), name="Inputs")
+                                         "classifier_file"]), name="input_spec")
 
     predict_edge_probability = Node(PredictEdgeProbability(), name="PredictEdgeProbability")
     predict_edge_probability.inputs.out_file = "{0}_edge_probability_map.nii.gz".format(edge_name)
@@ -59,7 +59,7 @@ def create_workflow_to_resample_baw_files(name="ResampleBAWOutputs"):
     inputs_to_resample = ["t1_file", "t2_file", "hncma_file", "abc_file"]
     other_inputs = ["reference_file", "acpc_transform"]
     label_maps = ["hncma_file", "abc_file"]
-    input_spec = Node(IdentityInterface(inputs_to_resample + other_inputs), name="Inputs")
+    input_spec = Node(IdentityInterface(inputs_to_resample + other_inputs), name="input_spec")
     output_spec = Node(IdentityInterface(inputs_to_resample), name="Outputs")
     for input in inputs_to_resample:
         node = Node(BRAINSResample(), "Resample_{0}".format(input))
@@ -84,7 +84,7 @@ def create_workflow_to_mask_white_matter(name):
 
     workflow = Workflow(name)
 
-    input_spec = create_identity_interface_node(["t1_file", "white"], "Inputs")
+    input_spec = create_identity_interface_node(["t1_file", "white"], "input_spec")
 
     # convert raw t1 to lia
     t1_to_lia = Node(MRIConvert(), "T1toLIA")
@@ -124,7 +124,7 @@ def create_logismosb_machine_learning_workflow(name="MachineLearningLOGISMOSB", 
     workflow = Workflow(name)
     input_spec = Node(IdentityInterface(["rho", "phi", "theta", "posteriors", "t1_file", "t2_file", "acpc_transform",
                                          "classifier_file", "orig_t1", "hncma_file", "abc_file",
-                                         "lh_white_surface_file", "rh_white_surface_file"]), name="Inputs")
+                                         "lh_white_surface_file", "rh_white_surface_file"]), name="input_spec")
 
     outputs = []
     surface_files = ['gm_surface_file', 'wm_surface_file']
@@ -143,29 +143,29 @@ def create_logismosb_machine_learning_workflow(name="MachineLearningLOGISMOSB", 
 
         # resample input images that are not used in the feature data
         resample_baw = create_workflow_to_resample_baw_files()
-        workflow.connect([(reference_image, resample_baw, [("reference_file", "Inputs.reference_file")]),
-                          (input_spec, resample_baw, [("hncma_file", "Inputs.hncma_file"),
-                                                      ("abc_file", "Inputs.abc_file"),
-                                                      ("t1_file", "Inputs.t1_file"),
-                                                      ("t2_file", "Inputs.t2_file"),
-                                                      ("acpc_transform", "Inputs.acpc_transform"),
+        workflow.connect([(reference_image, resample_baw, [("reference_file", "input_spec.reference_file")]),
+                          (input_spec, resample_baw, [("hncma_file", "input_spec.hncma_file"),
+                                                      ("abc_file", "input_spec.abc_file"),
+                                                      ("t1_file", "input_spec.t1_file"),
+                                                      ("t2_file", "input_spec.t2_file"),
+                                                      ("acpc_transform", "input_spec.acpc_transform"),
                                                       ])])
 
         # create and connect machine learning
         predict_gm = create_machine_learning_workflow(resample=resample)
         feature_files = ["rho", "phi", "theta", "posteriors"]
         for feature in feature_files:
-            workflow.connect([(input_spec, predict_gm, [(feature, "Inputs.{0}".format(feature))])])
-        workflow.connect([(resample_baw, predict_gm, [("Outputs.t1_file", "Inputs.t1_file")]),
-                          (input_spec, predict_gm, [("acpc_transform", "Inputs.acpc_transform"),
+            workflow.connect([(input_spec, predict_gm, [(feature, "input_spec.{0}".format(feature))])])
+        workflow.connect([(resample_baw, predict_gm, [("Outputs.t1_file", "input_spec.t1_file")]),
+                          (input_spec, predict_gm, [("acpc_transform", "input_spec.acpc_transform"),
                                                     ("classifier_file", "inputs.classifier_file")]),
                           ])
 
         for hemisphere in hemispheres:
 
             mask_wm = create_workflow_to_mask_white_matter("{0}_MaskWhiteMatter".format(hemisphere))
-            workflow.connect([(input_spec, mask_wm, [("{0}_white_surface_file".format(hemisphere), "Inputs.white")]),
-                              (resample_baw, mask_wm, [("Outputs.t1_file", "Inputs.t1_file")])])
+            workflow.connect([(input_spec, mask_wm, [("{0}_white_surface_file".format(hemisphere), "input_spec.white")]),
+                              (resample_baw, mask_wm, [("Outputs.t1_file", "input_spec.t1_file")])])
 
             convert_white = Node(MRIsConvert(), name="{0}_Convert_White".format(hemisphere))
             convert_white.inputs.out_file = "{0}_white.vtk".format(hemisphere)
