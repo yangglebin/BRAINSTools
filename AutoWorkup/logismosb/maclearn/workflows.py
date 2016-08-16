@@ -158,7 +158,7 @@ def create_logismosb_machine_learning_workflow(name="MachineLearningLOGISMOSB", 
             workflow.connect([(input_spec, predict_gm, [(feature, "input_spec.{0}".format(feature))])])
         workflow.connect([(resample_baw, predict_gm, [("Outputs.t1_file", "input_spec.t1_file")]),
                           (input_spec, predict_gm, [("acpc_transform", "input_spec.acpc_transform"),
-                                                    ("classifier_file", "inputs.classifier_file")]),
+                                                    ("classifier_file", "input_spec.classifier_file")]),
                           ])
 
         for hemisphere in hemispheres:
