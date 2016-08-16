@@ -1,9 +1,11 @@
 from nipype.interfaces.base import BaseInterface, traits, BaseInterfaceInputSpec, TraitedSpec
 from nipype.interfaces.semtools import BRAINSResample
+from nipype.interfaces.freesurfer import MRIConvert
 import os
 from training import image_data
 from sklearn.externals import joblib
 from predict import image_file_from_array_with_reference_image_file
+import SimpleITK as sitk
 
 
 def run_resample(in_file, ref_file, transform, out_file, interpolation_mode='Linear', pixel_type='float',
@@ -89,6 +91,7 @@ class PredictEdgeProbabilityOutputSpec(TraitedSpec):
 
 class PredictEdgeProbability(BaseInterface):
     input_spec = PredictEdgeProbabilityInputSpec
+    output_spec = PredictEdgeProbabilityOutputSpec
 
     def _run_interface(self, runtime):
         feature_data = image_data(self.inputs.t1_file, "T1", additional_images=self.inputs.additional_files)
@@ -102,3 +105,58 @@ class PredictEdgeProbability(BaseInterface):
         outputs = self._outputs().get()
         outputs["out_file"] = os.path.abspath(self.inputs.out_file)
         return outputs
+
+
+def create_identity_transform():
+    dimension = 3
+    offset = (0, 0, 0)
+    transform = sitk.TranslationTransform(dimension , offset)
+    transform.SetIdentity() # just to be safe
+    return transform
+
+
+def change_orientation(image_file, out_file, orientation="LPS"):
+    convert = MRIConvert()
+    convert.inputs.in_file = image_file
+    convert.inputs.out_file = os.path.abspath(out_file)
+    convert.inputs.out_orientation = orientation
+    result = convert.run()
+    return result.outputs.out_file
+
+
+def sample_image(image, size, spacing=(1, 1, 1)):
+    resample = sitk.ResampleImageFilter()
+    resample.SetInterpolator(sitk.sitkLinear)
+    resample.SetOutputSpacing(spacing)
+    resample.SetTransform(create_identity_transform())
+    resample.SetOutputDirection(image.GetDirection())
+    resample.SetSize(size)
+    resample.SetOutputOrigin(image.GetOrigin())
+    return resample.Execute(image)
+
+
+class CreateReferenceImageInputSpec(BaseInterfaceInputSpec):
+    baw_t1 = traits.File(exists=True)
+    orig_t1 = traits.File(exists=True)
+    spacing = traits.Tuple((1, 1, 1), use_default=True)
+
+
+class CreateReferenceImageOutputSpec(TraitedSpec):
+    reference_file = traits.File(desc="reference file for resampling")
+
+
+class CreateReferenceImage(BaseInterface):
+    input_spec = CreateReferenceImageInputSpec
+
+    def _list_outputs(self):
+        outputs = self._outputs().get()
+        outputs["reference_file"] = os.path.abspath("reference_file.nii.gz")
+        return outputs
+
+    def _run_interface(self, runtime):
+        size = sitk.ReadImage(self.inputs.baw_t1).GetSize()
+        output_image = sample_image(self.inputs.orig_t1, size, self.inputs.spacing)
+        out_file = self._list_outputs()["reference_file"]
+        sitk.WriteImage(output_image, out_file)
+        change_orientation(out_file, out_file)
+        return runtime

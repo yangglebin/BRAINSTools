@@ -61,7 +61,7 @@ def mask_array_with_image(array, mask_image):
 def mask_data_with_image(data, mask_image):
     for i, array in enumerate(data):
         data[i] = mask_array_with_image(array, mask_image)
-    return array
+    return data
 
 
 def linear_array_from_image_file(image_file):

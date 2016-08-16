@@ -1097,6 +1097,36 @@ def generate_single_session_template_WF(projectid, subjectid, sessionid, onlyT1,
         reconall.inputs.inputspec.num_threads = num_threads
         reconall.inputs.inputspec.subject_id = "FreeSurfer"
 
+        if 'edge_prediction' in master_config['components']:
+            from logismosb.maclearn.workflows import create_logismosb_machine_learning_workflow
+
+            gm_classifier_file = master_config['gm_edge_classifier']
+
+            edge_prediction_workflow = create_logismosb_machine_learning_workflow()
+            edge_prediction_workflow.inputs.Inputs.classifier_file = gm_classifier_file
+
+            select_t1_node = pe.Node(Function(['file_list'], ['first_file'], select_first_file), "SelectSingleT1")
+            baw201.connect(inputsSpec, 'T1s', select_t1_node, 'file_list')
+
+            baw201.connect([(atlasBCUTNode_W, edge_prediction_workflow, [("rho", "Inputs.rho"),
+                                                                         ("theta", "Inputs.theta"),
+                                                                         ("phi", "Inputs.phi")]),
+                            (myLocalTCWF, edge_prediction_workflow, [('outputspec.posteriorImages',
+                                                                      "Inputs.posteriors"),
+                                                                     ('outputspec.t1_average', 'Inputs.t1_file'),
+                                                                     ('outputspec.t2_average', 'Inputs.t2_file')]),
+                            (myLocalBrainStemWF, [('outputspec.ouputTissuelLabelFilename', 'Inputs.abc_file')]),
+                            (select_t1_node, edge_prediction_workflow, [('first_file', 'Inputs.orig_t1')]),
+                            (BResample['hncma_atlas'], edge_prediction_workflow, [('outputVolume',
+                                                                                   'Inputs.hncma_file')]),
+                            (myLocalLMIWF, edge_prediction_workflow, [('outputspec.outputTransform',
+                                                                       'Inputs.acpc_transform')])])
+            baw201.connect([(edge_prediction_workflow, DataSink,
+                             [('outputspec.lh_gm_surface_file', 'EdgePrediction.@lh_gm_surface_file'),
+                              ('outputspec.lh_wm_surface_file', 'EdgePrediction.@lh_wm_surface_file'),
+                              ('outputspec.rh_gm_surface_file', 'EdgePrediction.@rh_gm_surface_file'),
+                              ('outputspec.rh_wm_surface_file', 'EdgePrediction.@rh_wm_surface_file')])])
+
         if 'logismosb' in master_config['components']:
             # this workflow assumes that the input t1 and t2 files are in the same space!!!
             from logismosb import create_fs_logb_workflow_for_both_hemispheres

@@ -152,6 +152,10 @@ def parseExperiment(parser, workflow_phase):
             retval['relabel2lobes_filename'] = validatePath(parser.get('EXPERIMENT', 'RELABEL2LOBES_FILENAME'),
                                                        allow_empty=True,
                                                        isDirectory=False)
+        if 'edge_prediction' in retval['components']:
+            retval['gm_edge_classifier'] = validatePath(parser.get('EXPERIMENT', 'GM_EDGE_CLASSIFIER'),
+                                                        allow_empty=True,
+                                                        isDirectory=False)
         retval['workflow_phase'] = workflow_phase
     return retval
 
