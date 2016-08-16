@@ -147,6 +147,7 @@ class CreateReferenceImageOutputSpec(TraitedSpec):
 
 class CreateReferenceImage(BaseInterface):
     input_spec = CreateReferenceImageInputSpec
+    output_spec = CreateReferenceImageOutputSpec
 
     def _list_outputs(self):
         outputs = self._outputs().get()
