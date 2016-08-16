@@ -1120,7 +1120,9 @@ def generate_single_session_template_WF(projectid, subjectid, sessionid, onlyT1,
                             (BResample['hncma_atlas'], edge_prediction_workflow, [('outputVolume',
                                                                                    'Inputs.hncma_file')]),
                             (myLocalLMIWF, edge_prediction_workflow, [('outputspec.outputTransform',
-                                                                       'Inputs.acpc_transform')])])
+                                                                       'Inputs.acpc_transform')]),
+                            (reconall, edge_prediction_workflow, [('outputspec.lh_white', 'lh_white_surface_file'),
+                                                                  ('outputspec.rh_white', 'rh_white_surface_file')])])
             baw201.connect([(edge_prediction_workflow, DataSink,
                              [('outputspec.lh_gm_surface_file', 'EdgePrediction.@lh_gm_surface_file'),
                               ('outputspec.lh_wm_surface_file', 'EdgePrediction.@lh_wm_surface_file'),
