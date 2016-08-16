@@ -257,10 +257,10 @@ def create_fs_compatible_logb_workflow(name="LOGISMOSB", plugin_args=None, confi
                 (surfmask_to_nifti, logb, [('out_file', 'wm_file')]),
                 (convert_label_map, logb, [('out_file', 'brainlabels_file')])])
 
-    outputspec = Node(IdentityInterface(['gm_surface_file', 'wm_surface_file']), name="outputspec")
+    outputspec = Node(IdentityInterface(['gmsurface_file', 'wmsurface_file']), name="outputspec")
 
-    wf.connect([(logb, outputspec, [('gmsurface_file', 'gm_surface_file'),
-                                    ('wmsurface_file', 'wm_surface_file')])])
+    wf.connect([(logb, outputspec, [('gmsurface_file', 'gmsurface_file'),
+                                    ('wmsurface_file', 'wmsurface_file')])])
 
     return wf
 
@@ -294,8 +294,8 @@ def create_fs_logb_workflow_for_both_hemispheres(name="FSLOGB", plugin_args=None
                                                       ('lut_file', 'inputspec.lut_file')])])
 
         # move the outputs from logb to the outputspec
-        fslogb_wf.connect([(hemi_logb_wf, outputspec, [('outputspec.gm_surface_file', '{0}_gm_surf_file'.format(hemi)),
-                                                       ('outputspec.wm_surface_file',
+        fslogb_wf.connect([(hemi_logb_wf, outputspec, [('outputspec.gmsurface_file', '{0}_gm_surf_file'.format(hemi)),
+                                                       ('outputspec.wmsurface_file',
                                                         '{0}_wm_surf_file'.format(hemi))])])
 
     return fslogb_wf

@@ -1124,10 +1124,10 @@ def generate_single_session_template_WF(projectid, subjectid, sessionid, onlyT1,
                             (reconall, edge_prediction_workflow, [('outputspec.lh_white', 'lh_white_surface_file'),
                                                                   ('outputspec.rh_white', 'rh_white_surface_file')])])
             baw201.connect([(edge_prediction_workflow, DataSink,
-                             [('outputspec.lh_gm_surface_file', 'EdgePrediction.@lh_gm_surface_file'),
-                              ('outputspec.lh_wm_surface_file', 'EdgePrediction.@lh_wm_surface_file'),
-                              ('outputspec.rh_gm_surface_file', 'EdgePrediction.@rh_gm_surface_file'),
-                              ('outputspec.rh_wm_surface_file', 'EdgePrediction.@rh_wm_surface_file')])])
+                             [('outputspec.lh_gmsurface_file', 'EdgePrediction.@lh_gm_surface_file'),
+                              ('outputspec.lh_wmsurface_file', 'EdgePrediction.@lh_wm_surface_file'),
+                              ('outputspec.rh_gmsurface_file', 'EdgePrediction.@rh_gm_surface_file'),
+                              ('outputspec.rh_wmsurface_file', 'EdgePrediction.@rh_wm_surface_file')])])
 
         if 'logismosb' in master_config['components']:
             # this workflow assumes that the input t1 and t2 files are in the same space!!!

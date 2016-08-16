@@ -127,7 +127,7 @@ def create_logismosb_machine_learning_workflow(name="MachineLearningLOGISMOSB", 
                                          "lh_white_surface_file", "rh_white_surface_file"]), name="input_spec")
 
     outputs = []
-    surface_files = ['gm_surface_file', 'wm_surface_file']
+    surface_files = ['gmsurface_file', 'wmsurface_file']
     if not hemispheres:
         hemispheres = ["lh", "rh"]
     for hemi in hemispheres:
