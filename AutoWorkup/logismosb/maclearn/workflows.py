@@ -65,6 +65,7 @@ def create_workflow_to_resample_baw_files(name="ResampleBAWOutputs"):
         node = Node(BRAINSResample(), "Resample_{0}".format(input))
         node.inputs.pixelType = "short"
         node.inputs.inverseTransform = True
+        node.inputs.outputVolume = input + ".nii.gz"
         if input in label_maps:
             node.inputs.interpolationMode = "NearestNeighbor"
         workflow.connect([(input_spec, node, [("reference_file", "referenceVolume"),
