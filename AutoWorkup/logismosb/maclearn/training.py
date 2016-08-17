@@ -14,7 +14,7 @@ import json
 
 def get_list_of_features():
     from ..workflow import get_local_file_location
-    _file = open(get_local_file_location("data_order.json"), "rb")
+    _file = open(get_local_file_location(os.path.join("maclearn", "data_order.json")), "rb")
     features = json.load(_file)
     _file.close()
     return features
