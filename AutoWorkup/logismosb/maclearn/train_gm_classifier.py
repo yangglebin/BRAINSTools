@@ -25,7 +25,7 @@ def collect_training_data(training_files):
     return pd.concat(all_data, axis=0)
 
 
-def main():
+def train_gm_classifier():
     cache_dir = "/Shared/sinapse/CACHE/20160811_Davids_MachineLearning"
     training_files = pickle_load("/Shared/sinapse/CACHE/20160811_Davids_MachineLearning/training_files.pkl")
     training_data = collect_training_data(training_files)
@@ -37,5 +37,5 @@ def main():
     train_classifier(training_data["Features"].values, training_data["Truth"]["GM"].values, classifier_file)
 
 
-if __name__ == "__main__":
-    main()
+if __name__ == "__train_gm_classifier__":
+    train_gm_classifier()
