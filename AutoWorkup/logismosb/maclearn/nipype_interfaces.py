@@ -88,6 +88,22 @@ def scale_image(image_file, out_file, scale=None, square=False):
     return out_file
 
 
+def create_white_edge_cost_image(t1_file, t2_file, gm_proba_file, out_file):
+    import SimpleITK as sitk
+    import os
+    gm_proba = sitk.ReadImage(gm_proba_file)
+    negative_gm_proba = 1 - gm_proba
+    t1 = sitk.ReadImage(t1_file)
+    t2 = sitk.ReadImage(t2_file)
+    t1_gradient = sitk.GradientMagnitude(t1)
+    t2_gradient = sitk.GradientMagnitude(t2)
+    multi_modal_gradient = sitk.Cast((t1_gradient + t2_gradient), negative_gm_proba.GetPixelID())
+    cost_image = multi_modal_gradient * negative_gm_proba
+    out_file = os.path.abspath(out_file)
+    sitk.WriteImage(cost_image, out_file)
+    return out_file
+
+
 class PredictEdgeProbabilityInputSpec(BaseInterfaceInputSpec):
     t1_file = traits.File(exists=True)
     additional_files = traits.Dict(trait=traits.File(exists=True))

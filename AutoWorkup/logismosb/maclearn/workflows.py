@@ -164,6 +164,7 @@ def create_logismosb_machine_learning_workflow(name="MachineLearningLOGISMOSB", 
                           (input_spec, predict_gm, [("acpc_transform", "input_spec.acpc_transform"),
                                                     ("classifier_file", "input_spec.classifier_file")]),
                           ])
+
         from nipype_interfaces import scale_image
         scale_gm_proba = Node(Function(["image_file", "out_file", "scale", "square"], ["out_file"], scale_image),
                               name="ScaleGMPorbabilityMap")
@@ -171,6 +172,14 @@ def create_logismosb_machine_learning_workflow(name="MachineLearningLOGISMOSB", 
         scale_gm_proba.inputs.scale = 1000
         scale_gm_proba.inputs.out_file = "gm_probability_scaled.nii.gz"
         workflow.connect(predict_gm, "output_spec.probability_map", scale_gm_proba, "image_file")
+
+        from nipype_interfaces import create_white_edge_cost_image
+        white_edge_cost = Node(Function(["t1_file", "t2_file", "gm_proba_file", "out_file"], ["out_file"],
+                                        create_white_edge_cost_image), name="WhiteMatterEdgeCost")
+        workflow.connect([(resample_baw, white_edge_cost, [("output_spec.t1_file", "t1_file"),
+                                                           ("output_spec.t2_file", "t2_file")]),
+                          (predict_gm, white_edge_cost, [("output_spec.probability_map", "gm_proba_file")])])
+        white_edge_cost.inputs.out_file = "white_edge_cost.nii.gz"
 
         for hemisphere in hemispheres:
 
@@ -192,7 +201,8 @@ def create_logismosb_machine_learning_workflow(name="MachineLearningLOGISMOSB", 
                                                     ("output_spec.t2_file", "t2_file")]),
                               (convert_white, logb, [("converted", "mesh_file")]),
                               (mask_wm, logb, [("output_spec.white_mask", "wm_file")]),
-                              (scale_gm_proba, logb, [("out_file", "gm_proba_file")])])
+                              (scale_gm_proba, logb, [("out_file", "gm_proba_file")]),
+                              (white_edge_cost, logb, [("out_file", "wm_proba_file")])])
 
             for surface_name in surface_files:
                 workflow.connect(logb, surface_name, output_spec, hemisphere + "_" + surface_name)
