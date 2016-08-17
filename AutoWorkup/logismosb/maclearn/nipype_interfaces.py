@@ -75,6 +75,19 @@ class CollectFeatureFiles(BaseInterface):
                                                          inverse_transform=self.inputs.inverse_transform)
 
 
+def scale_image(image_file, out_file, scale=None, square=False):
+    import SimpleITK as sitk
+    import os
+    image = sitk.ReadImage(image_file)
+    if scale:
+        image = scale * image
+    if square:
+        image = image * image
+    out_file = os.path.abspath(out_file)
+    sitk.WriteImage(image, out_file)
+    return out_file
+
+
 class PredictEdgeProbabilityInputSpec(BaseInterfaceInputSpec):
     t1_file = traits.File(exists=True)
     additional_files = traits.Dict(trait=traits.File(exists=True))
