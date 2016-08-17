@@ -52,7 +52,7 @@ class CollectFeatureFiles(BaseInterface):
         return os.path.basename(filename).split(".")[0]
 
     def combine_files(self):
-        feature_files = [self.inputs.rho, self.inputs.phi, self.inputs.theta] + list(self.inputs.posterior_files.values)
+        feature_files = [self.inputs.rho, self.inputs.phi, self.inputs.theta] + self.inputs.posterior_files.values()
         return feature_files
 
     def _list_outputs(self):
