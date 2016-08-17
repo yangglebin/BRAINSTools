@@ -93,7 +93,7 @@ class PredictEdgeProbability(BaseInterface):
     def _run_interface(self, runtime):
         feature_data = image_data(self.inputs.t1_file, "T1", additional_images=self.inputs.additional_files)
         classifier = joblib.load(self.inputs.classifier_file)
-        probability_array = classifier.predict_proba(feature_data.values)
+        probability_array = classifier.predict_proba(feature_data.values)[:, 1]
         probability_image = image_file_from_array_with_reference_image_file(probability_array, self.inputs.t1_file,
                                                                             self._list_outputs()["out_file"])
         return runtime
