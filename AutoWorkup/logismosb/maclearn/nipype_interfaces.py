@@ -39,7 +39,6 @@ class CollectFeatureFilesOutputSpec(TraitedSpec):
 class CollectFeatureFiles(BaseInterface):
     input_spec = CollectFeatureFilesInputSpec
     output_spec = CollectFeatureFilesOutputSpec
-    feature_files = []
 
     def _run_interface(self, runtime):
         list_of_feature_files = self.combine_files()
@@ -56,7 +55,7 @@ class CollectFeatureFiles(BaseInterface):
 
     def _list_outputs(self):
         outputs = self._outputs().get()
-        outputs["feature_files"] = self._list_resampled_feature_files()
+        outputs["feature_files"] = self._list_resampled_feature_files(self.combine_files())
         return outputs
 
     def _list_resampled_feature_files(self, list_of_feature_files):
