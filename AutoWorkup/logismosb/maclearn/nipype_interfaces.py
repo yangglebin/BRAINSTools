@@ -26,14 +26,14 @@ class CollectFeatureFilesInputSpec(BaseInterfaceInputSpec):
     rho = traits.File(exists=True)
     phi = traits.File(exists=True)
     theta = traits.File(exists=True)
-    posterior_files = traits.Dict(desc="Dictionary of posterior probabilities")
+    posterior_files = traits.Dict(trait=traits.File(exists=True), desc="Dictionary of posterior probabilities")
     reference_file = traits.File(exists=True)
     transform_file = traits.File(exists=True)
     inverse_transform = traits.Bool(True, desc="if true, inverse transform will be used", use_default=True)
 
 
 class CollectFeatureFilesOutputSpec(TraitedSpec):
-    feature_files = traits.Dict(desc="Output dictionary of feature files")
+    feature_files = traits.Dict(trait=traits.File(exists=True), desc="Output dictionary of feature files")
 
 
 class CollectFeatureFiles(BaseInterface):
@@ -78,7 +78,7 @@ class CollectFeatureFiles(BaseInterface):
 
 class PredictEdgeProbabilityInputSpec(BaseInterfaceInputSpec):
     t1_file = traits.File(exists=True)
-    additional_files = traits.File(exists=True)
+    additional_files = traits.Dict(trait=traits.File(exists=True))
     classifier_file = traits.File(exists=True, desc="Classifier file for predicting edge probability")
     out_file = traits.File(exist=False)
 
