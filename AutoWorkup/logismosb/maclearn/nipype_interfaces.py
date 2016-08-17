@@ -42,9 +42,8 @@ class CollectFeatureFiles(BaseInterface):
     feature_files = []
 
     def _run_interface(self, runtime):
-        self.feature_files = self.combine_files()
-        self.feature_files = self.resample_images_for_features(self.feature_files, self.inputs.reference_file,
-                                                               self.inputs.transform_file)
+        list_of_feature_files = self.combine_files()
+        self.resample_images_for_features(list_of_feature_files, self.inputs.reference_file, self.inputs.transform_file)
         return runtime
 
     @staticmethod
@@ -60,22 +59,21 @@ class CollectFeatureFiles(BaseInterface):
         outputs["feature_files"] = self._list_resampled_feature_files()
         return outputs
 
-    def _list_resampled_feature_files(self):
-        outputs = dict()
-        for _file in self.feature_files:
+    def _list_resampled_feature_files(self, list_of_feature_files):
+        resampled_feature_files_dict = dict()
+        for _file in list_of_feature_files:
             basename = os.path.basename(_file)
             name = self._get_dict_name(_file)
-            outputs[name] = os.path.abspath(basename)
-        return outputs
+            resampled_feature_files_dict[name] = os.path.abspath(basename)
+        return resampled_feature_files_dict
 
-    def resample_images_for_features(self, feature_files, ref_file, transform):
-        resampled_feature_files = dict()
-        for _file in feature_files:
+    def resample_images_for_features(self, list_of_feature_files, ref_file, transform):
+        resampled_feature_files = self._list_resampled_feature_files(list_of_feature_files)
+        for _file in list_of_feature_files:
             name = self._get_dict_name(_file)
-            resampled_feature_files[name] = run_resample(_file, ref_file, transform,
-                                                         self._list_resampled_feature_files()[name], "Linear", "float",
+            resampled_feature_files[name] = run_resample(_file, ref_file, transform, resampled_feature_files[name],
+                                                         "Linear", "float",
                                                          inverse_transform=self.inputs.inverse_transform)
-        return resampled_feature_files
 
 
 class PredictEdgeProbabilityInputSpec(BaseInterfaceInputSpec):
