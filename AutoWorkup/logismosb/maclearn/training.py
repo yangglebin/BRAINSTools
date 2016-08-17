@@ -13,7 +13,8 @@ import json
 
 
 def get_list_of_features():
-    _file = open("data_order.json", "rb")
+    from ..workflow import get_local_file_location
+    _file = open(get_local_file_location("data_order.json"), "rb")
     features = json.load(_file)
     _file.close()
     return features

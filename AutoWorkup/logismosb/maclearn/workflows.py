@@ -10,13 +10,15 @@ def read_machine_learning_config():
     return read_json_config(os.path.join("maclearn", "logismosb_maclearn_config.json"))
 
 
-def create_machine_learning_workflow(name="CreateEdgeProbabilityMap", edge_name="gm", resample=True):
+def create_machine_learning_workflow(name="CreateEdgeProbabilityMap", edge_name="gm", resample=True, plugin_args=None):
     workflow = Workflow(name)
     input_spec = Node(IdentityInterface(["rho", "phi", "theta", "posteriors", "t1_file", "acpc_transform",
                                          "classifier_file"]), name="input_spec")
 
     predict_edge_probability = Node(PredictEdgeProbability(), name="PredictEdgeProbability")
     predict_edge_probability.inputs.out_file = "{0}_edge_probability_map.nii.gz".format(edge_name)
+    if plugin_args:
+        predict_edge_probability.plugin_args = plugin_args
     workflow.connect([(input_spec, predict_edge_probability, [("t1_file", "t1_file"),
                                                               ("classifier_file", "classifier_file")])])
 
@@ -121,7 +123,8 @@ def create_workflow_to_mask_white_matter(name):
     return workflow
 
 
-def create_logismosb_machine_learning_workflow(name="MachineLearningLOGISMOSB", resample=True, hemispheres=None):
+def create_logismosb_machine_learning_workflow(name="MachineLearningLOGISMOSB", resample=True, hemispheres=None,
+                                               plugin_args=None):
     workflow = Workflow(name)
     input_spec = Node(IdentityInterface(["rho", "phi", "theta", "posteriors", "t1_file", "t2_file", "acpc_transform",
                                          "classifier_file", "orig_t1", "hncma_file", "abc_file",
@@ -153,7 +156,7 @@ def create_logismosb_machine_learning_workflow(name="MachineLearningLOGISMOSB", 
                                                       ])])
 
         # create and connect machine learning
-        predict_gm = create_machine_learning_workflow(resample=resample)
+        predict_gm = create_machine_learning_workflow(resample=resample, plugin_args=plugin_args)
         feature_files = ["rho", "phi", "theta", "posteriors"]
         for feature in feature_files:
             workflow.connect([(input_spec, predict_gm, [(feature, "input_spec.{0}".format(feature))])])

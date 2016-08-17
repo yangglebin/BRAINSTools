@@ -1102,7 +1102,12 @@ def generate_single_session_template_WF(projectid, subjectid, sessionid, onlyT1,
 
             gm_classifier_file = master_config['gm_edge_classifier']
 
-            edge_prediction_workflow = create_logismosb_machine_learning_workflow()
+            edge_prediction_workflow = create_logismosb_machine_learning_workflow(
+                plugin_args={'qsub_args': modify_qsub_args(queue=master_config['queue'],
+                                                           memoryGB=8,
+                                                           minThreads=num_threads,
+                                                           maxThreads=num_threads),
+                             'overwrite': True})
             edge_prediction_workflow.inputs.input_spec.classifier_file = gm_classifier_file
 
             select_t1_node = pe.Node(Function(['file_list'], ['first_file'], select_first_file),
