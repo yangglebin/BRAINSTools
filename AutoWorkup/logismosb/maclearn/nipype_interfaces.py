@@ -154,10 +154,10 @@ class CreateReferenceImage(BaseInterface):
         return outputs
 
     def _run_interface(self, runtime):
-        baw_image = sitk.ReadImage(self.inputs.baw_t1)
+        baw_image = sitk.ReadImage(str(self.inputs.baw_t1))
         spacing = baw_image.GetSpacing()
         size = baw_image.GetSize()
-        output_image = sample_image(sitk.ReadImage(self.inputs.orig_t1), size, spacing)
+        output_image = sample_image(sitk.ReadImage(str(self.inputs.orig_t1)), size, spacing)
         out_file = self._list_outputs()["reference_file"]
         sitk.WriteImage(output_image, out_file)
         change_orientation(out_file, out_file)
