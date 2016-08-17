@@ -18,7 +18,9 @@ def collect_training_data(training_files):
     for t1_file, additional_files, truth_files in training_files:
         feature_data = image_data(t1_file, "T1", additional_images=additional_files)
         gm_truth_data = pd.Series(linear_array_from_image_file(truth_files["gm"]), name="GM")
-        data = pd.concat([feature_data, gm_truth_data], axis=1, keys=["Features", "Truth"])
+        wm_truth_data = pd.Series(linear_array_from_image_file(truth_files["wm"]), name="WM")
+        truth_data = pd.concat([gm_truth_data, wm_truth_data], axis=1)
+        data = pd.concat([feature_data, truth_data], axis=1, keys=["Features", "Truth"])
         all_data.append(data)
     return pd.concat(all_data, axis=0)
 
