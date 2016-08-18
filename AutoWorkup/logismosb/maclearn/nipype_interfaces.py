@@ -107,12 +107,13 @@ def create_white_edge_cost_image(t1_file, t2_file, gm_proba_file, out_file):
 class PredictEdgeProbabilityInputSpec(BaseInterfaceInputSpec):
     t1_file = traits.File(exists=True)
     additional_files = traits.Dict(trait=traits.File(exists=True))
-    classifier_file = traits.File(exists=True, desc="Classifier file for predicting edge probability")
-    out_file = traits.File(exist=False)
+    gm_classifier_file = traits.File(exists=True, desc="Classifier file for predicting edge probability")
+    wm_classifier_file = traits.File(exists=True, desc="Classifier file for predicting edge probability")
 
 
 class PredictEdgeProbabilityOutputSpec(TraitedSpec):
-    out_file = traits.File()
+    gm_edge_probability = traits.File()
+    wm_edge_probability = traits.File()
 
 
 class PredictEdgeProbability(BaseInterface):
@@ -121,15 +122,21 @@ class PredictEdgeProbability(BaseInterface):
 
     def _run_interface(self, runtime):
         feature_data = image_data(self.inputs.t1_file, "T1", additional_images=self.inputs.additional_files)
-        classifier = joblib.load(self.inputs.classifier_file)
-        probability_array = classifier.predict_proba(feature_data.values)[:, 1]
-        probability_image = image_file_from_array_with_reference_image_file(probability_array, self.inputs.t1_file,
-                                                                            self._list_outputs()["out_file"])
+        gm_classifier = joblib.load(self.inputs.gm_classifier_file)
+        gm_probability_array = gm_classifier.predict_proba(feature_data.values)[:, 1]
+        gm_probability_image = image_file_from_array_with_reference_image_file(
+            gm_probability_array, self.inputs.t1_file, self._list_outputs()["gm_edge_probability"])
+        wm_classifier = joblib.load(self.inputs.wm_classifier_file)
+        wm_probability_array = wm_classifier.predict_proba(feature_data.values)[:, 1]
+        wm_probability_image = image_file_from_array_with_reference_image_file(
+            wm_probability_array, self.inputs.t1_file, self._list_outputs()["wm_edge_probability"])
         return runtime
 
     def _list_outputs(self):
         outputs = self._outputs().get()
-        outputs["out_file"] = os.path.abspath(self.inputs.out_file)
+        for matter in ["gm", "wm"]:
+            name = "{0}_edge_probability".format(matter)
+            outputs[name] = os.path.abspath(name + ".nii.gz")
         return outputs
 
 

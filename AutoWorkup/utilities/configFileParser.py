@@ -156,6 +156,9 @@ def parseExperiment(parser, workflow_phase):
             retval['gm_edge_classifier'] = validatePath(parser.get('EXPERIMENT', 'GM_EDGE_CLASSIFIER'),
                                                         allow_empty=True,
                                                         isDirectory=False)
+            retval['wm_edge_classifier'] = validatePath(parser.get('EXPERIMENT', 'WM_EDGE_CLASSIFIER'),
+                                                        allow_empty=True,
+                                                        isDirectory=False)
         retval['workflow_phase'] = workflow_phase
     return retval
 

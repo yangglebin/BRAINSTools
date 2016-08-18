@@ -13,14 +13,14 @@ def read_machine_learning_config():
 def create_machine_learning_workflow(name="CreateEdgeProbabilityMap", edge_name="gm", resample=True, plugin_args=None):
     workflow = Workflow(name)
     input_spec = Node(IdentityInterface(["rho", "phi", "theta", "posteriors", "t1_file", "acpc_transform",
-                                         "classifier_file"]), name="input_spec")
+                                         "gm_classifier_file", "wm_classifier_file"]), name="input_spec")
 
     predict_edge_probability = Node(PredictEdgeProbability(), name="PredictEdgeProbability")
-    predict_edge_probability.inputs.out_file = "{0}_edge_probability_map.nii.gz".format(edge_name)
     if plugin_args:
         predict_edge_probability.plugin_args = plugin_args
     workflow.connect([(input_spec, predict_edge_probability, [("t1_file", "t1_file"),
-                                                              ("classifier_file", "classifier_file")])])
+                                                              ("gm_classifier_file", "gm_classifier_file"),
+                                                              ("wm_classifier_file", "wm_classifier_file")])])
 
     if resample:
         collect_features = Node(CollectFeatureFiles(), name="CollectFeatureFiles")
@@ -38,8 +38,9 @@ def create_machine_learning_workflow(name="CreateEdgeProbabilityMap", edge_name=
         # TODO: create workflow that does not resample the input images
         return
 
-    output_spec = Node(IdentityInterface(["probability_map"]), name="output_spec")
-    workflow.connect(predict_edge_probability, "out_file", output_spec, "probability_map")
+    output_spec = Node(IdentityInterface(["gm_probability_map", "wm_probability_map"]), name="output_spec")
+    workflow.connect(predict_edge_probability, "gm_edge_probability", output_spec, "gm_probability_map")
+    workflow.connect(predict_edge_probability, "wm_edge_probability", output_spec, "wm_probability_map")
 
     return workflow
 
@@ -127,8 +128,9 @@ def create_logismosb_machine_learning_workflow(name="MachineLearningLOGISMOSB", 
                                                plugin_args=None):
     workflow = Workflow(name)
     input_spec = Node(IdentityInterface(["rho", "phi", "theta", "posteriors", "t1_file", "t2_file", "acpc_transform",
-                                         "classifier_file", "orig_t1", "hncma_file", "abc_file",
-                                         "lh_white_surface_file", "rh_white_surface_file"]), name="input_spec")
+                                         "gm_classifier_file", "wm_classifier_file", "orig_t1", "hncma_file",
+                                         "abc_file", "lh_white_surface_file", "rh_white_surface_file"]),
+                      name="input_spec")
 
     outputs = []
     surface_files = ['gmsurface_file', 'wmsurface_file']
@@ -156,30 +158,15 @@ def create_logismosb_machine_learning_workflow(name="MachineLearningLOGISMOSB", 
                                                       ])])
 
         # create and connect machine learning
-        predict_gm = create_machine_learning_workflow(resample=resample, plugin_args=plugin_args)
+        predict_edges = create_machine_learning_workflow(resample=resample, plugin_args=plugin_args)
         feature_files = ["rho", "phi", "theta", "posteriors"]
         for feature in feature_files:
-            workflow.connect([(input_spec, predict_gm, [(feature, "input_spec.{0}".format(feature))])])
-        workflow.connect([(resample_baw, predict_gm, [("output_spec.t1_file", "input_spec.t1_file")]),
-                          (input_spec, predict_gm, [("acpc_transform", "input_spec.acpc_transform"),
-                                                    ("classifier_file", "input_spec.classifier_file")]),
+            workflow.connect([(input_spec, predict_edges, [(feature, "input_spec.{0}".format(feature))])])
+        workflow.connect([(resample_baw, predict_edges, [("output_spec.t1_file", "input_spec.t1_file")]),
+                          (input_spec, predict_edges, [("acpc_transform", "input_spec.acpc_transform"),
+                                                       ("gm_classifier_file", "input_spec.gm_classifier_file"),
+                                                       ("wm_classifier_file", "input_spec.wm_classifier_file")]),
                           ])
-
-        from nipype_interfaces import scale_image
-        scale_gm_proba = Node(Function(["image_file", "out_file", "scale", "square"], ["out_file"], scale_image),
-                              name="ScaleGMPorbabilityMap")
-        scale_gm_proba.inputs.square = True
-        scale_gm_proba.inputs.scale = 1000
-        scale_gm_proba.inputs.out_file = "gm_probability_scaled.nii.gz"
-        workflow.connect(predict_gm, "output_spec.probability_map", scale_gm_proba, "image_file")
-
-        from nipype_interfaces import create_white_edge_cost_image
-        white_edge_cost = Node(Function(["t1_file", "t2_file", "gm_proba_file", "out_file"], ["out_file"],
-                                        create_white_edge_cost_image), name="WhiteMatterEdgeCost")
-        workflow.connect([(resample_baw, white_edge_cost, [("output_spec.t1_file", "t1_file"),
-                                                           ("output_spec.t2_file", "t2_file")]),
-                          (predict_gm, white_edge_cost, [("output_spec.probability_map", "gm_proba_file")])])
-        white_edge_cost.inputs.out_file = "white_edge_cost.nii.gz"
 
         for hemisphere in hemispheres:
 
@@ -201,8 +188,8 @@ def create_logismosb_machine_learning_workflow(name="MachineLearningLOGISMOSB", 
                                                     ("output_spec.t2_file", "t2_file")]),
                               (convert_white, logb, [("converted", "mesh_file")]),
                               (mask_wm, logb, [("output_spec.white_mask", "wm_file")]),
-                              (scale_gm_proba, logb, [("out_file", "gm_proba_file")]),
-                              (white_edge_cost, logb, [("out_file", "wm_proba_file")])])
+                              (predict_edges, logb, [("output_spec.gm_probability_map", "gm_proba_file")]),
+                              (predict_edges, logb, [("output_spec.wm_probability_map", "wm_proba_file")])])
 
             for surface_name in surface_files:
                 workflow.connect(logb, surface_name, output_spec, hemisphere + "_" + surface_name)
