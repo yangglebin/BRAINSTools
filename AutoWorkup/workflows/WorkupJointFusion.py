@@ -32,15 +32,35 @@ from .WorkupComputeLabelVolume import *
     JointFusionWF.connect(BAtlas,'ExtendedAtlasDefinition.xml',myLocalTCWF,'atlasDefinition')
     JointFusionWF.connect(BLI,'outputTransformFilename',myLocalTCWF,'atlasToSubjectInitialTransform')
 """
+<<<<<<< 31b5dd8eccce1af5f22e669710506539926a4082
 def MakeIntensityOutputListFunc(n_modality, intensityFilenameFormat):
+||||||| merged common ancestors
+def MakeIntensityOutputDictionaryFunc(n_modality):
+    print( "MakeIntensityOutputDictionaryFunc: {0}".format(n_modality))
+=======
+def MakeIntensityOutputListFunc(n_modality, intensityFilenameFormat):
+    print( "MakeIntensityOutputListFunc: {0},{1}".format(n_modality, intensityFilenameFormat))
+>>>>>>> WIP: JointFusion Synthetic image to DS
     temp_list = list()
     import os
 
     for i in range(1,n_modality+1):
+<<<<<<< 31b5dd8eccce1af5f22e669710506539926a4082
         print ("JointFusion intensity output: JointFusion_HDAtlas20_2016_intensity_{0}.nii.gz".format(i))
         filenameStringWithFullpath=os.path.dirname(intensityFilenameFormat)
         filenameStringWithFullpath += "/JointFusion_HDAtlas20_2016_intensity_{0}.nii.gz".format(i)
         temp_list.append( filenameStringWithFullpath )
+||||||| merged common ancestors
+        print ("i: {0}".format(i))
+        temp_list.append("JointFusion_HDAtlas20_2016_intensity_{0}.nii.gz".format(i))
+        print( i, temp_list)
+=======
+        print ("i: {0}".format(i))
+        filenameStringWithFullpath=os.path.dirname(intensityFilenameFormat)
+        filenameStringWithFullpath += "/JointFusion_HDAtlas20_2016_intensity_{0}.nii.gz".format(i)
+        temp_list.append( filenameStringWithFullpath )
+        print( i, temp_list)
+>>>>>>> WIP: JointFusion Synthetic image to DS
     return temp_list
 
 def MakeVector(inFN1, inFN2=None, jointFusion =False):
@@ -430,12 +450,14 @@ def CreateJointFusionWorkflow(WFname, onlyT1, master_config, runFixFusionLabelMa
     #jointFusion.inputs.method='Joint[0.1,2]'
     if 'intensityoutputjointfusion' in master_config['components']:
         jointFusion.inputs.out_intensity_fusion_name_format='JointFusion_HDAtlas20_2016_intensity_%d.nii.gz'
-        MakeIntensityOutputDictionaryNode= pe.Node(Function(function=MakeIntensityOutputDictionaryFunc,
-                                                   input_names=['n_modality'],
-                                                   output_names=['intensityOutputDictionary']),
-                                                   run_without_submitting=True, name="99_makeIntensityDictionary")
-        MakeIntensityOutputDictionaryNode.inputs.n_modality = n_modality
-        JointFusionWF.connect( MakeIntensityOutputDictionaryNode, 'intensityOutputDictionary',
+        MakeIntensityOutputListNode= pe.Node(Function(function=MakeIntensityOutputListFunc,
+                                                   input_names=['n_modality','intensityFilenameFormat'],
+                                                   output_names=['intensityOutputList']),
+                                                   run_without_submitting=True, name="99_makeIntensityList")
+        MakeIntensityOutputListNode.inputs.n_modality = n_modality
+        JointFusionWF.connect( jointFusion, 'out_intensity_fusion_name_format',
+                               MakeIntensityOutputListNode, 'intensityFilenameFormat' )
+        JointFusionWF.connect( MakeIntensityOutputListNode, 'intensityOutputList',
                                outputsSpec, 'JointFusion_HDAtlas20_2016_intensityVolumes')
 
     else:
@@ -636,4 +658,5 @@ def CreateJointFusionWorkflow(WFname, onlyT1, master_config, runFixFusionLabelMa
         JointFusionWF.connect( computeLobeVolumes, 'outputspec.jsonFilename',
                                outputsSpec, 'JointFusion_lobe_volumes_json')
 
+    JointFusionWF.config['execution'] = {'remove_unnecessary_outputs':'false'}
     return JointFusionWF
