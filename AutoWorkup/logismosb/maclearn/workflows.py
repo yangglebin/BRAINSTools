@@ -10,7 +10,7 @@ def read_machine_learning_config():
     return read_json_config(os.path.join("maclearn", "logismosb_maclearn_config.json"))
 
 
-def create_machine_learning_workflow(name="CreateEdgeProbabilityMap", edge_name="gm", resample=True, plugin_args=None):
+def create_machine_learning_workflow(name="CreateEdgeProbabilityMap", resample=True, plugin_args=None):
     workflow = Workflow(name)
     input_spec = Node(IdentityInterface(["rho", "phi", "theta", "posteriors", "t1_file", "acpc_transform",
                                          "gm_classifier_file", "wm_classifier_file"]), name="input_spec")
@@ -162,7 +162,7 @@ def create_logismosb_machine_learning_workflow(name="MachineLearningLOGISMOSB", 
         feature_files = ["rho", "phi", "theta", "posteriors"]
         for feature in feature_files:
             workflow.connect([(input_spec, predict_edges, [(feature, "input_spec.{0}".format(feature))])])
-        workflow.connect([(resample_baw, predict_edges, [("output_spec.t1_file", "input_spec.t1_file")]),
+        workflow.connect([(reference_image, predict_edges, [("reference_file", "input_spec.t1_file")]),
                           (input_spec, predict_edges, [("acpc_transform", "input_spec.acpc_transform"),
                                                        ("gm_classifier_file", "input_spec.gm_classifier_file"),
                                                        ("wm_classifier_file", "input_spec.wm_classifier_file")]),
