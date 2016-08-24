@@ -1,5 +1,5 @@
 from nipype import Workflow, IdentityInterface, Node, Function
-from nipype_interfaces import PredictEdgeProbability, CollectFeatureFiles, CreateReferenceImage
+from nipype_interfaces import PredictEdgeProbability, CollectFeatureFiles, CreateReferenceImage, LOGISMOSBPreprocessing
 from nipype.interfaces.semtools import BRAINSResample
 from nipype.interfaces.freesurfer import MRIsConvert
 from ..workflow import LOGISMOSB, read_json_config
@@ -179,6 +179,11 @@ def create_logismosb_machine_learning_workflow(name="MachineLearningLOGISMOSB", 
             convert_white.inputs.to_scanner = True
             workflow.connect([(input_spec, convert_white, [("{0}_white_surface_file".format(hemisphere), "in_file")])])
 
+            preproc = Node(LOGISMOSBPreprocessing(), "{0}_Preprocessing".format(hemisphere))
+            workflow.connect([(mask_wm, preproc, [("output_spec.white_mask", "white_mask")]),
+                              (predict_edges, preproc, [("output_spec.gm_probability_map", "gm_proba"),
+                                                        ("output_spec.wm_probability_map", "wm_proba")])])
+
             logb = create_logismosb_node("{0}_LOGISMOSB".format(hemisphere))
             logb.inputs.basename = hemisphere
             # connect logb inputs
@@ -187,9 +192,9 @@ def create_logismosb_machine_learning_workflow(name="MachineLearningLOGISMOSB", 
                                                     ("output_spec.t1_file", "t1_file"),
                                                     ("output_spec.t2_file", "t2_file")]),
                               (convert_white, logb, [("converted", "mesh_file")]),
-                              (mask_wm, logb, [("output_spec.white_mask", "wm_file")]),
-                              (predict_edges, logb, [("output_spec.gm_probability_map", "gm_proba_file")]),
-                              (predict_edges, logb, [("output_spec.wm_probability_map", "wm_proba_file")])])
+                              (preproc, logb, [("white_mask", "wm_file")]),
+                              (preproc, logb, [("gm_proba", "gm_proba_file")]),
+                              (preproc, logb, [("wm_proba", "wm_proba_file")])])
 
             for surface_name in surface_files:
                 workflow.connect(logb, surface_name, output_spec, hemisphere + "_" + surface_name)

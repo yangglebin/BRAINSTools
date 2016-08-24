@@ -75,19 +75,6 @@ class CollectFeatureFiles(BaseInterface):
                                                          inverse_transform=self.inputs.inverse_transform)
 
 
-def scale_image(image_file, out_file, scale=None, square=False):
-    import SimpleITK as sitk
-    import os
-    image = sitk.ReadImage(image_file)
-    if scale:
-        image = scale * image
-    if square:
-        image = image * image
-    out_file = os.path.abspath(out_file)
-    sitk.WriteImage(image, out_file)
-    return out_file
-
-
 def create_white_edge_cost_image(t1_file, t2_file, gm_proba_file, out_file):
     import SimpleITK as sitk
     import os
@@ -194,4 +181,63 @@ class CreateReferenceImage(BaseInterface):
         out_file = self._list_outputs()["reference_file"]
         sitk.WriteImage(output_image, out_file)
         change_orientation(out_file, out_file)
+        return runtime
+
+
+def scale_image(image, scale=100000):
+    return image * scale
+
+
+def increase_penalty(image, penalty, minimum):
+    background = sitk.Cast(image < minimum, sitk.sitkFloat64)
+    return image - (background * penalty)
+
+
+class LOGISMOSBPreprocessingInputSpec(BaseInterfaceInputSpec):
+    white_mask = traits.File(exists=True, mandatory=True)
+    erode_mask = traits.Int(default_value=1, usedefault=True)
+    gm_proba = traits.File(exists=True, mandatory=True)
+    wm_proba = traits.File(exists=True, mandatory=True)
+    background_penalty = traits.Int(default_value=100, usedefault=True, desc="Penalty for a zero probability.")
+    proba_scale = traits.Int(default_value=50, usedefault=True, desc="Scale the probabilities.")
+    min_probability = traits.Float(default_value=0.01, usedefault=True)
+
+
+class LOGISMOSBPreprocessingOutputSpec(TraitedSpec):
+    wm_proba = traits.File()
+    gm_proba = traits.File()
+    white_mask = traits.File()
+
+
+class LOGISMOSBPreprocessing(BaseInterface):
+    """Interface for playing with the inputs so that LOGISMOS-B is optimized for the probability maps."""
+    input_spec = LOGISMOSBPreprocessingInputSpec
+    output_spec = LOGISMOSBPreprocessingOutputSpec
+
+    def _list_outputs(self):
+        outputs = self._outputs().get()
+        inputs = self.inputs.get()
+        for output in outputs:
+            outputs[output] = os.path.abspath(os.path.basename(inputs[output]))
+        return outputs
+
+    def _run_interface(self, runtime):
+        inputs = self.inputs.get()
+        for matter in ("gm", "wm"):
+            proba_name = "{0}_proba".format(matter)
+            proba_file = inputs[proba_name]
+            proba = sitk.ReadImage(str(proba_file))
+            if self.inputs.proba_scale:
+                proba = scale_image(proba, self.inputs.proba_scale)
+            if self.inputs.background_penalty:
+                proba = increase_penalty(proba, self.inputs.background_penalty, self.inputs.min_probability)
+            proba_out_file = self._list_outputs()[proba_name]
+            sitk.WriteImage(proba, proba_out_file)
+        white_mask = sitk.ReadImage(str(self.inputs.white_mask))
+        white_out_file = self._list_outputs()["white_mask"]
+        if self.inputs.erode_mask:
+            eroded_white_mask = sitk.BinaryErode(sitk.Cast(white_mask, sitk.sitkUInt8), int(self.inputs.erode_mask))
+            sitk.WriteImage(eroded_white_mask, white_out_file)
+        else:
+            sitk.WriteImage(white_mask, white_out_file)
         return runtime
