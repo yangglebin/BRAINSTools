@@ -3,6 +3,7 @@ from nipype_interfaces import PredictEdgeProbability, CollectFeatureFiles, Creat
 from nipype.interfaces.semtools import BRAINSResample
 from nipype.interfaces.freesurfer import MRIsConvert
 from ..workflow import LOGISMOSB, read_json_config
+from ..utils.mesh2mask import Mesh2Mask
 import os
 
 
@@ -83,43 +84,18 @@ def create_identity_interface_node(inputs, name):
 
 
 def create_workflow_to_mask_white_matter(name):
-    from ..freesurfer_utils import SurfaceMask, create_ones_image
-    from nipype.interfaces.freesurfer import MRIConvert
-
     workflow = Workflow(name)
 
     input_spec = create_identity_interface_node(["t1_file", "white"], "input_spec")
 
-    # convert raw t1 to lia
-    t1_to_lia = Node(MRIConvert(), "T1toLIA")
-    t1_to_lia.inputs.out_orientation = "LIA"
-    t1_to_lia.inputs.out_file = "t1_lia.mgz"
-    workflow.connect(input_spec, 't1_file', t1_to_lia, 'in_file')
+    mask_white_matter = Node(Mesh2Mask(), "MaskWhiteMatter")
+    mask_white_matter.inputs.output_image = "white.nii.gz"
 
-    # Create ones image for use when masking the white matter
-    ones = Node(Function(['in_volume', 'out_file'],
-                         ['out_file'],
-                         create_ones_image),
-                name="Ones_Image")
-    ones.inputs.out_file = "ones.mgz"
-
-    workflow.connect(t1_to_lia, 'out_file', ones, 'in_volume')
-
-    # use the ones image to obtain a white matter mask
-    surfmask = Node(SurfaceMask(), name="WhiteMask")
-    surfmask.inputs.out_file = "white_ras.mgz"
-
-    workflow.connect(ones, 'out_file', surfmask, 'in_volume')
-    workflow.connect(input_spec, 'white', surfmask, 'in_surface')
-
-    surfmask_to_nifti = Node(MRIConvert(), "MasktoNIFTI")
-    surfmask_to_nifti.inputs.out_file = "white.nii.gz"
-    surfmask_to_nifti.inputs.out_orientation = "LPS"
-
-    workflow.connect(surfmask, 'out_file', surfmask_to_nifti, 'in_file')
+    workflow.connect(input_spec, 'white', mask_white_matter, 'input_mesh')
+    workflow.connect(input_spec, 't1_file', mask_white_matter, 'input_image')
 
     output_spec = create_identity_interface_node(["white_mask"], "output_spec")
-    workflow.connect(surfmask_to_nifti, "out_file", output_spec, "white_mask")
+    workflow.connect(mask_white_matter, "output_image", output_spec, "white_mask")
 
     return workflow
 
@@ -169,17 +145,17 @@ def create_logismosb_machine_learning_workflow(name="MachineLearningLOGISMOSB", 
                           ])
 
         for hemisphere in hemispheres:
-
-            mask_wm = create_workflow_to_mask_white_matter("{0}_MaskWhiteMatter".format(hemisphere))
-            workflow.connect([(input_spec, mask_wm, [("{0}_white_surface_file".format(hemisphere), "input_spec.white")]),
-                              (resample_baw, mask_wm, [("output_spec.t1_file", "input_spec.t1_file")])])
-
             convert_white = Node(MRIsConvert(), name="{0}_Convert_White".format(hemisphere))
             convert_white.inputs.out_file = "{0}_white.vtk".format(hemisphere)
             convert_white.inputs.to_scanner = True
             workflow.connect([(input_spec, convert_white, [("{0}_white_surface_file".format(hemisphere), "in_file")])])
 
+            mask_wm = create_workflow_to_mask_white_matter("{0}_MaskWhiteMatter".format(hemisphere))
+            workflow.connect([(convert_white, mask_wm, [("converted", "input_spec.white")]),
+                              (resample_baw, mask_wm, [("output_spec.t1_file", "input_spec.t1_file")])])
+
             preproc = Node(LOGISMOSBPreprocessing(), "{0}_Preprocessing".format(hemisphere))
+            preproc.inputs.erode_mask = 0
             workflow.connect([(mask_wm, preproc, [("output_spec.white_mask", "white_mask")]),
                               (predict_edges, preproc, [("output_spec.gm_probability_map", "gm_proba"),
                                                         ("output_spec.wm_probability_map", "wm_proba")])])

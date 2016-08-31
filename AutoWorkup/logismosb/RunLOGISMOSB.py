@@ -43,7 +43,7 @@ for row in cursor.execute("SELECT t1_image_file, t2_image_file, session_id from 
     logb_wf.inputs.inputspec.posterior_files = posterior_files
     logb_wf.inputs.inputspec.hncma_atlas = hncma_atlas
     logb_wf.inputs.inputspec.joint_fusion_file = joint_fusion_file
-    logb_wf.inputs.inputspec.brainlabels_file = t1_file
+    logb_wf.inputs.inputspec.brainlabels_file = abc_file
     wf.base_dir = base_dir
     # wf.run(plugin="SGE", plugin_args={"qsub_args": "-q HJ,all.q,COE,UI"})
     # wf.run(plugin="MultiProc", plugin_args={"n_procs": 24})

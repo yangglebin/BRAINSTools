@@ -184,7 +184,7 @@ class CreateReferenceImage(BaseInterface):
         return runtime
 
 
-def scale_image(image, scale=100000):
+def scale_image(image, scale):
     return image * scale
 
 
