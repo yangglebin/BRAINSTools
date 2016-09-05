@@ -916,6 +916,9 @@ def generate_single_session_template_WF(projectid, subjectid, sessionid, onlyT1,
 
     if 'jointfusion_2015_wholebrain' in master_config['components']:  ## HACK Do JointFusion labeling
         ## HACK FOR NOW SHOULD BE MORE ELEGANT FROM THE .config file
+        if badT2:
+            print( "Set the onlyT1 to True since it is bad T2")
+            onlyT1 = True
         if onlyT1:
             print("T1 only processing in jointFusion")
         else:

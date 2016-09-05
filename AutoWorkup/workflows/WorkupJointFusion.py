@@ -33,16 +33,14 @@ from .WorkupComputeLabelVolume import *
     JointFusionWF.connect(BLI,'outputTransformFilename',myLocalTCWF,'atlasToSubjectInitialTransform')
 """
 def MakeIntensityOutputListFunc(n_modality, intensityFilenameFormat):
-    print( "MakeIntensityOutputListFunc: {0},{1}".format(n_modality, intensityFilenameFormat))
     temp_list = list()
     import os
 
     for i in range(1,n_modality+1):
-        print ("i: {0}".format(i))
+        print ("JointFusion intensity output: JointFusion_HDAtlas20_2016_intensity_{0}.nii.gz".format(i))
         filenameStringWithFullpath=os.path.dirname(intensityFilenameFormat)
         filenameStringWithFullpath += "/JointFusion_HDAtlas20_2016_intensity_{0}.nii.gz".format(i)
         temp_list.append( filenameStringWithFullpath )
-        print( i, temp_list)
     return temp_list
 
 def MakeVector(inFN1, inFN2=None, jointFusion =False):
@@ -56,10 +54,6 @@ def MakeVector(inFN1, inFN2=None, jointFusion =False):
     if jointFusion:
         returnVector = [returnVector]
 
-    print ("jointFusion: ")
-    print (str(jointFusion))
-    print (returnVector)
-    print ("============================================")
     return returnVector
 
 
@@ -106,13 +100,10 @@ def getListIndexOrNoneIfOutOfRange(imageList, index):
 
 def CreateJointFusionWorkflow(WFname, onlyT1, master_config, runFixFusionLabelMap=True):
     from nipype.interfaces import ants
-    onlyT1=False
-
     if onlyT1:
       n_modality = 1
     else:
       n_modality = 2
-
     if 'jointfusion' in  master_config:
         if master_config['jointfusion'] == 'allModalities':
             jointFusionInputModality='allModalities'
@@ -139,6 +130,7 @@ def CreateJointFusionWorkflow(WFname, onlyT1, master_config, runFixFusionLabelMa
     CLUSTER_QUEUE_LONG=master_config['long_q']
 
     JointFusionWF = pe.Workflow(name=WFname)
+    JointFusionWF.config['execution'] ={'remove_unnecessary_outputs':'False'}
 
     inputsSpec = pe.Node(interface=IdentityInterface(fields=['subj_t1_image', #Desired image to create label map for
                                                              'subj_t2_image', #Desired image to create label map for
@@ -239,9 +231,10 @@ def CreateJointFusionWorkflow(WFname, onlyT1, master_config, runFixFusionLabelMa
     t2Resample = dict()
     warpedAtlasLblMergeNode = pe.Node(interface=Merge(number_of_atlas_sources),name="LblMergeAtlas")
     NewwarpedAtlasLblMergeNode = pe.Node(interface=Merge(number_of_atlas_sources),name="fswmLblMergeAtlas")
+
+    warpedAtlasesMergeNode = pe.Node(interface=Merge(number_of_atlas_sources*n_modality),name="MergeAtlases")
     # "HACK NOT to use T2 for JointFusion only"
-    #warpedAtlasesMergeNode = pe.Node(interface=Merge(number_of_atlas_sources*n_modality),name="MergeAtlases")
-    warpedAtlasesMergeNode = pe.Node(interface=Merge(number_of_atlas_sources*1),name="MergeAtlases")
+    #warpedAtlasesMergeNode = pe.Node(interface=Merge(number_of_atlas_sources*1),name="MergeAtlases")
 
     ## if using Registration masking, then do ROIAuto on fixed and moving images and connect to registraitons
     UseRegistrationMasking = True
@@ -333,11 +326,6 @@ def CreateJointFusionWorkflow(WFname, onlyT1, master_config, runFixFusionLabelMa
         JointFusionWF.connect(atlasMakeMultimodalInput[jointFusion_atlas_subject], 'outFNs',
                        A2SantsRegistrationPreJointFusion_SyN[jointFusion_atlas_subject],'moving_image')
 
-        "HACK NOT to use T2 for JointFusion"
-        JointFusionWF.connect(A2SantsRegistrationPreJointFusion_SyN[jointFusion_atlas_subject],'warped_image',
-                       warpedAtlasesMergeNode,'in'+str(merge_input_offset + jointFusion_atlas_mergeindex*n_modality) )
-        #JointFusionWF.connect(A2SantsRegistrationPreJointFusion_SyN[jointFusion_atlas_subject],'warped_image',
-        #               warpedAtlasesMergeNode,'in'+str(merge_input_offset + jointFusion_atlas_mergeindex*1) )
 
         if jointFusionInputModality == 'allModalities':
             JointFusionWF.connect(A2SantsRegistrationPreJointFusion_SyN[jointFusion_atlas_subject],'warped_image',
@@ -440,11 +428,19 @@ def CreateJointFusionWorkflow(WFname, onlyT1, master_config, runFixFusionLabelMa
                                                    input_names=['n_modality','intensityFilenameFormat'],
                                                    output_names=['intensityOutputList']),
                                                    run_without_submitting=True, name="99_makeIntensityList")
-        MakeIntensityOutputListNode.inputs.n_modality = n_modality
-        JointFusionWF.connect( jointFusion, 'out_intensity_fusion_name_format',
-                               MakeIntensityOutputListNode, 'intensityFilenameFormat' )
-        JointFusionWF.connect( MakeIntensityOutputListNode, 'intensityOutputList',
-                               outputsSpec, 'JointFusion_HDAtlas20_2016_intensityVolumes')
+
+        if jointFusion  == 'allModalities':
+            MakeIntensityOutputListNode.inputs.n_modality = n_modality
+        elif jointFusion  == 'onlyT1':
+            MakeIntensityOutputListNode.inputs.n_modality = 1
+        else:
+            MakeIntensityOutputListNode.inputs.n_modality = 1
+        #JointFusionWF.connect( jointFusion, 'out_intensity_fusion_name_format',
+        #                       MakeIntensityOutputListNode, 'intensityFilenameFormat' )
+        #JointFusionWF.connect( MakeIntensityOutputListNode, 'intensityOutputList',
+        #                       outputsSpec, 'JointFusion_HDAtlas20_2016_intensityVolumes')
+        JointFusionWF.connect( jointFusion, 'out_intensity_fusion',
+                               outputsSpec, 'JointFusion_HDAtlas20_2016_intensityVolumes' )
 
     else:
         print ("No intensity output")
@@ -460,13 +456,6 @@ def CreateJointFusionWorkflow(WFname, onlyT1, master_config, runFixFusionLabelMa
                                                    input_names=['allList','n_modality'],
                                                    output_names=['out']),
                                                    name="AdjustMergeListNode")
-    "*** HACK JointFusion only uses T1"
-    AdjustMergeListNode.inputs.n_modality = n_modality
-    #AdjustMergeListNode.inputs.n_modality = 1
-
-    JointFusionWF.connect(warpedAtlasesMergeNode,'out',AdjustMergeListNode,'allList')
-    JointFusionWF.connect(AdjustMergeListNode,'out',jointFusion,'atlas_image')
-
     AdjustTargetImageListNode = pe.Node(Function(function=adjustMergeList,
                                                    input_names=['allList','n_modality'],
                                                    output_names=['out']),
@@ -502,19 +491,8 @@ def CreateJointFusionWorkflow(WFname, onlyT1, master_config, runFixFusionLabelMa
         JointFusionWF.connect(inputsSpec, 'subj_t1_image', sessionMakeListSingleModalInput, 'inFN1')
         JointFusionWF.connect(sessionMakeListSingleModalInput, 'outFNs', jointFusion,'target_image')
 
-    "*** HACK JointFusion only uses T1"
-    """ Once JointFusion works with T2 properly,
-        delete sessionMakeListSingleModalInput and use sessionMakeMultimodalInput instead
-    """
-    JointFusionWF.connect(sessionMakeMultimodalInput, 'outFNs', jointFusion,'target_image')
-
-    #sessionMakeListSingleModalInput = pe.Node(Function(function=MakeVector,
-    #                                     input_names=['inFN1', 'inFN2', 'jointFusion'],
-    #                                     output_names=['outFNs']),
-    #                            run_without_submitting=True, name="sessionMakeListSingleModalInput")
-    #sessionMakeListSingleModalInput.inputs.jointFusion = False
-    #JointFusionWF.connect(inputsSpec, 'subj_t1_image', sessionMakeListSingleModalInput, 'inFN1')
-    #JointFusionWF.connect(sessionMakeListSingleModalInput, 'outFNs', jointFusion,'target_image')
+    JointFusionWF.connect(warpedAtlasesMergeNode,'out',AdjustMergeListNode,'allList')
+    JointFusionWF.connect(AdjustMergeListNode,'out',jointFusion,'atlas_image')
 
     JointFusionWF.connect(jointFusion, 'out_label_fusion', outputsSpec,'JointFusion_HDAtlas20_2015_label')
 
