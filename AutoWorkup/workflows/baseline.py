@@ -961,7 +961,7 @@ def generate_single_session_template_WF(projectid, subjectid, sessionid, onlyT1,
                                                       plugin_args={'qsub_args': modify_qsub_args(
                                                           queue=master_config['queue'],
                                                           memoryGB=8,
-                                                          minThreads=12,
+                                                          minThreads=16,
                                                           maxThreads=16),
                                                           'overwrite': True})
 
@@ -1106,7 +1106,7 @@ def generate_single_session_template_WF(projectid, subjectid, sessionid, onlyT1,
             edge_prediction_workflow = create_logismosb_machine_learning_workflow(
                 plugin_args={'qsub_args': modify_qsub_args(queue=master_config['queue'],
                                                            memoryGB=8,
-                                                           minThreads=12,
+                                                           minThreads=16,
                                                            maxThreads=16),
                              'overwrite': True})
             edge_prediction_workflow.inputs.input_spec.gm_classifier_file = gm_classifier_file
@@ -1146,7 +1146,7 @@ def generate_single_session_template_WF(projectid, subjectid, sessionid, onlyT1,
             myLocalFSLOGISMOSBWF = create_fs_logb_workflow_for_both_hemispheres(
                 plugin_args={'qsub_args': modify_qsub_args(queue=master_config['queue'],
                                                            memoryGB=8,
-                                                           minThreads=12,
+                                                           minThreads=16,
                                                            maxThreads=16),
                              'overwrite': True})
             baw201.connect([(reconall, myLocalFSLOGISMOSBWF, [('outputspec.aseg_presurf', 'inputspec.aseg_presurf'),
