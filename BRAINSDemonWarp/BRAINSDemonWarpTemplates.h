@@ -45,6 +45,7 @@
 #include "GenericTransformImage.h"
 #include "VBRAINSDemonWarp.h"
 #include "BRAINSDemonWarp.h"
+#include "BRAINSTypes.h"
 
 #include "itkSymmetricForcesDemonsRegistrationFunction.h"
 #include "itkFastSymmetricForcesDemonsRegistrationFunction.h"

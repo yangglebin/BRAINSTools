@@ -27,6 +27,7 @@
 #ifndef __itkResampleInPlaceImageFilter_h
 #define __itkResampleInPlaceImageFilter_h
 
+#include "itkIOCommon.h"
 #include "itkImageToImageFilter.h"
 #include "itkVersorRigid3DTransform.h"
 

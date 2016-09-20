@@ -143,6 +143,7 @@ def parseExperiment(parser, workflow_phase):
         if 'jointfusion_2015_wholebrain' in retval['components']:
             print("'jointFusion_2015_wholebrain' will be run with a specified 'jointfusion_atlas_db_base'.")
             """ HACK: warp_atlas_to_subject is coupled with jointFusion????"""
+            retval['jointfusion'] = parser.get('EXPERIMENT', 'JointFusion')
             retval['jointfusion_atlas_db_base'] = validatePath(parser.get('EXPERIMENT', 'JointFusion_ATLAS_DB_BASE'),
                                                        allow_empty=False,
                                                        isDirectory=False)

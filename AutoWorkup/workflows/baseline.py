@@ -291,7 +291,7 @@ def image_autounwrap(wrapped_inputfn, unwrapped_outputbasefn):
     return unwrapped_outputfn
 
 def generate_single_session_template_WF(projectid, subjectid, sessionid, onlyT1, master_config, phase, interpMode,
-                                        pipeline_name, doDenoise=True, badT2 = False, useEMSP=False):
+                                        pipeline_name, doDenoise=True, useEMSP=False):
     """
     Run autoworkup on a single sessionid
 
@@ -916,8 +916,6 @@ def generate_single_session_template_WF(projectid, subjectid, sessionid, onlyT1,
 
     if 'jointfusion_2015_wholebrain' in master_config['components']:  ## HACK Do JointFusion labeling
         ## HACK FOR NOW SHOULD BE MORE ELEGANT FROM THE .config file
-        if badT2:
-            onlyT1 = True
         if onlyT1:
             print("T1 only processing in jointFusion")
         else:

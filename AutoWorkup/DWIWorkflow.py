@@ -35,6 +35,7 @@ def ExtractBRAINFromHead(RawScan, BrainLabels):
     headImage = sitk.ReadImage(RawScan)
     labelsMap = sitk.ReadImage(BrainLabels)
     label_mask = labelsMap>0
+    label_mask = sitk.Resample(label_mask, headImage)
     brainImage = sitk.Cast(headImage,sitk.sitkInt16) * sitk.Cast(label_mask,sitk.sitkInt16)
     outputVolume = os.path.realpath('T2Stripped.nrrd')
     sitk.WriteImage(brainImage, outputVolume)
@@ -92,7 +93,10 @@ def ForceDCtoID(inputVolume):
     return outputVolume
 
 def pickCompositeTransfromFromList(composite_transform_as_list):
-    return composite_transform_as_list[0]
+    returnVal=composite_transform_as_list[0]
+    if isinstance(composite_transform_as_list, basestring):
+        returnVal=composite_transform_as_list
+    return returnVal
 
 def RestoreDCFromSavedMatrix(inputVolume, inputDirectionCosine):
     import os
@@ -415,7 +419,7 @@ def runMainWorkflow(DWI_scan, T2_scan, labelMap_image, BASE_DIR, dataSink_DIR):
     DWIWorkflow.connect(outputsSpec, 'Lambda2Image', DWIDataSink, 'Outputs.@Lambda2Image')
     DWIWorkflow.connect(outputsSpec, 'Lambda3Image', DWIDataSink, 'Outputs.@Lambda3Image')
 
-    DWIWorkflow.write_graph()
+    #DWIWorkflow.write_graph()
     DWIWorkflow.run()
 
 

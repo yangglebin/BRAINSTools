@@ -32,6 +32,28 @@ from .WorkupComputeLabelVolume import *
     JointFusionWF.connect(BAtlas,'ExtendedAtlasDefinition.xml',myLocalTCWF,'atlasDefinition')
     JointFusionWF.connect(BLI,'outputTransformFilename',myLocalTCWF,'atlasToSubjectInitialTransform')
 """
+def NormalizeZeroOne( inputVolume, outputVolumeFilename ):
+    import SimpleITK as sitk
+    import os
+    inputImg = sitk.ReadImage(inputVolume)
+    float_inputImg = sitk.Cast(inputImg, sitk.sitkFloat32)
+    rescaled_inputImg = sitk.RescaleIntensity(float_inputImg, 0.0, 1.0)
+    sitk.WriteImage(rescaled_inputImg, outputVolumeFilename)
+
+    outputVolume = os.path.abspath(outputVolumeFilename)
+    return( outputVolume )
+
+def MakeIntensityOutputListFunc(n_modality, intensityFilenameFormat):
+    temp_list = list()
+    import os
+
+    for i in range(1,n_modality+1):
+        print ("JointFusion intensity output: JointFusion_HDAtlas20_2016_intensity_{0}.nii.gz".format(i))
+        filenameStringWithFullpath=os.path.dirname(intensityFilenameFormat)
+        filenameStringWithFullpath += "/JointFusion_HDAtlas20_2016_intensity_{0}.nii.gz".format(i)
+        temp_list.append( filenameStringWithFullpath )
+    return temp_list
+
 def MakeVector(inFN1, inFN2=None, jointFusion =False):
     #print("inFN1: {0}".format(inFN1))
     #print("inFN2: {0}".format(inFN2))
@@ -98,6 +120,29 @@ def CreateJointFusionWorkflow(WFname, onlyT1, master_config, runFixFusionLabelMa
       n_modality = 1
     else:
       n_modality = 2
+
+    if 'jointfusion' in  master_config:
+        if master_config['jointfusion'] == 'allModalities':
+            jointFusionInputModality='allModalities'
+        elif master_config['jointfusion'] == 'onlyT1':
+            jointFusionInputModality='onlyT1'
+        else:
+            print ("""
+        Invalid joint fusion option is given: {0}.
+        We will use only t1 for ants joint fusion.
+        To use T2, please set 'jointFusionInputModality' option to be 'allModalities':
+        Available option:
+            allModalities, onlyT1""".format( master_config['jointfusion'] ))
+            jointFusionInputModality='onlyT1'
+    else:
+        print ("""
+        No joint fusion option is given.
+        We will use only t1 for ants joint fusion.
+        To use T2, please set 'jointFusion' option to be 'allModalities':
+        Available option:
+        allModalities, onlyT1""")
+        jointFusionInputModality='onlyT1'
+
     CLUSTER_QUEUE=master_config['queue']
     CLUSTER_QUEUE_LONG=master_config['long_q']
 
@@ -143,7 +188,18 @@ def CreateJointFusionWorkflow(WFname, onlyT1, master_config, runFixFusionLabelMa
                                          output_names=['outFNs']),
                                 run_without_submitting=True, name="sessionMakeMultimodalInput")
     sessionMakeMultimodalInput.inputs.jointFusion = False
-    JointFusionWF.connect(inputsSpec, 'subj_t1_image', sessionMakeMultimodalInput, 'inFN1')
+
+
+    normalizeT1 = pe.Node(Function(function=NormalizeZeroOne,
+                                    input_names=['inputVolume', 'outputVolumeFilename'],
+                                    output_names=['outputVolume']),
+                           name="normalizeT1")
+    JointFusionWF.connect(inputsSpec, 'subj_t1_image',
+                          normalizeT1, 'inputVolume')
+    normalizeT1.inputs.outputVolumeFilename = 'subject_t1_normalized.nii.gz'
+
+    #JointFusionWF.connect(inputsSpec, 'subj_t1_image', sessionMakeMultimodalInput, 'inFN1')
+    JointFusionWF.connect(normalizeT1, 'outputVolume', sessionMakeMultimodalInput, 'inFN1')
     """
     T2 resample to T1 average image
     :: BRAINSABC changed its behavior to retain image's original spacing & origin
@@ -151,7 +207,7 @@ def CreateJointFusionWorkflow(WFname, onlyT1, master_config, runFixFusionLabelMa
     :: Resampling is placed at this stage
     """
     subjectT2Resample = pe.Node(interface=BRAINSResample(), name="BRAINSResample_T2_forAntsJointFusion")
-    if not onlyT1:
+    if ( (not onlyT1) and (jointFusionInputModality == 'allModalities')):
         subjectT2Resample.plugin_args = {'qsub_args': modify_qsub_args(master_config['queue'], 1, 1, 1),
                                   'overwrite': True}
         subjectT2Resample.inputs.pixelType = 'short'
@@ -161,8 +217,19 @@ def CreateJointFusionWorkflow(WFname, onlyT1, master_config, runFixFusionLabelMa
 
         JointFusionWF.connect(inputsSpec, 'subj_t1_image', subjectT2Resample, 'referenceVolume')
         JointFusionWF.connect(inputsSpec, 'subj_t2_image', subjectT2Resample, 'inputVolume')
+        """
+        normalize t2 to [0,1]
+        """
+        normalizeT2 = pe.Node(Function(function=NormalizeZeroOne,
+                                        input_names=['inputVolume', 'outputVolumeFilename'],
+                                        output_names=['outputVolume']),
+                               name="normalizeT2")
+        JointFusionWF.connect(subjectT2Resample, 'outputVolume',
+                              normalizeT2, 'inputVolume')
+        normalizeT2.inputs.outputVolumeFilename = 'subject_t2_normalized.nii.gz'
 
-        JointFusionWF.connect(subjectT2Resample, 'outputVolume', sessionMakeMultimodalInput, 'inFN2')
+        JointFusionWF.connect(normalizeT2, 'outputVolume', sessionMakeMultimodalInput, 'inFN2')
+        #JointFusionWF.connect(subjectT2Resample, 'outputVolume', sessionMakeMultimodalInput, 'inFN2')
     else:
         pass
 
@@ -278,29 +345,39 @@ def CreateJointFusionWorkflow(WFname, onlyT1, master_config, runFixFusionLabelMa
         JointFusionWF.connect(A2SantsRegistrationPreJointFusion_SyN[jointFusion_atlas_subject],'warped_image',
                        warpedAtlasesMergeNode,'in'+str(merge_input_offset + jointFusion_atlas_mergeindex*1) )
 
-        """
-        Original t2 resampling
-        """
-        for modality_index in range(1,n_modality):
-            t2Resample[jointFusion_atlas_subject] = pe.Node(interface=ants.ApplyTransforms(),name="resampledT2"+jointFusion_atlas_subject)
-            many_cpu_t2Resample_options_dictionary = {'qsub_args': modify_qsub_args(CLUSTER_QUEUE,1,1,1), 'overwrite': True}
-            t2Resample[jointFusion_atlas_subject].plugin_args = many_cpu_t2Resample_options_dictionary
-            t2Resample[jointFusion_atlas_subject].inputs.num_threads=-1
-            t2Resample[jointFusion_atlas_subject].inputs.dimension=3
-            t2Resample[jointFusion_atlas_subject].inputs.output_image=jointFusion_atlas_subject+'_t2.nii.gz'
-            t2Resample[jointFusion_atlas_subject].inputs.interpolation='BSpline'
-            t2Resample[jointFusion_atlas_subject].inputs.default_value=0
-            t2Resample[jointFusion_atlas_subject].inputs.invert_transform_flags=[False]
+        if jointFusionInputModality == 'allModalities':
+            JointFusionWF.connect(A2SantsRegistrationPreJointFusion_SyN[jointFusion_atlas_subject],'warped_image',
+                           warpedAtlasesMergeNode,'in'+str(merge_input_offset + jointFusion_atlas_mergeindex*n_modality ))
+            print( "MergeIndex::::" + str(merge_input_offset + jointFusion_atlas_mergeindex*n_modality ))
+            """
+            Original t2 resampling
+            """
+            for modality_index in range(1,n_modality):
+                t2Resample[jointFusion_atlas_subject] = pe.Node(interface=ants.ApplyTransforms(),name="resampledT2"+jointFusion_atlas_subject)
+                many_cpu_t2Resample_options_dictionary = {'qsub_args': modify_qsub_args(CLUSTER_QUEUE,1,1,1), 'overwrite': True}
+                t2Resample[jointFusion_atlas_subject].plugin_args = many_cpu_t2Resample_options_dictionary
+                t2Resample[jointFusion_atlas_subject].inputs.num_threads=-1
+                t2Resample[jointFusion_atlas_subject].inputs.dimension=3
+                t2Resample[jointFusion_atlas_subject].inputs.output_image=jointFusion_atlas_subject+'_t2.nii.gz'
+                t2Resample[jointFusion_atlas_subject].inputs.interpolation='BSpline'
+                t2Resample[jointFusion_atlas_subject].inputs.default_value=0
+                t2Resample[jointFusion_atlas_subject].inputs.invert_transform_flags=[False]
 
-            JointFusionWF.connect( A2SantsRegistrationPreJointFusion_SyN[jointFusion_atlas_subject],'composite_transform',
-                            t2Resample[jointFusion_atlas_subject],'transforms')
-            JointFusionWF.connect( inputsSpec, 'subj_t1_image',
-                            t2Resample[jointFusion_atlas_subject],'reference_image')
-            JointFusionWF.connect( jointFusionAtlases[jointFusion_atlas_subject], 't2',
-                            t2Resample[jointFusion_atlas_subject],'input_image')
-            "HACK NOT to use T2 for JointFusion only"
-            #JointFusionWF.connect(t2Resample[jointFusion_atlas_subject],'output_image',
-            #               warpedAtlasesMergeNode,'in'+str(merge_input_offset + jointFusion_atlas_mergeindex*n_modality+modality_index) )
+                JointFusionWF.connect( A2SantsRegistrationPreJointFusion_SyN[jointFusion_atlas_subject],'composite_transform',
+                                t2Resample[jointFusion_atlas_subject],'transforms')
+                JointFusionWF.connect( inputsSpec, 'subj_t1_image',
+                                t2Resample[jointFusion_atlas_subject],'reference_image')
+                JointFusionWF.connect( jointFusionAtlases[jointFusion_atlas_subject], 't2',
+                                t2Resample[jointFusion_atlas_subject],'input_image')
+                "HACK NOT to use T2 for JointFusion only"
+                print( "MergeIndex T2::::" + str( merge_input_offset + jointFusion_atlas_mergeindex *n_modality +(modality_index) ))
+                JointFusionWF.connect(t2Resample[jointFusion_atlas_subject],'output_image',
+                               warpedAtlasesMergeNode,'in'+str(merge_input_offset + jointFusion_atlas_mergeindex*n_modality + modality_index) )
+        else:
+            "HACK NOT to use T2 for JointFusion"
+            JointFusionWF.connect(A2SantsRegistrationPreJointFusion_SyN[jointFusion_atlas_subject],'warped_image',
+                           warpedAtlasesMergeNode,'in'+str(merge_input_offset + jointFusion_atlas_mergeindex*1) )
+
 
         """
         Original labelmap resampling
@@ -383,7 +460,36 @@ def CreateJointFusionWorkflow(WFname, onlyT1, master_config, runFixFusionLabelMa
                                                    input_names=['allList','n_modality'],
                                                    output_names=['out']),
                                                    name="AdjustTargetImageListNode")
-    AdjustTargetImageListNode.inputs.n_modality = n_modality
+    if jointFusionInputModality  == 'allModalities':
+        AdjustMergeListNode.inputs.n_modality = n_modality
+        AdjustTargetImageListNode.inputs.n_modality = n_modality
+        """
+        make multimodal input for JointFusion
+        """
+
+        sessionMakeMultimodalInputJF= pe.Node(Function(function=MakeVector,
+                                             input_names=['inFN1', 'inFN2', 'jointFusion'],
+                                             output_names=['outFNs']),
+                                    run_without_submitting=True, name="sessionMakeMultimodalInputJF")
+        sessionMakeMultimodalInputJF.inputs.jointFusion = True
+        JointFusionWF.connect(normalizeT1, 'outputVolume', sessionMakeMultimodalInputJF, 'inFN1')
+        JointFusionWF.connect(normalizeT2, 'outputVolume', sessionMakeMultimodalInputJF, 'inFN2')
+        JointFusionWF.connect(sessionMakeMultimodalInputJF, 'outFNs', jointFusion,'target_image')
+    else:
+        "*** HACK JointFusion only uses T1"
+        AdjustMergeListNode.inputs.n_modality = 1
+        AdjustTargetImageListNode.inputs.n_modality = 1
+        "*** HACK JointFusion only uses T1"
+        """ Once JointFusion works with T2 properly,
+            delete sessionMakeListSingleModalInput and use sessionMakeMultimodalInput instead
+        """
+        sessionMakeListSingleModalInput = pe.Node(Function(function=MakeVector,
+                                             input_names=['inFN1', 'inFN2', 'jointFusion'],
+                                             output_names=['outFNs']),
+                                    run_without_submitting=True, name="sessionMakeListSingleModalInput")
+        sessionMakeListSingleModalInput.inputs.jointFusion = False
+        JointFusionWF.connect(inputsSpec, 'subj_t1_image', sessionMakeListSingleModalInput, 'inFN1')
+        JointFusionWF.connect(sessionMakeListSingleModalInput, 'outFNs', jointFusion,'target_image')
 
     "*** HACK JointFusion only uses T1"
     """ Once JointFusion works with T2 properly,
