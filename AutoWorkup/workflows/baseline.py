@@ -588,7 +588,7 @@ def generate_single_session_template_WF(projectid, subjectid, sessionid, onlyT1,
         N4BFC.inputs.dimension = 3
         N4BFC.inputs.bspline_fitting_distance = 200
         N4BFC.inputs.shrink_factor = 3
-        N4BFC.inputs.n_iterations = [50,50,30,20]
+        N4BFC.inputs.n_iterations = [1000,1000,1000,1000]
         N4BFC.inputs.convergence_threshold = 1e-6
 
         baw201.connect([(DenoiseInputImgs, N4BFC, [('output_image', 'input_image')]),
@@ -603,7 +603,6 @@ def generate_single_session_template_WF(projectid, subjectid, sessionid, onlyT1,
                                            name="99_makePreprocessingOutList")
         baw201.connect(N4BFC, 'output_image', makePreprocessingOutList, 'inFileList')
         baw201.connect(makeDenoiseInImageList, 'imageTypeList', makePreprocessingOutList, 'inTypeList')
-
     else:
         makePreprocessingOutList = inputsSpec
 
