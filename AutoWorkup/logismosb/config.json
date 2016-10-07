@@ -22,7 +22,7 @@
   },
   "LOGISMOSB": {
     "smoothnessConstraint": 1,
-    "nColumns": 100000,
+    "nColumns": 90000,
     "columnChoice": "GVF",
     "columnHeight": 120,
     "nodeSpacing": 0.1,
