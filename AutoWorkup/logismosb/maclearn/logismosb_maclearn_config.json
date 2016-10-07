@@ -1,5 +1,5 @@
 {
-    "nColumns": 90000,
+    "nColumns": 100000,
     "columnChoice": "GVF",
     "columnHeight": 120,
     "nodeSpacing": 0.1,

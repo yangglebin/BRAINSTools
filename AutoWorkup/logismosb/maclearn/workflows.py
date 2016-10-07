@@ -160,8 +160,10 @@ def create_logismosb_machine_learning_workflow(name="MachineLearningLOGISMOSB", 
                               (predict_edges, preproc, [("output_spec.gm_probability_map", "gm_proba"),
                                                         ("output_spec.wm_probability_map", "wm_proba")])])
 
-            logb = create_logismosb_node("{0}_LOGISMOSB".format(hemisphere))
+            logb = create_logismosb_node("ML_LOGISMOSB_{0}".format(hemisphere))
             logb.inputs.basename = hemisphere
+            if plugin_args:
+                logb.plugin_args = plugin_args
             # connect logb inputs
             workflow.connect([(resample_baw, logb, [("output_spec.hncma_file", "atlas_file"),
                                                     ("output_spec.abc_file", "brainlabels_file"),
