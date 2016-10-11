@@ -1,24 +1,15 @@
-
-# coding: utf-8
-
-# In[1]:
-
 from workflow import create_logb_workflow
-
-
-# In[11]:
-
 import sqlite3
-connection = sqlite3.connect("/Shared/sinapse/CACHE/20160712_AtrophySimulation_Results/results.db")
+
+
+subjects_dir = "/Shared/sinapse/CACHE/20161010_AtrophySimulation_Baseline"
+connection = sqlite3.connect("/Shared/johnsonhj/HDNI/20151001_AtrophySimulation/results.db")
 cursor = connection.cursor()
 
 
-# In[37]:
-
-import glob
 import os
 from nipype import Workflow, DataSink, Node
-base_dir = "/Shared/sinapse/CACHE/20160728_LOGISMOSB_baseline_CACHE"
+base_dir = "/Shared/sinapse/CACHE/20161010_AtrophySimulation_Baseline_CACHE"
 for row in cursor.execute("SELECT t1_image_file, t2_image_file, session_id from input"):
     session_id = str(row[2])
     t1_file = str(row[0])
@@ -33,7 +24,7 @@ for row in cursor.execute("SELECT t1_image_file, t2_image_file, session_id from 
     logb_wf = create_logb_workflow(name="{0}_LOGISMOSB_Workflow".format(session_id))
     wf = Workflow("AtrophySim_Baseline_{0}".format(session_id))
     datasink = Node(DataSink(), name="DataSink")
-    datasink.inputs.base_directory = subject_directory
+    datasink.inputs.base_directory = os.path.join(subjects_dir, session_id)
     for hemisphere in ("lh", "rh"):
         for matter in ("gm", "wm"):
             wf.connect(logb_wf, "outputspec.{0}_{1}surface_file".format(hemisphere, matter),
