@@ -39,7 +39,12 @@ for row in cursor.execute("SELECT t1_image_file, t2_image_file, session_id FROM 
                                                             "overwrite": True})
     logb.inputs.inputspec.rawavg = t1_file
     logb.inputs.inputspec.t2_raw = t2_file
-    wf.connect([(recon_all, logb, [('aseg_presurf', 'inputspec.aseg_presurf')])])
+    logb.inputs.inputspec.aseg_presurf = os.path.join(subject_directory, "FreeSurfer",
+                                                      "aseg.presurf.mgz")
+    if not os.path.isfile(logb.inputs.inputspec.aseg_presurf):
+        print("could not find aseg")
+        import sys
+        sys.exit()
     logb.inputs.inputspec.hncma_atlas = hncma_atlas
 
     datasink = Node(DataSink(), name="DataSink")
