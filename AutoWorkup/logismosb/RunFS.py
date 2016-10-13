@@ -20,7 +20,7 @@ for row in cursor.execute("SELECT t1_image_file, t2_image_file, session_id FROM 
 
     subject_directory = os.path.dirname(os.path.dirname(t1_file))
 
-    recon_all = ReconAll()
+    recon_all = Node(ReconAll(), "ReconAll")
     recon_all.inputs.T1_files = [t1_file]
     recon_all.inputs.T2_file = t2_file
     recon_all.inputs.openmp = num_threads
