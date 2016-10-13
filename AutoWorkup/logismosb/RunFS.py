@@ -48,7 +48,7 @@ for row in cursor.execute("SELECT t1_image_file, t2_image_file, session_id FROM 
     logb.inputs.inputspec.hncma_atlas = hncma_atlas
 
     datasink = Node(DataSink(), name="DataSink")
-    datasink.inputs.base_directory = recon_all.inputs.inputspec.subjects_dir
+    datasink.inputs.base_directory = recon_all.inputs.subjects_dir
     for hemisphere in ("lh", "rh"):
         fssource = Node(FreeSurferSource(), "{0}FSSource".format(hemisphere))
         fssource.inputs.hemi = hemisphere
