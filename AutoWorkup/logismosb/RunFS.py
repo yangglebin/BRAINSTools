@@ -37,10 +37,9 @@ for row in cursor.execute("SELECT t1_image_file, t2_image_file, session_id FROM 
                                                             "qsub_args": "-q HJ,UI,all.q,COE -pe smp {0}".format(
                                                                 num_threads),
                                                             "overwrite": True})
-    wf.connect([(recon_all, logb, [('aseg_presurf', 'inputspec.aseg_presurf'),
-                                   ('rawavg', 'inputspec.rawavg'),
-                                   ('t2_raw', 'inputspec.t2_raw')])])
-
+    logb.inputs.inputspec.rawavg = t1_file
+    logb.inputs.inputspec.t2_raw = t2_file
+    wf.connect([(recon_all, logb, [('aseg_presurf', 'inputspec.aseg_presurf')])])
     logb.inputs.inputspec.hncma_atlas = hncma_atlas
 
     datasink = Node(DataSink(), name="DataSink")
