@@ -62,4 +62,5 @@ for row in cursor.execute("SELECT t1_image_file, t2_image_file, session_id FROM 
 
     wf.base_dir = base_dir
     wf.config['execution']['job_finished_timeout'] = 120
-    wf.run(plugin="SGEGraph", plugin_args={"qsub_args": "-q HJ,all.q,COE,UI"})
+    #wf.run(plugin="SGEGraph", plugin_args={"qsub_args": "-q HJ,all.q,COE,UI"})
+    wf.run()
