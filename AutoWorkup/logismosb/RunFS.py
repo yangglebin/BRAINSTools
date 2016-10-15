@@ -25,6 +25,7 @@ for row in cursor.execute("SELECT t1_image_file, t2_image_file, session_id FROM 
     recon_all.inputs.T2_file = t2_file
     recon_all.inputs.openmp = num_threads
     recon_all.inputs.subject_id = "FreeSurfer"
+    recon_all.inputs.flags = "-no-isrunning"
     recon_all.inputs.subjects_dir = os.path.join("/Shared/sinapse/CACHE/20161010_AtrophySimulation_Baseline",
                                                  session_id)
     recon_all.plugin_args = plugin_args={"qsub_args": "-q HJ,UI,all.q,COE -pe smp {0}".format(num_threads),
