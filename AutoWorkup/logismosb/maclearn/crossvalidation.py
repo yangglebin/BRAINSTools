@@ -1,17 +1,10 @@
 import preprocess, training, testing
 import os
 import pandas as pd
-import numpy as np
-import multiprocessing as mp
-from functools import partial
-import matplotlib.pyplot as plt
 from sklearn import cross_validation
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import roc_curve, auc
-from sklearn.externals import joblib
 import cPickle as pickle
-from scipy import interp
-from training import run_training, get_labeled_region_data
 import sys
 
 
