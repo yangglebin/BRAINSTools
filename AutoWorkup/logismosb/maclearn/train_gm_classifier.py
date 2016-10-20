@@ -37,5 +37,5 @@ def train_gm_classifier():
     train_classifier(training_data["Features"].values, training_data["Truth"]["GM"].values, classifier_file)
 
 
-if __name__ == "__train_gm_classifier__":
+if __name__ == "__main__":
     train_gm_classifier()
