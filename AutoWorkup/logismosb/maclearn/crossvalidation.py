@@ -56,16 +56,25 @@ def get_features_from_data(data):
 
 def run_cross_validation_fold(data, fold, output_dir):
     if not os.path.isdir(output_dir):
+        print("making output directory: {0}".format(output_dir))
         os.mkdir(output_dir)
+    print("splitting training and testing data for fold: {0}".format(fold))
     training_data, testing_data = get_training_and_testing_data(data, fold)
+    print("getting data features")
     training_features = get_features_from_data(training_data)
     testing_features = get_features_from_data(testing_data)
     for matter in ["WM", "GM"]:
         clf_file = os.path.join(output_dir, "{0}_classifier.pkl")
+        print("Training {0} classifier".format(matter))
         clf = train_classifier(training_features, get_truth_from_data(training_data, matter),
                                out_file=clf_file)
+        print("Getting ROC scores for classifier")
         roc = test_classifier(clf, testing_features, get_truth_from_data(testing_data, matter))
-        pickle.dump(roc, open(os.path.join(output_dir, "{0}_roc.pkl"), "wb"))
+
+        roc_out_file_name = os.path.join(output_dir, "{0}_roc.pkl")
+        roc_out_file = open(roc_out_file_name, "wb")
+        print("Writing ROC scores to file {0}".format(roc_out_file_name))
+        pickle.dump(roc, roc_out_file)
 
 
 def run_nfold_cross_validation(data_file, nfolds=10, output_dir=os.path.curdir):
@@ -74,6 +83,7 @@ def run_nfold_cross_validation(data_file, nfolds=10, output_dir=os.path.curdir):
     print("splitting data into {0} folds".format(nfolds))
     folds = get_subject_id_folds_from_data(data, nfolds)
     for i in range(nfolds):
+        print("Fold number: {0}".format(i))
         run_cross_validation_fold(data=data, fold=folds[i], output_dir=os.path.join(output_dir, str(i)))
 
 
