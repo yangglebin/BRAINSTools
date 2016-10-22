@@ -14,7 +14,7 @@ def pickle_load(pickled_file):
 
 
 def get_subject_id_from_t1(t1_file):
-    return os.path.split(t1_file)[-3]
+    return os.path.abspath(t1_file).split("/")[-3]
 
 
 def collect_training_data(training_files):
@@ -22,6 +22,7 @@ def collect_training_data(training_files):
     for t1_file, additional_files, truth_files in training_files:
         feature_data = image_data(t1_file, "T1", additional_images=additional_files)
         subject_id = get_subject_id_from_t1(t1_file)
+        print(subject_id)
         index = pd.MultiIndex.from_tuples([(subject_id, i) for i in feature_data.index])
         gm_truth_data = pd.Series(linear_array_from_image_file(truth_files["gm"]), name="GM", index=index)
         wm_truth_data = pd.Series(linear_array_from_image_file(truth_files["wm"]), name="WM", index=index)
@@ -31,12 +32,7 @@ def collect_training_data(training_files):
     return pd.concat(all_data, axis=0)
 
 
-def train_gm_classifier():
-    cache_dir = "/Shared/sinapse/CACHE/20160811_Davids_MachineLearning"
-    training_files = pickle_load("/Shared/sinapse/CACHE/20160811_Davids_MachineLearning/training_files.pkl")
-    training_data = collect_training_data(training_files)
-    training_data_file = os.path.join(cache_dir, "training_data.hdf5")
-    save_data_frame(training_data, training_data_file)
+def train_gm_classifier(cache_dir):
     classifier_file = os.path.join(cache_dir, "Classifier", "gray_matter_classifier.pkl")
     if not os.path.isdir(os.path.dirname(classifier_file)):
         os.makedirs(os.path.dirname(classifier_file))
@@ -44,4 +40,4 @@ def train_gm_classifier():
 
 
 if __name__ == "__main__":
-    train_gm_classifier()
+    train_gm_classifier(os.path.curdir)
