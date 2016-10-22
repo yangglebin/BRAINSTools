@@ -92,3 +92,8 @@ def test_classifier(clf, test_features, test_targets):
     score_roc = roc_curve(test_targets, probas[:, 1], pos_label=1)
     return score_roc
 
+
+if __name__ == "__main__":
+    run_nfold_cross_validation(data_file="/Shared/sinapse/CACHE/20160811_Davids_MachineLearning/training_data.hdf5",
+                               nfolds=10,
+                               output_dir="/Shared/sinapse/CACHE/20161019_Davids_CrossValidation/")
