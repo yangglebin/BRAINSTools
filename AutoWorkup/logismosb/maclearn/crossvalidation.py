@@ -67,7 +67,7 @@ def run_cross_validation_fold(data, fold, output_dir):
         clf_file = os.path.join(output_dir, "{0}_classifier.pkl")
         print("Training {0} classifier".format(matter))
         clf = train_classifier(training_features, get_truth_from_data(training_data, matter),
-                               out_file=clf_file)
+                               out_file=clf_file, n_jobs=8)
         print("Getting ROC scores for classifier")
         roc = test_classifier(clf, testing_features, get_truth_from_data(testing_data, matter))
 
