@@ -13,12 +13,18 @@ def pickle_load(pickled_file):
     return output
 
 
+def get_subject_id_from_t1(t1_file):
+    return os.path.split(t1_file)[-3]
+
+
 def collect_training_data(training_files):
     all_data = list()
     for t1_file, additional_files, truth_files in training_files:
         feature_data = image_data(t1_file, "T1", additional_images=additional_files)
-        gm_truth_data = pd.Series(linear_array_from_image_file(truth_files["gm"]), name="GM")
-        wm_truth_data = pd.Series(linear_array_from_image_file(truth_files["wm"]), name="WM")
+        subject_id = get_subject_id_from_t1(t1_file)
+        index = pd.MultiIndex.from_tuples([(subject_id, i) for i in feature_data.index])
+        gm_truth_data = pd.Series(linear_array_from_image_file(truth_files["gm"]), name="GM", index=index)
+        wm_truth_data = pd.Series(linear_array_from_image_file(truth_files["wm"]), name="WM", index=index)
         truth_data = pd.concat([gm_truth_data, wm_truth_data], axis=1)
         data = pd.concat([feature_data, truth_data], axis=1, keys=["Features", "Truth"])
         all_data.append(data)
