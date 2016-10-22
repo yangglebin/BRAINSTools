@@ -4,6 +4,7 @@ import pandas as pd
 from sklearn import cross_validation
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import roc_curve, auc
+from sklearn.externals import joblib
 import cPickle as pickle
 import sys
 
@@ -29,7 +30,7 @@ def get_data_with_subject_ids(data, subject_ids):
 
 
 def get_subject_ids(data):
-    return data.index.levels[0].values
+    return data.index.values
 
 
 def read_data(data_file):
@@ -54,17 +55,20 @@ def get_features_from_data(data):
 
 
 def run_cross_validation_fold(data, fold, output_dir):
+    if not os.path.isdir(output_dir):
+        os.mkdir(output_dir)
     training_data, testing_data = get_training_and_testing_data(data, fold)
     training_features = get_features_from_data(training_data)
     testing_features = get_features_from_data(testing_data)
     for matter in ["WM", "GM"]:
         clf_file = os.path.join(output_dir, "{0}_classifier.pkl")
-        clf = train_classifier(training_features, get_truth_from_data(training_data, matter), clf_file)
+        clf = train_classifier(training_features, get_truth_from_data(training_data, matter),
+                               out_file=clf_file)
         roc = test_classifier(clf, testing_features, get_truth_from_data(testing_data, matter))
-        pickle.dump(roc, open(os.path.join(output_dir, "{0}_roc.pkl"), "rb"))
+        pickle.dump(roc, open(os.path.join(output_dir, "{0}_roc.pkl"), "wb"))
 
 
-def run_nfold_cross_validation(data_file, nfolds=10, output_dir=os.path.curdir()):
+def run_nfold_cross_validation(data_file, nfolds=10, output_dir=os.path.curdir):
     print("reading: {0}".format(data_file))
     data = read_data(data_file)
     print("splitting data into {0} folds".format(nfolds))
@@ -74,9 +78,11 @@ def run_nfold_cross_validation(data_file, nfolds=10, output_dir=os.path.curdir()
 
 
 def train_classifier(train_features, train_targets, n_jobs=-1,
-                     clf=RandomForestClassifier()):
+                     clf=RandomForestClassifier(), out_file=None):
     clf.n_jobs = n_jobs
     clf.fit(train_features, train_targets)
+    if out_file:
+        joblib.dump(clf, out_file)
     return clf
 
 
