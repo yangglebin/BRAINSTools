@@ -362,6 +362,7 @@ def CreateJointFusionWorkflow(WFname, onlyT1, master_config, runFixFusionLabelMa
     jointFusion.inputs.search_radius=[3]
     #jointFusion.inputs.method='Joint[0.1,2]'
     jointFusion.inputs.out_label_fusion='JointFusion_HDAtlas20_2015_label.nii.gz'
+    jointFusion.inputs.modalities=1
     #JointFusionWF.connect(inputsSpec, 'subj_fixed_head_labels', jointFusion, 'mask_image')
     JointFusionWF.connect(fixedROIAuto, 'outputROIMaskVolume', jointFusion, 'mask_image')
 

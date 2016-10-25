@@ -104,6 +104,7 @@ def _create_singleSession(dataDict, master_config, interpMode, pipeline_name):
     if useEMSP:
         sessionWorkflow_inputsspec.inputs.EMSP = dataDict['EMSP'][0]
     sessionWorkflow_inputsspec.inputs.OTHERs = dataDict['OTHERs']
+    sessionWorkflow_inputsspec.inputs.registrationMask = dataDict['registrationMask'][0]
     return sessionWorkflow
 
 
@@ -157,6 +158,7 @@ def createAndRun(sessions, environment, experiment, pipeline, cluster, useSentin
             _dict['FLs'] = database.getFilenamesByScantype(session, ['FL-15', 'FL-30'])
             _dict['EMSP'] = database.getFilenamesByScantype(session, ['EMSP'])
             _dict['OTHERs'] = database.getFilenamesByScantype(session, ['OTHER-15', 'OTHER-30'])
+            _dict['registrationMask'] = database.getFilenamesByScantype(session, ['registrationMask'])
             sentinal_file_basedir = os.path.join(
                 master_config['resultdir'],
                 _dict['project'],

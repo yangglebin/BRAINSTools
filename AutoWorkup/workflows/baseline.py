@@ -325,6 +325,7 @@ def generate_single_session_template_WF(projectid, subjectid, sessionid, onlyT1,
     inputsSpec = pe.Node(interface=IdentityInterface(fields=['atlasLandmarkFilename', 'atlasWeightFilename',
                                                              'LLSModel', 'inputTemplateModel', 'template_t1_denoised_gaussian',
                                                              'atlasDefinition', 'T1s', 'T2s', 'PDs', 'FLs', 'OTHERs',
+                                                             'registrationMask',
                                                              'EMSP',
                                                              'hncma_atlas',
                                                              'template_rightHemisphere',
@@ -646,7 +647,26 @@ def generate_single_session_template_WF(projectid, subjectid, sessionid, onlyT1,
     if 'tissue_classify' in master_config['components']:
         useRegistrationMask = master_config['use_registration_masking']
 
+        print("useRegistrationMask")
+        print(useRegistrationMask)
+        print(useRegistrationMask)
+        print(useRegistrationMask)
+        print(useRegistrationMask)
+        print(useRegistrationMask)
         myLocalTCWF = CreateTissueClassifyWorkflow("TissueClassify", master_config, interpMode,useRegistrationMask)
+
+        if useRegistrationMask == 'useRegistrationMask':
+            print( "use registration mask for BABC" )
+            maskResample = pe.Node(interface=BRAINSResample(), name="BRAINSResample_SubjBrainMask" )
+            maskResample.plugin_args = {'qsub_args': modify_qsub_args(master_config['queue'], 1, 1, 1),
+                                         'overwrite': True}
+            maskResample.inputs.pixelType = 'binary'
+            maskResample.inputs.interpolationMode = 'NearestNeighbor'
+            maskResample.inputs.outputVolume = "PrimaryT1_BrainMask.nii.gz"
+
+            baw201.connect(inputsSpec, 'registrationMask', maskResample, 'inputVolume')
+            baw201.connect(maskResample, 'outputVolume', myLocalTCWF, 'inputspec.registrationMask')
+
         baw201.connect([(makePreprocessingOutList, myLocalTCWF, [('T1s', 'inputspec.T1List')]),
                         (makePreprocessingOutList, myLocalTCWF, [('T2s', 'inputspec.T2List')]),
                         (makePreprocessingOutList, myLocalTCWF, [('PDs', 'inputspec.PDList')]),

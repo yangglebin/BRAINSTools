@@ -127,7 +127,10 @@ def parseExperiment(parser, workflow_phase):
     useRegistrationMasking = True
     try:
         regMasking = parser.get('EXPERIMENT', 'USE_REGISTRATION_MASKING')
-        useRegistrationMasking = str2bool(regMasking)
+        if regMasking =='useRegistrationMask':
+            useRegistrationMasking = 'useRegistrationMask'
+        else:
+            useRegistrationMasking = str2bool(regMasking)
     except:
         pass
     retval['use_registration_masking'] = useRegistrationMasking

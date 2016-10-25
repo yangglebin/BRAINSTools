@@ -51,9 +51,15 @@ def CreateTissueClassifyWorkflow(WFname, master_config, InterpolationMode,UseReg
     CLUSTER_QUEUE_LONG=master_config['long_q']
 
     tissueClassifyWF = pe.Workflow(name=WFname)
+    print("UseRegistrationMasking")
+    print(UseRegistrationMasking)
+    print(UseRegistrationMasking)
+    print(UseRegistrationMasking)
+    print(UseRegistrationMasking)
 
     inputsSpec = pe.Node(interface=IdentityInterface(fields=['T1List', 'T2List', 'PDList', 'FLList', 'OTHERList',
                                                              'T1_count', 'PrimaryT1',
+                                                             'registrationMask',
                                                              'atlasDefinition',
                                                              'atlasToSubjectInitialTransform','atlasVolume',
                                                              'atlasheadregion'
@@ -134,7 +140,7 @@ def CreateTissueClassifyWorkflow(WFname, master_config, InterpolationMode,UseReg
                       )
 
     ## if using Registration masking, then do ROIAuto on fixed and moving images and connect to registraitons
-    if UseRegistrationMasking == True:
+    if UseRegistrationMasking == True or UseRegistrationMasking =='useROIAuto':
         from nipype.interfaces.semtools.segmentation.specialized import BRAINSROIAuto
 
         fixedROIAuto = pe.Node(interface=BRAINSROIAuto(), name="fixedImageROIAUTOMask")
@@ -144,6 +150,17 @@ def CreateTissueClassifyWorkflow(WFname, master_config, InterpolationMode,UseReg
         tissueClassifyWF.connect(inputsSpec, 'PrimaryT1',fixedROIAuto,'inputVolume')
         tissueClassifyWF.connect(fixedROIAuto, 'outputROIMaskVolume',A2SantsRegistrationPreABCAffine,'fixed_image_mask')
         tissueClassifyWF.connect(fixedROIAuto, 'outputROIMaskVolume',A2SantsRegistrationPreABCSyN,'fixed_image_mask')
+    elif UseRegistrationMasking == 'useRegistrationMask':
+        from nipype.interfaces.semtools.registration.brainsresample import BRAINSResample
+        maskResample = pe.Node(interface=BRAINSResample(), name="BRAINSResample_SubjBrainMask" )
+        maskResample.plugin_args = {'qsub_args': modify_qsub_args(master_config['queue'], 1, 1, 1),
+                                     'overwrite': True}
+        maskResample.inputs.pixelType = 'binary'
+        maskResample.inputs.interpolationMode = 'NearestNeighbor'
+        maskResample.inputs.outputVolume = "PrimaryT1_BrainMask.nii.gz"
+
+        tissueClassifyWF.connect(inputsSpec, 'registrationMask', A2SantsRegistrationPreABCAffine,'fixed_image_mask')
+        tissueClassifyWF.connect(inputsSpec, 'registrationMask', A2SantsRegistrationPreABCSyN,'fixed_image_mask')
 
     ## NOTE: Always use atlas head region to avoid computing this every time.
     tissueClassifyWF.connect(inputsSpec, 'atlasheadregion',A2SantsRegistrationPreABCAffine,'moving_image_mask')
