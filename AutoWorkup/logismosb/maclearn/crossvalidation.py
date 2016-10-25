@@ -26,11 +26,11 @@ def get_subject_id_folds_from_data(data, num_folds):
 
 
 def get_data_with_subject_ids(data, subject_ids):
-    return data.loc[subject_ids]
+    return data[data.index.get_level_values(0).isin(subject_ids)]
 
 
 def get_subject_ids(data):
-    return data.index.values
+    return data.index.levels[0].values
 
 
 def read_data(data_file):
@@ -104,6 +104,6 @@ def test_classifier(clf, test_features, test_targets):
 
 
 if __name__ == "__main__":
-    run_nfold_cross_validation(data_file="/Shared/sinapse/CACHE/20160811_Davids_MachineLearning/training_data.hdf5",
+    run_nfold_cross_validation(data_file="/Shared/sinapse/CACHE/20161019_Davids_CrossValidation/training_data.hdf5",
                                nfolds=10,
                                output_dir="/Shared/sinapse/CACHE/20161019_Davids_CrossValidation/")
