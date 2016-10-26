@@ -104,6 +104,6 @@ def test_classifier(clf, test_features, test_targets):
 
 
 if __name__ == "__main__":
-    run_nfold_cross_validation(data_file="/Shared/sinapse/CACHE/20161019_Davids_CrossValidation/training_data.hdf5",
+    run_nfold_cross_validation(data_file="/Shared/sinapse/CACHE/20161025_Davids_CrossValidation/training_data.hdf5",
                                nfolds=10,
-                               output_dir="/Shared/sinapse/CACHE/20161019_Davids_CrossValidation/")
+                               output_dir="/Shared/sinapse/CACHE/20161025_Davids_CrossValidation/")
