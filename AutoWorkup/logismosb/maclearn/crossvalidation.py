@@ -64,14 +64,14 @@ def run_cross_validation_fold(data, fold, output_dir):
     training_features = get_features_from_data(training_data)
     testing_features = get_features_from_data(testing_data)
     for matter in ["WM", "GM"]:
-        clf_file = os.path.join(output_dir, "{0}_classifier.pkl")
+        clf_file = os.path.join(output_dir, "{0}_classifier.pkl".format(matter))
         print("Training {0} classifier".format(matter))
         clf = train_classifier(training_features, get_truth_from_data(training_data, matter),
                                out_file=clf_file, n_jobs=8)
         print("Getting ROC scores for classifier")
         roc = test_classifier(clf, testing_features, get_truth_from_data(testing_data, matter))
 
-        roc_out_file_name = os.path.join(output_dir, "{0}_roc.pkl")
+        roc_out_file_name = os.path.join(output_dir, "{0}_roc.pkl".format(matter))
         roc_out_file = open(roc_out_file_name, "wb")
         print("Writing ROC scores to file {0}".format(roc_out_file_name))
         pickle.dump(roc, roc_out_file)
