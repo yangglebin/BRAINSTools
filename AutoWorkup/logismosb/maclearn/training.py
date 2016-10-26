@@ -10,6 +10,7 @@ from sklearn.externals import joblib
 from sklearn.ensemble import RandomForestClassifier
 import pandas as pd
 import json
+from vesselness import compute_absolute_eigen_values
 
 
 def get_list_of_features():
@@ -116,51 +117,58 @@ def image_data(in_file, modality, abc_file=None, additional_images=None):
     """
 
     # features can be added or taken out as to optimize the edge detection
-    features = get_list_of_features()
+    additional_feature_names = get_list_of_features()
 
-    image = sitk.ReadImage(in_file)
-    intensity_values = imagearray(image)
+    feature_value_arrays = []
+    feature_names = []
 
-    grad = sitk.GradientMagnitude(image)
-    grad_values = imagearray(grad)
-    sigmas = [i * .5 for i in range(1, 5)]
-    gauss_gradients = [imagearray(sitk.GradientMagnitudeRecursiveGaussian(image, sigma=sigma)) for sigma in sigmas]
-    gauss_gradient_names = ["GaussGrad_{0:.1f}".format(sigma).replace('.', '_') for sigma in sigmas]
+    # intensity
+    image = sitk.ReadImage(in_file, sitk.sitkFloat64)
+    feature_value_arrays.append(imagearray(image))
+    feature_names.append('')
 
-    grad_2 = sitk.GradientMagnitude(grad)
-    grad_2_values = imagearray(grad_2)
+    # gradient magnitude
+    feature_value_arrays.append(imagearray(sitk.GradientMagnitude(image)))
+    feature_names.append('GradMag')
 
-    lap_values = imagearray(sitk.Laplacian(sitk.Cast(image, sitk.sitkFloat32)))
-    gauss_lap = imagearray(sitk.LaplacianRecursiveGaussian(image))
-    sobel_values = imagearray(sitk.SobelEdgeDetection(sitk.Cast(image, sitk.sitkFloat32)))
+    # second order gradient magnitude
+    feature_value_arrays.append(imagearray(sitk.GradientMagnitude(sitk.GradientMagnitude(image))))
+    feature_names.append("GradMag2")
 
-    directional_gradients = list(getgradientinfo(image))
-    directional_gradient_names = ["GradX", "GradY", "GradZ", "Eigen1", "Eigen2", "Eigen3"]
+    # Sobel
+    feature_names.append("Sobel")
+    feature_value_arrays.append(imagearray(sitk.SobelEdgeDetection(sitk.Cast(image, sitk.sitkFloat32))))
 
-    gauss_image = sitk.SmoothingRecursiveGaussian(image, sigma=1.0)
-    gauss_array = imagearray(gauss_image)
-    gauss_directional_gradients = list(getgradientinfo(gauss_image))
-    gauss_directional_gradient_names = ["Gauss_" + name for name in directional_gradient_names]
+    # eigenvalues of hessian
+    feature_names.extend(["Eigen{0}".format(i) for i in range(1, 4)])
+    feature_value_arrays.extend([eigen.flatten() for eigen in compute_absolute_eigen_values(image, sigma=0)])
 
-    array_list = [intensity_values, gauss_array, grad_values, grad_2_values, lap_values, gauss_lap,
-                  sobel_values] + gauss_gradients + directional_gradients + gauss_directional_gradients
+    # Laplacian
+    feature_names.append("Laplacian")
+    feature_value_arrays.append(imagearray(sitk.Laplacian(image, useImageSpacing=True)))
 
-    if abc_file:
-        abc_image = sitk.ReadImage(abc_file)
-        mask_image = get_brainmask(abc_image)
-        array_list = mask_data_with_image(array_list, mask_image)
+    for sigma in [i * .5 for i in range(1, 7)]:
+        sigma_str = "{0:.1f}".format(sigma)
+        feature_names.extend(["GaussEigen{0}_{1}".format(i, sigma_str) for i in range(1, 4)])
+        feature_value_arrays.extend([eigen.flatten() for eigen in compute_absolute_eigen_values(image, sigma=sigma)])
 
-    series_list = [pd.Series(array) for array in array_list]
-    keys = [modality + meas for meas in ['', 'Smoothed', 'GradMag', 'GradMag2', 'Laplacian', 'LapGauss',
-                                         'Sobel'] + gauss_gradient_names + directional_gradient_names + gauss_directional_gradient_names]
+        feature_names.append("GaussLaplacian_{0}".format(sigma_str))
+        feature_value_arrays.append(imagearray(sitk.LaplacianRecursiveGaussian(image, sigma=sigma)))
 
-    features = remove_keys_from_array(features, keys)
+        feature_names.append("Gauss_{0}".format(sigma_str))
+        feature_value_arrays.append(imagearray(sitk.RecursiveGaussian(image, sigma=sigma)))
 
-    for name in features:
-        series_list.append(pd.Series(imagearray(sitk.ReadImage(additional_images[name]))))
+        feature_value_arrays.append(imagearray(sitk.GradientMagnitudeRecursiveGaussian(image, sigma=sigma)))
+        feature_names.append("GaussGradMag_{0}".format(sigma_str))
+
+    feature_value_series = [pd.Series(array) for array in feature_value_arrays]
+    keys = [modality + meas for meas in feature_names]
+
+    for name in additional_feature_names:
+        feature_value_series.append(pd.Series(imagearray(sitk.ReadImage(additional_images[name]))))
         keys.append(name)
 
-    data = pd.concat(series_list,
+    data = pd.concat(feature_value_series,
                      keys=keys,
                      axis=1)
 

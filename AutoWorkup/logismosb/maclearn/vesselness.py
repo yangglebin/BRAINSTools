@@ -77,7 +77,6 @@ def compute_eigen_values_from_hessian(hessian):
     if check_eigen_values(*eigen_values_list):
         return eigen_values_list
     else:
-        print("Sorting eigen values")
         sorted_eigen_values = sortbyabs(eigen_values, axis=-1)
         sorted_eigen_values_list = separate_eigen_values(sorted_eigen_values)
         if check_eigen_values(*sorted_eigen_values_list):
@@ -142,15 +141,17 @@ def compute_eigen_values(image, sigma):
     return eigen1, eigen2, eigen3
 
 
+def compute_absolute_eigen_values(image, sigma):
+    return [np.abs(eigen) for eigen in compute_eigen_values(image, sigma=sigma)]
+
+
 def check_eigen_values(eigen1, eigen2, eigen3):
     """
     Check that |eigen1| <= |eigen2| <= |eigen3|
     """
     if np.all(np.abs(eigen1) <= np.abs(eigen2)) and np.all(np.abs(eigen2) <= np.abs(eigen3)):
-        print("|eigen1| <= |eigen2| <= |eigen3|")
         return True
     else:
-        print("Eigen values are not in the correct order")
         return False
 
 
