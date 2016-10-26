@@ -137,7 +137,7 @@ def image_data(in_file, modality, abc_file=None, additional_images=None):
 
     # Sobel
     feature_names.append("Sobel")
-    feature_value_arrays.append(imagearray(sitk.SobelEdgeDetection(sitk.Cast(image, sitk.sitkFloat32))))
+    feature_value_arrays.append(imagearray(sitk.SobelEdgeDetection(image)))
 
     # eigenvalues of hessian
     feature_names.extend(["Eigen{0}".format(i) for i in range(1, 4)])
