@@ -3,18 +3,29 @@ import SimpleITK as sitk
 import pandas as pd
 
 
+def largest_connected_component(image, minSize=1000):
+    return sitk.RelabelComponent(sitk.ConnectedComponent(image), minSize) == 1
+
+
+def fill_mask_holes(image, minSize=0):
+    negConnected = largest_connected_component(image == 0, minSize)
+    return negConnected == 0
+
+
 def getedges(nm_file, between_labels=False):
     """Method to extract edges from a neuromorphometrics label map."""
-    nm_map = sitk.ReadImage(nm_file)
+    nm_map = sitk.ReadImage(nm_file, sitk.sitkUInt32)
 
     # define labels not to include
-    c_labels = [4, 11, 35, 38, 39, 40, 41, 46, 61, 62, 71, 72, 73, 34, 33] # cerebellum and brainstem labels
-    c_mask = nm_map < 0
-    for cl in c_labels:
-        c_mask = c_mask + (nm_map == cl)
+    # cerebellum and brainstem labels
+    background_labels = [0, 4, 11, 32, 33, 34, 35, 38, 39, 40, 41, 46, 61, 62, 71, 72, 73]
+    background = sitk.Cast(nm_map * 0, sitk.sitkUInt8)
+    for background_label in background_labels:
+        background = sitk.Or(nm_map == background_label, background)
 
-    gm_mask = nm_map >= 100
-    wm_mask = (nm_map > 0) * (nm_map < 100) * (1 - c_mask)
+    gm_mask = sitk.BinaryThreshold(nm_map, lowerThreshold=99.5, upperThreshold=1000)
+    wm_mask = fill_mask_holes(sitk.BinaryThreshold(nm_map, 0.5, 1000) * (gm_mask == 0) * (background == 0))
+    # wm_mask = largest_connected_component(wm_mask)
 
     # get the wm edges/contours
     wm_contours = sitk.LabelContour(wm_mask)
@@ -23,11 +34,12 @@ def getedges(nm_file, between_labels=False):
         # get the gm edges/contours
         gm_map = sitk.Cast(nm_map, sitk.sitkUInt16) * sitk.Cast(gm_mask, sitk.sitkUInt16)
         gm_label_contours = sitk.LabelContour(gm_map) > 0
-        select_gm = gm_label_contours - (gm_label_contours * wm_contours)
+        select_gm = gm_label_contours * (gm_label_contours * wm_contours == 0)
         rm_edges = sitk.BinaryDilate(wm_mask, 1)
-        gm_contours = select_gm * (1 - rm_edges)
+        gm_contours = select_gm * (rm_edges == 0)
     else:
-        gm_contours = sitk.LabelContour(gm_mask + wm_mask) > 0
+        gm_contours = (sitk.LabelContour(sitk.Or(gm_mask, wm_mask)) > 0) * (wm_contours == 0)
+
     return wm_contours, gm_contours
 
 
