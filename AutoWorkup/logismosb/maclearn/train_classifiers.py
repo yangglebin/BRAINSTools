@@ -13,5 +13,5 @@ def train_classifiers(data_file, cache_dir=os.path.curdir):
 
 
 if __name__ == "__main__":
-    train_classifiers("/Shared/sinapse/CACHE/20161025_Davids_CrossValidation/training_data.hdf5",
-                      "/Shared/sinapse/CACHE/20161025_Davids_CrossValidation")
+    train_classifiers("/Shared/sinapse/CACHE/20161105_Davids_CrossValidation/training_data.hdf5",
+                      "/Shared/sinapse/CACHE/20161105_Davids_CrossValidation")
