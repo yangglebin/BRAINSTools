@@ -32,7 +32,7 @@ def collect_training_data(training_files):
 
 
 def save_training_data():
-    cache_dir = "/Shared/sinapse/CACHE/20161025_Davids_CrossValidation"
+    cache_dir = "/Shared/sinapse/CACHE/20161105_Davids_CrossValidation"
     training_files = pickle_load(os.path.join(cache_dir, "training_files.pkl"))
     training_data = collect_training_data(training_files)
     training_data_file = os.path.join(cache_dir, "training_data.hdf5")
