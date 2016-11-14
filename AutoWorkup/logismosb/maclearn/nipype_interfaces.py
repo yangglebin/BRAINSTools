@@ -111,12 +111,16 @@ class PredictEdgeProbability(BaseInterface):
         feature_data = image_data(self.inputs.t1_file, "T1", additional_images=self.inputs.additional_files)
         gm_classifier = joblib.load(self.inputs.gm_classifier_file)
         gm_probability_array = gm_classifier.predict_proba(feature_data.values)[:, 1]
+        del gm_classifier
         gm_probability_image = image_file_from_array_with_reference_image_file(
             gm_probability_array, self.inputs.t1_file, self._list_outputs()["gm_edge_probability"])
+        del gm_probability_array, gm_probability_image
         wm_classifier = joblib.load(self.inputs.wm_classifier_file)
         wm_probability_array = wm_classifier.predict_proba(feature_data.values)[:, 1]
+        del wm_classifier
         wm_probability_image = image_file_from_array_with_reference_image_file(
             wm_probability_array, self.inputs.t1_file, self._list_outputs()["wm_edge_probability"])
+        del wm_probability_array, wm_probability_image
         return runtime
 
     def _list_outputs(self):
