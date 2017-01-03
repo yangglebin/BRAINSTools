@@ -54,7 +54,7 @@ DICOM Data Dictionary: http://medical.nema.org/Dicom/2011/11_06pu.pdf
 
 
 
-#undef HAVE_SSTREAM
+//#undef HAVE_SSTREAM
 #include "DWIConvertCLP.h"
 #include "DWIConvertLib.h"
 

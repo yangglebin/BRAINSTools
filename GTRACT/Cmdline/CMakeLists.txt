@@ -48,3 +48,15 @@ endforeach()
 if(BUILD_TESTING AND NOT BRAINSTools_DISABLE_TESTING)
    add_subdirectory(TestSuite)
 endif()
+
+# For using DWIConvert interface
+include_directories("..\\..\\DWIConvert")
+FindITKUtil( DWIConvert_ITK
+        ITKImageIntensity
+        ITKImageStatistics
+        ITKTestKernel
+        ITKIODCMTK
+        ITKIORAW
+        ITKDCMTK
+        ITKNrrdIO
+        )

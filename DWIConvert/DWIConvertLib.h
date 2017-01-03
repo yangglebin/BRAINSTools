@@ -38,6 +38,8 @@ public:
 
     int write();
 
+    DWIConverter *getConverter() const;
+
 
 
 //application case use in gtractConcatDWI.cxx

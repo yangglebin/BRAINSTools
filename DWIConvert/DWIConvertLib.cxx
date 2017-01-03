@@ -583,3 +583,7 @@ const std::string &DWIConvert::getOutputBVectors() const {
 void DWIConvert::setOutputBVectors(const std::string &outputBVectors) {
   m_outputBVectors = outputBVectors;
 }
+
+DWIConverter *DWIConvert::getConverter() const {
+    return m_converter;
+}

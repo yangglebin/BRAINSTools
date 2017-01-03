@@ -149,6 +149,12 @@ DWIConverter::Volume3DUnwrappedType::PointType DWIConverter::GetOrigin() const
   return this->m_Volume->GetOrigin();
 }
 
+void DWIConverter::SetOrigin(DWIConverter::Volume3DUnwrappedType::PointType origin)
+{
+  return this->m_Volume->SetOrigin(origin);
+}
+
+
 DWIConverter::RotationMatrixType   DWIConverter::GetLPSDirCos() const { return this->m_Volume->GetDirection(); }
 
 DWIConverter::RotationMatrixType DWIConverter::GetMeasurementFrame() const { return this->m_MeasurementFrame; }

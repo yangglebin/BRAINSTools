@@ -56,6 +56,13 @@
 #include "DWIMetaDataDictionaryValidator.h"
 #include <BRAINSCommonLib.h>
 
+#define Using_DWIConvert_Interface
+#ifdef Using_DWIConvert_Interface
+   #include "DWIConvertLib.h"
+#endif
+
+
+
 int main(int argc, char *argv[])
 {
   PARSE_ARGS;
@@ -63,6 +70,15 @@ int main(int argc, char *argv[])
   const BRAINSUtils::StackPushITKDefaultNumberOfThreads TempDefaultNumberOfThreadsHolder(numberOfThreads);
   const int                                             numberOfImages = inputVolume.size();
   bool                                                  debug = true;
+
+#ifdef Using_DWIConvert_Interface
+   std::cout<<"======Use DWIConvet Interface in gtractConcatDWi method========="<<std::endl;
+#else
+
+#endif
+
+
+
   if( debug )
     {
     std::cout << "=====================================================" << std::endl;
@@ -89,11 +105,13 @@ int main(int argc, char *argv[])
     }
 
   typedef signed short                   PixelType;
-  typedef itk::VectorImage<PixelType, 3> NrrdImageType;
   typedef itk::Image<PixelType, 3>       IndexImageType;
+  typedef itk::VectorImage<PixelType, 3> NrrdImageType;
 
+#ifndef  Using_DWIConvert_Interface
   typedef itk::ImageFileReader<NrrdImageType,
                                itk::DefaultConvertPixelTraits<PixelType> > FileReaderType;
+#endif
 
   DWIMetaDataDictionaryValidator currentMetaDataValidator;
   DWIMetaDataDictionaryValidator resultMetaDataValidator;
@@ -105,10 +123,17 @@ int main(int argc, char *argv[])
   int                            vectorIndex = 0;
   double                         baselineBvalue = 0.0;
 
+#ifndef Using_DWIConvert_Interface
   NrrdImageType::PointType firstOrigin;
+#else
+    NrrdImageType::PointType firstOrigin;
+#endif
+
   for( unsigned i = 0; i < inputVolume.size(); i++ )
     {
     std::cout << "Reading volume:              " <<  inputVolume[i] << std::endl;
+
+#ifndef Using_DWIConvert_Interface
     FileReaderType::Pointer imageReader = FileReaderType::New();
     imageReader->SetFileName( inputVolume[i] );
     try
@@ -123,11 +148,22 @@ int main(int argc, char *argv[])
 
     currentMetaDataValidator.SetMetaDataDictionary(imageReader->GetOutput()->GetMetaDataDictionary());
     NrrdImageType::PointType currentOrigin = imageReader->GetOutput()->GetOrigin();
+#else
+    DWIConvert dwiConvert(outputVolume,inputVolume[i]);
+    int result = dwiConvert.read();
+    if (EXIT_SUCCESS != result) return result;
+    NrrdImageType::PointType currentOrigin = dwiConvert.getConverter()->GetOrigin();
+#endif
+
+
     if( i == 0 )
       {
-      firstOrigin = currentOrigin;
-
+       firstOrigin = currentOrigin;
+#ifndef Using_DWIConvert_Interface
       resultMetaDataValidator.SetMetaDataDictionary(imageReader->GetOutput()->GetMetaDataDictionary());
+#else
+      resultMetaDataValidator.SetMetaDataDictionary(dwiConvert.getConverter()->getVolumePointer()->GetMetaDataDictionary());
+#endif
       resultMetaDataValidator.DeleteGradientTable();
       baselineBvalue = resultMetaDataValidator.GetBValue();
       }
@@ -143,20 +179,41 @@ int main(int argc, char *argv[])
         }
       else if( distance > 1.0E-6 )
         {
+#ifndef Using_DWIConvert_Interface
         // if there is a small difference make them the same
         imageReader->GetOutput()->SetOrigin(firstOrigin);
+#else
+        dwiConvert.getConverter()->SetOrigin(firstOrigin);
+#endif
         }
       }
+#ifndef  Using_DWIConvert_Interface
     DWIMetaDataDictionaryValidator::GradientTableType currGradTable = currentMetaDataValidator.GetGradientTable();
+#else
+    DWIMetaDataDictionaryValidator::GradientTableType currGradTable = dwiConvert.getConverter()->GetDiffusionVectors();
+#endif
+
     double currentBvalue = currentMetaDataValidator.GetBValue();
     double bValueScale = currentBvalue / baselineBvalue;
+#ifndef  Using_DWIConvert_Interface
     for( unsigned int j = 0; j < imageReader->GetOutput()->GetVectorLength(); j++ )
-      {
+    {
       typedef itk::VectorIndexSelectionCastImageFilter<NrrdImageType, IndexImageType> VectorSelectFilterType;
+#else
+    unsigned long vectorLength = dwiConvert.getConverter()->GetRows() *  dwiConvert.getConverter()->GetCols();
+    for( unsigned int j = 0; j < vectorLength; j++ )
+    {
+      typedef itk::VectorIndexSelectionCastImageFilter<IndexImageType, IndexImageType> VectorSelectFilterType;
+#endif
+
       typedef VectorSelectFilterType::Pointer                                         VectorSelectFilterPointer;
       VectorSelectFilterPointer selectIndexImageFilter = VectorSelectFilterType::New();
       selectIndexImageFilter->SetIndex( j );
+#ifndef Using_DWIConvert_Interface
       selectIndexImageFilter->SetInput( imageReader->GetOutput() );
+#else
+      selectIndexImageFilter->SetInput( dwiConvert.getConverter()->getVolumePointer());
+#endif
       try
         {
         selectIndexImageFilter->Update();
@@ -176,7 +233,8 @@ int main(int argc, char *argv[])
 
       vectorIndex++;
       }
-    }
+    }//end of for loop of  for( unsigned i = 0; i < inputVolume.size(); i++ )
+
   resultMetaDataValidator.SetGradientTable( resultGradTable );
 
   try
@@ -190,12 +248,14 @@ int main(int argc, char *argv[])
     throw;
     }
 
+
+//current write method does not use DWI Convert interface as DWIConvert does not support Vector Image
   typedef itk::ImageFileWriter<NrrdImageType> WriterType;
   WriterType::Pointer nrrdWriter = WriterType::New();
   nrrdWriter->UseCompressionOn();
   nrrdWriter->UseInputMetaDataDictionaryOn();
   nrrdWriter->SetInput( indexImageToVectorImageFilter->GetOutput() );
-  nrrdWriter->SetFileName( outputVolume );
+  nrrdWriter->SetFileName( outputVolume.c_str() );
   try
     {
     nrrdWriter->Update();
@@ -204,5 +264,6 @@ int main(int argc, char *argv[])
     {
     std::cout << e << std::endl;
     }
+
   return EXIT_SUCCESS;
 }
