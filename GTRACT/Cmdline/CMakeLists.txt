@@ -50,7 +50,7 @@ if(BUILD_TESTING AND NOT BRAINSTools_DISABLE_TESTING)
 endif()
 
 # For using DWIConvert interface
-include_directories("..\\..\\DWIConvert")
+include_directories("${BRAINSTools_SOURCE_DIR}/DWIConvert")
 FindITKUtil( DWIConvert_ITK
         ITKImageIntensity
         ITKImageStatistics

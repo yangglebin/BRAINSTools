@@ -54,7 +54,7 @@ DICOM Data Dictionary: http://medical.nema.org/Dicom/2011/11_06pu.pdf
 
 
 
-//#undef HAVE_SSTREAM
+#undef HAVE_SSTREAM
 #include "DWIConvertCLP.h"
 #include "DWIConvertLib.h"
 
@@ -67,25 +67,26 @@ int main(int argc, char *argv[])
     std::cout << "======= DWI Convert Public Lib Ctest =========" << std::endl;
     DWIConvert dWIConvert;
 
-    dWIConvert.setInputVolume(inputVolume);
-    dWIConvert.setInputDicomDirectory (inputDicomDirectory);
+    dWIConvert.setInputFileType(inputVolume, inputDicomDirectory);
     dWIConvert.setInputBValues (inputBValues);
     dWIConvert.setInputBVectors (inputBVectors);
     dWIConvert.setGradientVectorFile (gradientVectorFile);
     dWIConvert.setSmallGradientThreshold (smallGradientThreshold);
 
-    dWIConvert.setConversionMode(conversionMode);
     dWIConvert.setfMRIOutput (fMRIOutput);
     dWIConvert.setTranspose (transpose);
     dWIConvert.setAllowLossyConversion (allowLossyConversion);
     dWIConvert.setUseIdentityMeasurementFrame (useIdentityMeaseurementFrame);
     dWIConvert.setUseBMatrixGradientDirections (useBMatrixGradientDirections);
 
-    dWIConvert.setOutputVolume(outputVolume);
+    dWIConvert.setOutputFileType(outputVolume);
     dWIConvert.setOutputDirectory(outputDirectory);
     dWIConvert.setOutputBValues(outputBValues);
     dWIConvert.setOutputBVectors(outputBVectors);
 
-    return dWIConvert.readWrite();
-
+    int result = dWIConvert.read();
+    if (EXIT_SUCCESS == result) {
+        return dWIConvert.write(outputVolume);
+    }
+    else return result;
 }

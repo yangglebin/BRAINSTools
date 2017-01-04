@@ -203,7 +203,7 @@ int main(int argc, char *argv[])
     unsigned long vectorLength = dwiConvert.getConverter()->GetRows() *  dwiConvert.getConverter()->GetCols();
     for( unsigned int j = 0; j < vectorLength; j++ )
     {
-      typedef itk::VectorIndexSelectionCastImageFilter<IndexImageType, IndexImageType> VectorSelectFilterType;
+      typedef itk::VectorIndexSelectionCastImageFilter<NrrdImageType, IndexImageType> VectorSelectFilterType;
 #endif
 
       typedef VectorSelectFilterType::Pointer                                         VectorSelectFilterPointer;
@@ -212,7 +212,7 @@ int main(int argc, char *argv[])
 #ifndef Using_DWIConvert_Interface
       selectIndexImageFilter->SetInput( imageReader->GetOutput() );
 #else
-      selectIndexImageFilter->SetInput( dwiConvert.getConverter()->getVolumePointer());
+      selectIndexImageFilter->SetInput( dwiConvert.getConverter()->FourDToThreeDImage(dwiConvert.getConverter()->OrientForFSLConventions())));
 #endif
       try
         {
