@@ -396,15 +396,15 @@ double DWIDICOMConverterBase::getDicomZSpacing(){
         m_Headers[0]->GetOrigin(origin0);
 
         double origin1[3];
-        unsigned  int nextSlice = 0;
+        unsigned  int nextSlice = 1;
         while (0 == zSpace && nextSlice < m_NSlice){ //escape the slice interleave case
-            ++nextSlice;
             m_Headers[nextSlice]->GetOrigin(origin1);
             zSpace = origin1[2] - origin0[2];
+            ++nextSlice;
         }
-
         double zDirection = m_Volume->GetDirection()[2][2];
         zSpace = zSpace * zDirection;
+
     }
     return zSpace;
 }
