@@ -92,6 +92,8 @@ protected:
   /** track if images is interleaved */
   bool                        m_IsInterleaved;
 
+  double getDicomZSpacing();
+
 
 
 };

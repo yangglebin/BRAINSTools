@@ -94,7 +94,8 @@ void DWIDICOMConverterBase::LoadDicomDirectory()
     SpacingType imSpacing;
     imSpacing[0] = spacing[0];
     imSpacing[1] = spacing[1];
-    imSpacing[2] = spacing[2];
+    //imSpacing[2] = spacing[2];
+    imSpacing[2] = getDicomZSpacing();
     m_Volume->SetSpacing(imSpacing);
   }
 
@@ -384,4 +385,26 @@ void DWIDICOMConverterBase::DetermineSliceOrderIS()
   {
     this->m_SliceOrderIS = false;
   }
+}
+
+
+double DWIDICOMConverterBase::getDicomZSpacing(){
+    double zSpace = 0;
+    if (m_NSlice > 1)
+    {
+        double origin0[3];
+        m_Headers[0]->GetOrigin(origin0);
+
+        double origin1[3];
+        unsigned  int nextSlice = 0;
+        while (0 == zSpace && nextSlice < m_NSlice){ //escape the slice interleave case
+            ++nextSlice;
+            m_Headers[nextSlice]->GetOrigin(origin1);
+            zSpace = origin1[2] - origin0[2];
+        }
+
+        double zDirection = m_Volume->GetDirection()[2][2];
+        zSpace = zSpace * zDirection;
+    }
+    return zSpace;
 }
