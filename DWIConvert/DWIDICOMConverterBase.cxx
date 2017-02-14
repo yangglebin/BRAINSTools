@@ -87,7 +87,8 @@ void DWIDICOMConverterBase::LoadDicomDirectory()
     this->m_Volume->SetOrigin(imOrigin);
   }
   // spacing
-  {
+    setDicomSpacing();
+ /* {
 
     double spacing[3];
     m_Headers[0]->GetSpacing(spacing);
@@ -97,7 +98,7 @@ void DWIDICOMConverterBase::LoadDicomDirectory()
     //imSpacing[2] = spacing[2];
     imSpacing[2] = getDicomZSpacing();
     m_Volume->SetSpacing(imSpacing);
-  }
+  }*/
 
   // a map of ints keyed by the slice location string
   // reported in the dicom file.  The number of slices per
@@ -407,4 +408,23 @@ double DWIDICOMConverterBase::getDicomZSpacing(){
 
     }
     return zSpace;
+}
+
+void DWIDICOMConverterBase::setDicomSpacing(){
+
+    double spacing[3];
+    m_Headers[0]->GetSpacing(spacing);
+    SpacingType imSpacing;
+    imSpacing[0] = spacing[0];
+    imSpacing[1] = spacing[1];
+
+    double zSpace =  getDicomZSpacing();
+    if (0 == zSpace){
+       imSpacing[2] = spacing[2];
+    }
+    else {
+       imSpacing[2] = zSpace;
+    }
+
+    m_Volume->SetSpacing(imSpacing);
 }
