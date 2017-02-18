@@ -130,6 +130,7 @@ public:
  Volume3DUnwrappedType::Pointer GetDiffusionVolume() const ;
 
  SpacingType GetSpacing() const;
+ double GetThickness() const;
 
  Volume3DUnwrappedType::PointType GetOrigin() const;
  void SetOrigin(DWIConverter::Volume3DUnwrappedType::PointType origin);
@@ -216,12 +217,14 @@ protected:
   unsigned int        m_NSlice;
   /** number of gradient volumes */
   unsigned int        m_NVolume;
+  double m_thickness;
     /* The following variables make up the primary data model for diffusion weighted images
      * in the most generic sense.  These variables all need to be manipulated together in
      * order to maintain a consistent data model.
      */
     /** the image read from the DICOM dataset */
  Volume3DUnwrappedType::Pointer m_Volume;
+
 
 
   // this is always "left-posterior-superior" in all cases that we currently support

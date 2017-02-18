@@ -14,6 +14,7 @@ DWIConverter::DWIConverter( const FileNamesContainer &inputFileNames, const bool
         m_NRRDSpaceDefinition("left-posterior-superior")
 {
   this->m_MeasurementFrame.SetIdentity();
+  m_thickness = 0;
 }
 
 DWIConverter::~DWIConverter() {}
@@ -134,6 +135,11 @@ DWIConverter::Volume3DUnwrappedType::Pointer DWIConverter::GetDiffusionVolume() 
 DWIConverter::SpacingType DWIConverter::GetSpacing() const
 {
   return this->m_Volume->GetSpacing();
+}
+
+double DWIConverter::GetThickness() const
+{
+  return m_thickness;
 }
 
 DWIConverter::Volume3DUnwrappedType::PointType DWIConverter::GetOrigin() const
@@ -333,7 +339,8 @@ void DWIConverter::ManualWriteNRRDFile(
          << " " << this->GetRows()
          << " " << this->GetSlicesPerVolume()
          << " " << this->GetNVolume() << std::endl;
-  header << "thicknesses:  NaN  NaN " << DoubleConvert(this->GetSpacing()[2]) << " NaN" << std::endl;
+  //header << "thicknesses:  NaN  NaN " << DoubleConvert(this->GetSpacing()[2]) << " NaN" << std::endl;
+  header << "thicknesses:  NaN  NaN " << DoubleConvert(GetThickness()) << " NaN" << std::endl;
   // need to check
   header << "space directions: "
          << "("
