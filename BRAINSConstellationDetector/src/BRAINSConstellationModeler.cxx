@@ -91,6 +91,29 @@ void sample_variance(const std::vector<DType> & x, DType *mean, DType *var)
   *var = ( sum_of_sq - sum * sum / n ) / ( n - 1.0 ); // var = E[X^2]-(E[X])^2
 }
 
+
+static void extractArray(LinearInterpolatorType::Pointer imInterp,
+  const SImageType::PointType & CenterPoint,
+  const landmarksConstellationModelIO::IndexLocationVectorType & model,
+  std::vector<float> & result_array)
+{
+  int q = 0;
+  for( landmarksConstellationModelIO::IndexLocationVectorType::const_iterator it = model.begin();
+       it != model.end(); ++it, ++q )
+  {
+    const SImageType::PointType & point = CenterPoint + *it;
+    if( imInterp->IsInsideBuffer(point) )
+    {
+      result_array[q] = static_cast<float>(imInterp->Evaluate(point));
+    }
+    else
+    {
+      result_array[q] = 0.0F;
+    }
+  }
+}
+
+
 //
 //
 // ===========================================================================

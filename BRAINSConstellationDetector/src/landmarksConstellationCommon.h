@@ -31,24 +31,20 @@
 // Use linear interpolation to keep the processing quick.
 //RM #define __QUICK_RUNS_APPROXIMATION__
 
-#include <cstdio>      // TODO: This include file should be removed, prefer constructs
-                       // from the std library
-#include <cstdlib>     // TODO: This include file should be removed, prefer constructs
-                       // from the std library
-#include <cmath>       // TODO: This include file should be removed, use vcl_math
-                       // instead
-#include <sys/types.h> // TODO: This include file should be removed, unix only
-                       // non-portable
-#include <sys/stat.h>  // TODO: This include file should be removed, unix only
-                       // non-portable
-#include <unistd.h>    // TODO: This include file should be removed, unix only
-                       // non-portable
-#include <ctime>       // TODO: This include file should be removed, unix only
-                       // non-portable
-#include <cctype>      // TODO: This include file should be removed, use vcl_math
-                       // instead
-                       // #include <volume.h> //This include file should be
-                       // removed
+#include <cstdio>
+#include <cmath>
+#include <cctype>
+
+// TODO: cstdlib include file should be removed, prefer constructs from the std library
+#include <cstdlib>
+
+
+//TODO: These are unix only headers that are non-portable
+#include <ctime>
+#include <unistd.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+
 
 #include <numeric>
 #include <itksys/SystemTools.hxx>
@@ -84,6 +80,7 @@
 #include "GenericTransformImage.h"
 
 #include "Slicer3LandmarkIO.h"
+
 
 #if 0 //RM
 extern const unsigned int MAX_ROTATIONS_TESTED;
@@ -128,7 +125,41 @@ typedef itk::MultiResolutionPyramidImageFilter<SImageType, SImageType> PyramidFi
 typedef itk::LinearInterpolateImageFunction<SImageType, double>        LinearInterpolatorType;
 }
 
-#include "landmarksConstellationModelIO.h"
+
+#if 0 //RM
+inline
+static std::string
+PrefixName(const char *prefix, const std::string & name)
+{
+  std::string rval;
+
+  rval += itksys::SystemTools::GetFilenamePath(name);
+  if( rval.size() > 0 )
+    {
+    rval += "/";
+    }
+  //  std::string rval(pathpart);
+  rval += prefix;
+  rval += itksys::SystemTools::GetFilenameName(name);
+  return rval;
+}
+#endif
+
+#include <itkMinimumMaximumImageFilter.h>
+#include <itkScalarImageToHistogramGenerator.h>
+#include <itkOtsuMultipleThresholdsCalculator.h>
+template <class SImageType>
+void ImageMinMax(typename SImageType::Pointer image,
+  typename SImageType::PixelType *imageMin, typename SImageType::PixelType *imageMax)
+{
+  typename itk::MinimumMaximumImageFilter<SImageType>::Pointer minmaxFilter =
+    itk::MinimumMaximumImageFilter<SImageType>::New();
+  minmaxFilter->SetInput(image);
+  minmaxFilter->Update();
+  *imageMax = minmaxFilter->GetMaximum();
+  *imageMin = minmaxFilter->GetMinimum();
+}
+
 
 //RM extern VersorTransformType::Pointer ConvertToVersorRigid3D(RigidTransformType::Pointer RT);
 
@@ -151,6 +182,8 @@ extern SImageType::Pointer CreateTestCenteredRotatedImage2(const RigidTransformT
                                                            const RigidTransformType::Pointer & Point_Rotate);
 
 #if 0 //RM
+#include "landmarksConstellationModelIO.h"
+
 extern itk::Matrix<double, 3, 3> GetMatrixInverse(const itk::Matrix<double, 3, 3> & input);
 
 // extern itk::Matrix<double,3,3> CreateRotationMatrixFromAngles(const double
@@ -303,66 +336,6 @@ ValuesType removeVectorMean(std::vector<ValuesType> & x)
     *it -= mean;
     }
   return mean;
-}
-
-/**
- * This function takes an image and returns an array of type
- float comprised of an ordered subset of the intensity values
- stored in 'image'.  The subset of  voxels that is returned is
- centered around point 'CenterPoint'.  The shape of the subset is
- specified by a set of point offesets from the 'CenterPoint'
- given specified by the vector 'model'.
-
- If any computed voxel location happens to fall outside the
- memory block 'image', a value of 0.0 is returned in for for that
- location in 'result_array'.
- *
- * @author hjohnson (8/29/2008)
- *
- * @param image
- * @param CenterPoint
- * @param model
- * @param result_array
- */
-extern
-void extractArray(
-  LinearInterpolatorType::Pointer imInterp,
-  const SImageType::PointType & CenterPoint,
-  const landmarksConstellationModelIO::IndexLocationVectorType & model,
-  std::vector<float> & result_array);
-
-#if 0 //RM
-inline
-static std::string
-PrefixName(const char *prefix, const std::string & name)
-{
-  std::string rval;
-
-  rval += itksys::SystemTools::GetFilenamePath(name);
-  if( rval.size() > 0 )
-    {
-    rval += "/";
-    }
-  //  std::string rval(pathpart);
-  rval += prefix;
-  rval += itksys::SystemTools::GetFilenameName(name);
-  return rval;
-}
-#endif
-
-#include <itkMinimumMaximumImageFilter.h>
-#include <itkScalarImageToHistogramGenerator.h>
-#include <itkOtsuMultipleThresholdsCalculator.h>
-template <class SImageType>
-void ImageMinMax(typename SImageType::Pointer image,
-                 typename SImageType::PixelType *imageMin, typename SImageType::PixelType *imageMax)
-{
-  typename itk::MinimumMaximumImageFilter<SImageType>::Pointer minmaxFilter =
-    itk::MinimumMaximumImageFilter<SImageType>::New();
-  minmaxFilter->SetInput(image);
-  minmaxFilter->Update();
-  *imageMax = minmaxFilter->GetMaximum();
-  *imageMin = minmaxFilter->GetMinimum();
 }
 
 /**

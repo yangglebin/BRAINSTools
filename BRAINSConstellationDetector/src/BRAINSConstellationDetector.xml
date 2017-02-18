@@ -21,23 +21,6 @@
             </description>
             <default>1</default>
         </integer>
-        <file fileExtensions=".txt">
-            <name>inputTemplateModel</name>
-            <label>Input Template Model</label>
-            <default></default>
-            <longflag>inputTemplateModel</longflag>
-            <description>User-specified template model.
-            </description>
-            <channel>input</channel>
-        </file>
-        <file fileExtensions=".h5,.hdf5,.mat,.txt">
-            <name>llsModel</name>
-            <label>Input LLS Model in HD5 format</label>
-            <default></default>
-            <longflag>LLSModel</longflag>
-            <description>Linear least squares model filename in HD5 format</description>
-            <channel>input</channel>
-        </file>
         <image>
             <name>inputVolume</name>
             <flag>i</flag>
@@ -275,6 +258,25 @@
     <parameters advanced="true">
     <label>Model Override</label>
     <description>Override the default values from the model files.</description>
+
+        <file fileExtensions=".txt">
+            <name>inputTemplateModel</name>
+            <label>Input Template Model</label>
+            <default></default>
+            <longflag>inputTemplateModel</longflag>
+            <description>User-specified template model.
+            </description>
+            <channel>input</channel>
+        </file>
+        <file fileExtensions=".h5,.hdf5,.mat,.txt">
+            <name>llsModel</name>
+            <label>Input LLS Model in HD5 format</label>
+            <default>builtinDefaultModel</default>
+            <longflag>LLSModel</longflag>
+            <description>Linear least squares model filename in HD5 format.  If "builtinDefaultModel", then use the model compiled into the program. If "default", use the file "LLSModel.h5" adjacent to the program executable.</description>
+            <channel>input</channel>
+        </file>
+
         <double>
             <name>radiusMPJ</name>
             <longflag>rmpj</longflag>

@@ -427,27 +427,6 @@ void decomposeRPAC(const SImageType::PointType & RP,
 }
 
 
-void
-extractArray(LinearInterpolatorType::Pointer imInterp,
-             const SImageType::PointType & CenterPoint,
-             const landmarksConstellationModelIO::IndexLocationVectorType & model,
-             std::vector<float> & result_array)
-{
-  int q = 0;
-  for( landmarksConstellationModelIO::IndexLocationVectorType::const_iterator it = model.begin();
-       it != model.end(); ++it, ++q )
-    {
-    const SImageType::PointType & point = CenterPoint + *it;
-    if( imInterp->IsInsideBuffer(point) )
-      {
-      result_array[q] = static_cast<float>(imInterp->Evaluate(point));
-      }
-    else
-      {
-      result_array[q] = 0.0F;
-      }
-    }
-}
 
 unsigned char
 ShortToUChar(short in, short min, short max)

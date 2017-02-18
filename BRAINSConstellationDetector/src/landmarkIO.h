@@ -67,10 +67,12 @@ extern void WriteMRMLFile(std::string outputMRML, std::string outputLandmarksInI
                           const LandmarksMapType & outputLandmarksInOutputSpaceMap,
                           VersorTransformType::ConstPointer versorTransform);
 
+#if 0
 // load linear least squares model for selected landmarks
 // .load from txt file
 extern void loadLLSModel(std::string llsModel, std::map<std::string, std::vector<double> > & llsMeans,
                          std::map<std::string, MatrixType> & llsMatrices, std::map<std::string, double> & searchRadii);
+#endif
 
 /*
 // load from .mat file

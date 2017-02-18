@@ -25,7 +25,6 @@
 #include "landmarkIO.h"
 //#include "itk_hdf5.h"
 //#include "itk_H5Cpp.h"
-#include "itkNumberToString.h"
 
 RGBImageType::Pointer ReturnOrientedRGBImage(SImageType::Pointer inputImage)
 {
@@ -684,23 +683,33 @@ WriteMRMLFile(std::string outputMRML,
   myfile.close();
 }
 
+#if 0
 void
 loadLLSModel(std::string llsModelFilename,
              std::map<std::string, std::vector<double> > & llsMeans,
              std::map<std::string, MatrixType> & llsMatrices,
              std::map<std::string, double> & searchRadii)
 {
-  std::ifstream myfile( llsModelFilename.c_str() );
+  std::string entire_file_as_string("");
+  {
+    std::ifstream myfile(llsModelFilename);
 
-  if( !myfile.is_open() )
-    {
-    itkGenericExceptionMacro(<< "Cannot open landmark model file!"
-                             << llsModelFilename);
+    if (!myfile.is_open()) {
+      itkGenericExceptionMacro(<< "Cannot open landmark model file!"
+        << llsModelFilename);
     }
+
+    const std::string temp((std::istreambuf_iterator<char>(myfile)),
+      std::istreambuf_iterator<char>());
+    entire_file_as_string = temp;
+    myfile.close();
+  }
+
+  std::stringstream ss(entire_file_as_string);
 
   // for each landmark
   std::string line;
-  while( getline(myfile, line) )
+  while( std::getline(ss, line) )
     {
     // skip newline or comments between landmarks
     if( ( line.compare(0, 1, "#") != 0 )
@@ -711,7 +720,7 @@ loadLLSModel(std::string llsModelFilename,
       // read in the landmark name
       std::string name = line;
 
-      if( !getline(myfile, line) )
+      if( !getline(ss, line) )
         {
         itkGenericExceptionMacro(<< "Bad number of parameters info in llsModelFile!");
         }
@@ -737,7 +746,7 @@ loadLLSModel(std::string llsModelFilename,
         }
 
       // read in search radius
-      if( !getline(myfile, line) )
+      if( !getline(ss, line) )
         {
         itkGenericExceptionMacro(<< "Bad search radius in llsModelFile!");
         }
@@ -748,7 +757,7 @@ loadLLSModel(std::string llsModelFilename,
 
       // read in the number of linear model coefficients
       unsigned int numParameters = 0;
-      if( !getline(myfile, line) )
+      if( !getline(ss, line) )
         {
         itkGenericExceptionMacro(<< "Bad number of parameters info in llsModelFile!");
         }
@@ -761,7 +770,7 @@ loadLLSModel(std::string llsModelFilename,
       coefficients.set_size(dimension, numParameters);
       for( unsigned int j = 0; j < dimension; ++j )
         {
-        if( !getline(myfile, line) )
+        if( !getline(ss, line) )
           {
           itkGenericExceptionMacro(<< "Bad linear model coefficients in llsModelFile!")
           }
@@ -787,9 +796,8 @@ loadLLSModel(std::string llsModelFilename,
       llsMatrices[name] = coefficients;
       }
     }
-
-  myfile.close();
 }
+#endif
 
 void
 writeVerificationScript(std::string outputVerificationScriptFilename,

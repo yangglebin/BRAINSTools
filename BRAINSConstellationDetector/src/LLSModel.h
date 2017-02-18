@@ -76,6 +76,8 @@ private:
 
   MatrixType ReadMatrix(const std::string & DataSetName);
 
+  void SetDefaultModel(); //This function is generated with a special compilation option
+
 private:
   std::string               m_FileName;
   LLSMeansType              m_LLSMeans;

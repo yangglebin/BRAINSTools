@@ -108,7 +108,7 @@ ExternalData_add_test( ${PROJECT_NAME}FetchData NAME ${BCDTestName}
          BCDTest
   --inputVolume DATA{${TestData_DIR}/2.nii.gz}
   --inputTemplateModel DATA{${TestData_DIR}/T1_50Lmks.mdl}
-  --LLSModel DATA{${TestData_DIR}/Transforms_h5/LLSModel_50Lmks.${XFRM_EXT}}
+##- Use internal model  --LLSModel DATA{${TestData_DIR}/Transforms_h5/LLSModel_50Lmks.${XFRM_EXT}}
   --resultsDir ${CMAKE_CURRENT_BINARY_DIR}/
   --forceHoughEyeDetectorReportFailure)
 set_property(TEST ${BCDTestName}
@@ -203,6 +203,7 @@ set(BCDTestName BCDTest_ForceRPPoint)
     BRAINSConstellationDetectorTest
     --forceRPPoint 0.44,7.27,1.97
     --inputVolume DATA{${TestData_DIR}/T1.nii.gz}
+##- Use internal model
     --LLSModel DATA{${TestData_DIR}/Transforms_h5/LLSModel_50Lmks.${XFRM_EXT}}
     --inputTemplateModel DATA{${TestData_DIR}/T1_50Lmks.mdl}
     --outputLandmarksInInputSpace ${CMAKE_CURRENT_BINARY_DIR}/${BCDTestName}_InputSpace.fcsv
@@ -224,7 +225,7 @@ set(BCDTestName BCDTest_ForceACPoint)
     BRAINSConstellationDetectorTest
     --forceACPoint 0.72,30.01,18.95
     --inputVolume DATA{${TestData_DIR}/T1.nii.gz}
-    --LLSModel DATA{${TestData_DIR}/Transforms_h5/LLSModel_50Lmks.${XFRM_EXT}}
+##- Use internal model    --LLSModel DATA{${TestData_DIR}/Transforms_h5/LLSModel_50Lmks.${XFRM_EXT}}
     --inputTemplateModel DATA{${TestData_DIR}/T1_50Lmks.mdl}
     --outputLandmarksInInputSpace ${CMAKE_CURRENT_BINARY_DIR}/${BCDTestName}_InputSpace.fcsv
     )
@@ -245,7 +246,7 @@ set(BCDTestName BCDTest_ForcePCPoint)
     BRAINSConstellationDetectorTest
     --forcePCPoint 1.54,1.64,14.32
     --inputVolume DATA{${TestData_DIR}/T1.nii.gz}
-    --LLSModel DATA{${TestData_DIR}/Transforms_h5/LLSModel_50Lmks.${XFRM_EXT}}
+##- Use internal model    --LLSModel DATA{${TestData_DIR}/Transforms_h5/LLSModel_50Lmks.${XFRM_EXT}}
     --inputTemplateModel DATA{${TestData_DIR}/T1_50Lmks.mdl}
     --outputLandmarksInInputSpace ${CMAKE_CURRENT_BINARY_DIR}/${BCDTestName}_InputSpace.fcsv
     )
@@ -266,7 +267,7 @@ set(BCDTestName BCDTest_ForceVN4Point)
     BRAINSConstellationDetectorTest
     --forceVN4Point 0,-20.60,-12.81
     --inputVolume DATA{${TestData_DIR}/T1.nii.gz}
-    --LLSModel DATA{${TestData_DIR}/Transforms_h5/LLSModel_50Lmks.${XFRM_EXT}}
+##- Use internal model    --LLSModel DATA{${TestData_DIR}/Transforms_h5/LLSModel_50Lmks.${XFRM_EXT}}
     --inputTemplateModel DATA{${TestData_DIR}/T1_50Lmks.mdl}
     --outputLandmarksInInputSpace ${CMAKE_CURRENT_BINARY_DIR}/${BCDTestName}_InputSpace.fcsv
     )
@@ -295,7 +296,7 @@ set(BCDTestName BCDTest_ForceVN4Point)
     --inputVolume DATA{${TestData_DIR}/T1.nii.gz}
     --outputResampledVolume ${CMAKE_CURRENT_BINARY_DIR}/${BCDTestName}_aligned.nrrd
     --inputTemplateModel DATA{${TestData_DIR}/T1_50Lmks.mdl}
-    --LLSModel DATA{${TestData_DIR}/Transforms_h5/LLSModel_50Lmks.${XFRM_EXT}}
+##- Use internal model    --LLSModel DATA{${TestData_DIR}/Transforms_h5/LLSModel_50Lmks.${XFRM_EXT}}
     --acLowerBound 100)
 
   set(BCDTestName BCDTest_backgroundValue)
@@ -311,7 +312,7 @@ set(BCDTestName BCDTest_ForceVN4Point)
     --inputVolume DATA{${TestData_DIR}/T1.nii.gz}
     --outputResampledVolume ${CMAKE_CURRENT_BINARY_DIR}/${BCDTestName}_aligned.nrrd
     --inputTemplateModel DATA{${TestData_DIR}/T1_50Lmks.mdl}
-    --LLSModel DATA{${TestData_DIR}/Transforms_h5/LLSModel_50Lmks.${XFRM_EXT}}
+##- Use internal model    --LLSModel DATA{${TestData_DIR}/Transforms_h5/LLSModel_50Lmks.${XFRM_EXT}}
     --BackgroundFillValue BIGNEG)
 
   set(BCDTestName BCDTest_cutOutHeadInOutputResampledVolume)
@@ -327,7 +328,7 @@ set(BCDTestName BCDTest_ForceVN4Point)
     --inputVolume DATA{${TestData_DIR}/T1.nii.gz}
     --outputResampledVolume ${CMAKE_CURRENT_BINARY_DIR}/${BCDTestName}_aligned.nrrd
     --inputTemplateModel DATA{${TestData_DIR}/T1_50Lmks.mdl}
-    --LLSModel DATA{${TestData_DIR}/Transforms_h5/LLSModel_50Lmks.${XFRM_EXT}}
+##- Use internal model    --LLSModel DATA{${TestData_DIR}/Transforms_h5/LLSModel_50Lmks.${XFRM_EXT}}
     --cutOutHeadInOutputVolume)
 
   set(BCDTestName BCDTest_cutOutHeadInOutputVolume)
@@ -343,7 +344,7 @@ set(BCDTestName BCDTest_ForceVN4Point)
     --inputVolume DATA{${TestData_DIR}/T1.nii.gz}
     --outputVolume ${CMAKE_CURRENT_BINARY_DIR}/${BCDTestName}_aligned.nrrd
     --inputTemplateModel DATA{${TestData_DIR}/T1_50Lmks.mdl}
-    --LLSModel DATA{${TestData_DIR}/Transforms_h5/LLSModel_50Lmks.${XFRM_EXT}}
+##- Use internal model    --LLSModel DATA{${TestData_DIR}/Transforms_h5/LLSModel_50Lmks.${XFRM_EXT}}
     --cutOutHeadInOutputVolume)
 
   set(BCDTestName BCDTest_interpolationMode)
@@ -359,7 +360,7 @@ set(BCDTestName BCDTest_ForceVN4Point)
     --inputVolume DATA{${TestData_DIR}/T1.nii.gz}
     --outputResampledVolume ${CMAKE_CURRENT_BINARY_DIR}/${BCDTestName}_aligned.nrrd
     --inputTemplateModel DATA{${TestData_DIR}/T1_50Lmks.mdl}
-    --LLSModel DATA{${TestData_DIR}/Transforms_h5/LLSModel_50Lmks.${XFRM_EXT}}
+##- Use internal model    --LLSModel DATA{${TestData_DIR}/Transforms_h5/LLSModel_50Lmks.${XFRM_EXT}}
     --interpolationMode BSpline)
 
   set(BCDTestName BCDTest_mspLevel)
@@ -375,7 +376,7 @@ set(BCDTestName BCDTest_ForceVN4Point)
     --inputVolume DATA{${TestData_DIR}/T1.nii.gz}
     --outputResampledVolume ${CMAKE_CURRENT_BINARY_DIR}/${BCDTestName}_aligned.nrrd
     --inputTemplateModel DATA{${TestData_DIR}/T1_50Lmks.mdl}
-    --LLSModel DATA{${TestData_DIR}/Transforms_h5/LLSModel_50Lmks.${XFRM_EXT}}
+##- Use internal model    --LLSModel DATA{${TestData_DIR}/Transforms_h5/LLSModel_50Lmks.${XFRM_EXT}}
     --mspQualityLevel 2)
 
   set(BCDTestName BCDTest_otsuThreshold)
@@ -391,7 +392,7 @@ set(BCDTestName BCDTest_ForceVN4Point)
     --inputVolume DATA{${TestData_DIR}/T1.nii.gz}
     --outputResampledVolume ${CMAKE_CURRENT_BINARY_DIR}/${BCDTestName}_aligned.nrrd
     --inputTemplateModel DATA{${TestData_DIR}/T1_50Lmks.mdl}
-    --LLSModel DATA{${TestData_DIR}/Transforms_h5/LLSModel_50Lmks.${XFRM_EXT}}
+##- Use internal model    --LLSModel DATA{${TestData_DIR}/Transforms_h5/LLSModel_50Lmks.${XFRM_EXT}}
     --otsuPercentileThreshold 0.05)
 
   set(BCDTestName BCDTest_outputUntransformedClippedVolume)
@@ -408,7 +409,8 @@ set(BCDTestName BCDTest_ForceVN4Point)
     ${CMAKE_CURRENT_BINARY_DIR}/${BCDTestName}_aligned.nrrd
     --acLowerBound 100
     --inputTemplateModel DATA{${TestData_DIR}/T1_50Lmks.mdl}
-    --LLSModel DATA{${TestData_DIR}/Transforms_h5/LLSModel_50Lmks.${XFRM_EXT}})
+##- Use internal model    --LLSModel DATA{${TestData_DIR}/Transforms_h5/LLSModel_50Lmks.${XFRM_EXT}}
+  )
 
   set(BCDTestName BCDTest_rac)
   ExternalData_add_test( ${PROJECT_NAME}FetchData NAME ${BCDTestName}
@@ -424,7 +426,7 @@ set(BCDTestName BCDTest_ForceVN4Point)
     --outputResampledVolume ${CMAKE_CURRENT_BINARY_DIR}/${BCDTestName}_aligned.nrrd
     --outputLandmarksInACPCAlignedSpace ${CMAKE_CURRENT_BINARY_DIR}/${BCDTestName}_lmk_acpc.fcsv
     --inputTemplateModel DATA{${TestData_DIR}/T1_50Lmks.mdl}
-    --LLSModel DATA{${TestData_DIR}/Transforms_h5/LLSModel_50Lmks.${XFRM_EXT}}
+##- Use internal model    --LLSModel DATA{${TestData_DIR}/Transforms_h5/LLSModel_50Lmks.${XFRM_EXT}}
     --rac 10)
 
   set(BCDTestName BCDTest_rescaleIntensity)
@@ -440,7 +442,7 @@ set(BCDTestName BCDTest_ForceVN4Point)
     --inputVolume DATA{${TestData_DIR}/T1.nii.gz}
     --outputResampledVolume ${CMAKE_CURRENT_BINARY_DIR}/${BCDTestName}_aligned.nrrd
     --inputTemplateModel DATA{${TestData_DIR}/T1_50Lmks.mdl}
-    --LLSModel DATA{${TestData_DIR}/Transforms_h5/LLSModel_50Lmks.${XFRM_EXT}}
+##- Use internal model    --LLSModel DATA{${TestData_DIR}/Transforms_h5/LLSModel_50Lmks.${XFRM_EXT}}
     --rescaleIntensities)
 
   set(BCDTestName BCDTest_rescaleIntensityRange)
@@ -456,7 +458,7 @@ set(BCDTestName BCDTest_ForceVN4Point)
     --inputVolume DATA{${TestData_DIR}/T1.nii.gz}
     --outputResampledVolume ${CMAKE_CURRENT_BINARY_DIR}/${BCDTestName}_aligned.nrrd
     --inputTemplateModel DATA{${TestData_DIR}/T1_50Lmks.mdl}
-    --LLSModel DATA{${TestData_DIR}/Transforms_h5/LLSModel_50Lmks.${XFRM_EXT}}
+##- Use internal model    --LLSModel DATA{${TestData_DIR}/Transforms_h5/LLSModel_50Lmks.${XFRM_EXT}}
     --rescaleIntensitiesOutputRange 20,2000)
 
   set(BCDTestName BCDTest_rmpj)
@@ -473,7 +475,7 @@ set(BCDTestName BCDTest_ForceVN4Point)
     --outputResampledVolume ${CMAKE_CURRENT_BINARY_DIR}/${BCDTestName}_aligned.nrrd
     --outputLandmarksInACPCAlignedSpace ${CMAKE_CURRENT_BINARY_DIR}/${BCDTestName}_lmk_acpc.fcsv
     --inputTemplateModel DATA{${TestData_DIR}/T1_50Lmks.mdl}
-    --LLSModel DATA{${TestData_DIR}/Transforms_h5/LLSModel_50Lmks.${XFRM_EXT}}
+##- Use internal model    --LLSModel DATA{${TestData_DIR}/Transforms_h5/LLSModel_50Lmks.${XFRM_EXT}}
     --rmpj 10)
 
   set(BCDTestName BCDTest_rpc)
@@ -490,7 +492,7 @@ set(BCDTestName BCDTest_ForceVN4Point)
     --outputResampledVolume ${CMAKE_CURRENT_BINARY_DIR}/${BCDTestName}_aligned.nrrd
     --outputLandmarksInACPCAlignedSpace ${CMAKE_CURRENT_BINARY_DIR}/${BCDTestName}_lmk_acpc.fcsv
     --inputTemplateModel DATA{${TestData_DIR}/T1_50Lmks.mdl}
-    --LLSModel DATA{${TestData_DIR}/Transforms_h5/LLSModel_50Lmks.${XFRM_EXT}}
+##- Use internal model    --LLSModel DATA{${TestData_DIR}/Transforms_h5/LLSModel_50Lmks.${XFRM_EXT}}
     --rpc 10)
 
   set(BCDTestName BCDTest_rVN4)
@@ -507,7 +509,7 @@ set(BCDTestName BCDTest_ForceVN4Point)
     --outputResampledVolume ${CMAKE_CURRENT_BINARY_DIR}/${BCDTestName}_aligned.nrrd
     --outputLandmarksInACPCAlignedSpace ${CMAKE_CURRENT_BINARY_DIR}/${BCDTestName}_lmk_acpc.fcsv
     --inputTemplateModel DATA{${TestData_DIR}/T1_50Lmks.mdl}
-    --LLSModel DATA{${TestData_DIR}/Transforms_h5/LLSModel_50Lmks.${XFRM_EXT}}
+##- Use internal model    --LLSModel DATA{${TestData_DIR}/Transforms_h5/LLSModel_50Lmks.${XFRM_EXT}}
     --rVN4 10)
 
   set(BCDTestName BCDTest_rVN4-rpc-rac-rmpj)
@@ -524,7 +526,7 @@ set(BCDTestName BCDTest_ForceVN4Point)
     --outputResampledVolume ${CMAKE_CURRENT_BINARY_DIR}/${BCDTestName}_aligned.nrrd
     --outputLandmarksInACPCAlignedSpace ${CMAKE_CURRENT_BINARY_DIR}/${BCDTestName}_lmk_acpc.fcsv
     --inputTemplateModel DATA{${TestData_DIR}/T1_50Lmks.mdl}
-    --LLSModel DATA{${TestData_DIR}/Transforms_h5/LLSModel_50Lmks.${XFRM_EXT}}
+##- Use internal model    --LLSModel DATA{${TestData_DIR}/Transforms_h5/LLSModel_50Lmks.${XFRM_EXT}}
     --rmpj 10
     --rVN4 10
     --rac 10
@@ -543,7 +545,8 @@ set(BCDTestName BCDTest_ForceVN4Point)
     --inputVolume DATA{${TestData_DIR}/T1.nii.gz}
     --outputResampledVolume ${CMAKE_CURRENT_BINARY_DIR}/${BCDTestName}_aligned.nrrd
     --inputTemplateModel DATA{${TestData_DIR}/T1_50Lmks.mdl}
-    --LLSModel DATA{${TestData_DIR}/Transforms_h5/LLSModel_50Lmks.${XFRM_EXT}})
+##- Use internal model    --LLSModel DATA{${TestData_DIR}/Transforms_h5/LLSModel_50Lmks.${XFRM_EXT}}
+  )
 
   set(BCDTestName BCDTest_T1_outputVolume)
   ExternalData_add_test( ${PROJECT_NAME}FetchData NAME ${BCDTestName}
@@ -558,7 +561,8 @@ set(BCDTestName BCDTest_ForceVN4Point)
     --inputVolume DATA{${TestData_DIR}/T1.nii.gz}
     --outputVolume ${CMAKE_CURRENT_BINARY_DIR}/${BCDTestName}_aligned.nrrd
     --inputTemplateModel DATA{${TestData_DIR}/T1_50Lmks.mdl}
-    --LLSModel DATA{${TestData_DIR}/Transforms_h5/LLSModel_50Lmks.${XFRM_EXT}})
+##- Use internal model    --LLSModel DATA{${TestData_DIR}/Transforms_h5/LLSModel_50Lmks.${XFRM_EXT}}
+  )
 
   set(BCDTestName BCDTest_trimRescaledIntensities)
   ExternalData_add_test( ${PROJECT_NAME}FetchData NAME ${BCDTestName}
@@ -573,7 +577,7 @@ set(BCDTestName BCDTest_ForceVN4Point)
     --inputVolume DATA{${TestData_DIR}/T1.nii.gz}
     --outputResampledVolume ${CMAKE_CURRENT_BINARY_DIR}/${BCDTestName}_aligned.nrrd
     --inputTemplateModel DATA{${TestData_DIR}/T1_50Lmks.mdl}
-    --LLSModel DATA{${TestData_DIR}/Transforms_h5/LLSModel_50Lmks.${XFRM_EXT}}
+##- Use internal model    --LLSModel DATA{${TestData_DIR}/Transforms_h5/LLSModel_50Lmks.${XFRM_EXT}}
     --trimRescaledIntensities 2)
 
   set(BCDTestName BCDTest_writeBranded2DImage)
@@ -589,7 +593,7 @@ set(BCDTestName BCDTest_ForceVN4Point)
     --inputVolume DATA{${TestData_DIR}/T1.nii.gz}
     --outputResampledVolume ${CMAKE_CURRENT_BINARY_DIR}/${BCDTestName}_aligned.nrrd
     --inputTemplateModel DATA{${TestData_DIR}/T1_50Lmks.mdl}
-    --LLSModel DATA{${TestData_DIR}/Transforms_h5/LLSModel_50Lmks.${XFRM_EXT}}
+##- Use internal model    --LLSModel DATA{${TestData_DIR}/Transforms_h5/LLSModel_50Lmks.${XFRM_EXT}}
     --writeBranded2DImage ${CMAKE_CURRENT_BINARY_DIR}/${BCDTestName}_aligned.png)
 
   set(BCDTestName BCDTest_inputLandmarksEMSP)
@@ -606,7 +610,7 @@ set(BCDTestName BCDTest_ForceVN4Point)
     --outputResampledVolume ${CMAKE_CURRENT_BINARY_DIR}/${BCDTestName}_aligned.nrrd
     --outputLandmarksInACPCAlignedSpace ${CMAKE_CURRENT_BINARY_DIR}/${BCDTestName}_lmk_acpc.fcsv
     --inputTemplateModel DATA{${TestData_DIR}/T1_50Lmks.mdl}
-    --LLSModel DATA{${TestData_DIR}/Transforms_h5/LLSModel_50Lmks.${XFRM_EXT}}
+##- Use internal model    --LLSModel DATA{${TestData_DIR}/Transforms_h5/LLSModel_50Lmks.${XFRM_EXT}}
     --inputLandmarksEMSP DATA{${TestData_DIR}/EMSP.fcsv})
   set_tests_properties(${BCDTestName} PROPERTIES TIMEOUT 9876)
 
@@ -615,7 +619,7 @@ set(BCDTestName BCDTest_ForceVN4Point)
     COMMAND ${LAUNCH_EXE} $<TARGET_FILE:BRAINSConstellationDetectorTestDriver>
     BRAINSConstellationDetectorTest
     --inputVolume DATA{${TestData_DIR}/T1.nii.gz}
-    --LLSModel DATA{${TestData_DIR}/Transforms_h5/LLSModel_50Lmks.${XFRM_EXT}}
+##- Use internal model    --LLSModel DATA{${TestData_DIR}/Transforms_h5/LLSModel_50Lmks.${XFRM_EXT}}
     --inputTemplateModel DATA{${TestData_DIR}/T1_50Lmks.mdl}
     --outputVolume ${CMAKE_CURRENT_BINARY_DIR}/${BCDTestName}_aligned.nrrd
     --outputLandmarksInACPCAlignedSpace ${CMAKE_CURRENT_BINARY_DIR}/${BCDTestName}_ACPCSpace_aligned.fcsv

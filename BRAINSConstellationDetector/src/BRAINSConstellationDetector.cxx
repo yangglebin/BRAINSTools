@@ -69,14 +69,14 @@ int main( int argc, char *argv[] )
     std::string pathOut;
     std::string errorMsg;
 
+#if 0
     if( !itksys::SystemTools::FindProgramPath( argv[0], pathOut, errorMsg) )
-
       {
       std::cerr << "Error: Input Template Model File not found" << std::endl;
       std::cerr << errorMsg << std::endl;
-
       return 1;
       }
+#endif
 
     inputTemplateModel = itksys::SystemTools::GetProgramPath( pathOut.c_str() ) + "/" + "T1.mdl";
     std::cout << "Set inputTemplateModel to default: " << std::endl;
@@ -84,21 +84,18 @@ int main( int argc, char *argv[] )
     }
 
   // set the llsModel to default
-  if( llsModel == "" )
+  if( llsModel == "default" ) //If "default", then use the model adjacent to the program executable
     {
-    std::string pathOut;
+    std::string progPathOut;
     std::string errorMsg;
-
-    if( !itksys::SystemTools::FindProgramPath( argv[0], pathOut, errorMsg) )
-
+    if( !itksys::SystemTools::FindProgramPath( argv[0], progPathOut, errorMsg) )
       {
       std::cerr << "Error: Input LLSModel File not found" << std::endl;
       std::cerr << errorMsg << std::endl;
-
       return 1;
       }
 
-    llsModel = itksys::SystemTools::GetProgramPath( pathOut.c_str() ) + "/" + "LLSModel.h5";
+    llsModel = itksys::SystemTools::GetProgramPath( progPathOut.c_str() ) + "/" + "LLSModel.h5";
     std::cout << "Set LLSModel to default: " << std::endl;
     std::cout << llsModel << std::endl;
     }
