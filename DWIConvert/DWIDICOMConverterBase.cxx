@@ -97,6 +97,7 @@ void DWIDICOMConverterBase::LoadDicomDirectory()
     imSpacing[2] = spacing[2];
     m_Volume->SetSpacing(imSpacing);
   }
+  m_Headers[0]->GetThickness(&m_thickness);
 
   // a map of ints keyed by the slice location string
   // reported in the dicom file.  The number of slices per

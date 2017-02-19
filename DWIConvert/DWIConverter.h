@@ -130,6 +130,7 @@ public:
  Volume3DUnwrappedType::Pointer GetDiffusionVolume() const ;
 
  SpacingType GetSpacing() const;
+ double GetThickness() const;
 
  Volume3DUnwrappedType::PointType GetOrigin() const;
  void SetOrigin(DWIConverter::Volume3DUnwrappedType::PointType origin);
@@ -171,15 +172,15 @@ public:
   void ManualWriteNRRDFile(
             const std::string& outputVolumeHeaderName,
             const std::string commentstring) const;
-  Volume4DType::Pointer ThreeDToFourDImage(Volume3DUnwrappedType::Pointer img) const;
+  Volume4DType::Pointer ThreeDToFourDImage(Volume3DUnwrappedType::Pointer img);
 
-  Volume3DUnwrappedType::Pointer FourDToThreeDImage(Volume4DType::Pointer img4D) const;
+  Volume3DUnwrappedType::Pointer FourDToThreeDImage(Volume4DType::Pointer img4D);
 
 /** the DICOM datasets are read as 3D volumes, but they need to be
  *  written as 4D volumes for image types other than NRRD.
  */
   void WriteFSLFormattedFileSet(const std::string& outputVolumeHeaderName,
-                             const std::string outputBValues, const std::string outputBVectors, Volume4DType::Pointer img4D) const;
+                             const std::string outputBValues, const std::string outputBVectors, Volume4DType::Pointer img4D);
 
 
   /**
@@ -191,6 +192,7 @@ public:
 
   //add by Hui Xie
   Volume3DUnwrappedType::Pointer getVolumePointer();
+  double readThicknessFromDict();
 
 
 protected:
@@ -216,6 +218,7 @@ protected:
   unsigned int        m_NSlice;
   /** number of gradient volumes */
   unsigned int        m_NVolume;
+  double             m_thickness;
     /* The following variables make up the primary data model for diffusion weighted images
      * in the most generic sense.  These variables all need to be manipulated together in
      * order to maintain a consistent data model.
