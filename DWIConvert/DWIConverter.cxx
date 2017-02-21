@@ -599,7 +599,6 @@ void DWIConverter::WriteFSLFormattedFileSet(const std::string& outputVolumeHeade
     itk::MetaDataDictionary & thisDic = img4D->GetMetaDataDictionary();
     itk::EncapsulateMetaData< std::string >( thisDic, "qform_code_name", "NIFTI_XFORM_SCANNER_ANAT" );
     itk::EncapsulateMetaData< std::string >( thisDic, "sform_code_name", "NIFTI_XFORM_SCANNER_ANAT" );
-    itk::EncapsulateMetaData<double>( thisDic, "NRRD_thicknesses", GetThickness());
   }
   itk::ImageFileWriter<Volume4DType>::Pointer imgWriter = itk::ImageFileWriter<Volume4DType>::New();
   imgWriter->SetInput( img4D );
@@ -695,11 +694,5 @@ double DWIConverter::readThicknessFromDict(){
   DWIMetaDataDictionaryValidator myValidator;
   myValidator.SetMetaDataDictionary(m_Volume->GetMetaDataDictionary());
   m_thickness = myValidator.GetThicknesses().at(2);
-  /*std::vector<double> temp = myValidator.GetThicknesses();
-  for (int i=0 ; i< temp.size();++i)
-  {
-    std::cout<<"%%%%%%%%%%%%%%Read FSL:get thickness: "<< temp.at(i)<< "at " << i<< std::endl;
-
-  }*/
   return m_thickness;
 }
