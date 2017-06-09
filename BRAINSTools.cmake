@@ -66,7 +66,7 @@ include(${GenerateCLP_USE_FILE})
 include(${SlicerExecutionModel_USE_FILE})
 include(${SlicerExecutionModel_CMAKE_DIR}/SEMMacroBuildCLI.cmake)
 
-set(USE_BRAINSABC "OFF")
+set(USE_BRAINSABC "ON")
 if(USE_BRAINSABC)
   if( NOT USE_AutoWorkup )
      message(FATAL_ERROR "BRAINSABC requires USE_AutoWorkup to be ON: ${USE_BRAINSABC} != ${USE_AutoWorkup}")

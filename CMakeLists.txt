@@ -64,6 +64,9 @@ else()
   project(${LOCAL_PROJECT_NAME} C CXX)
 endif()
 
+
+set (CMAKE_CXX_STANDARD 11) # for include BRAINSABC module
+
 ## For compatibility with Slicer
 if(NOT CMAKE_CXX_STANDARD)
    set(CMAKE_CXX_STANDARD 98) # Supported values are ``98``, ``11`` and ``14``.
