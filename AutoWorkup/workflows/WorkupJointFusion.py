@@ -174,17 +174,7 @@ def CreateJointFusionWorkflow(WFname, onlyT1, master_config, runFixFusionLabelMa
                                 run_without_submitting=True, name="sessionMakeMultimodalInput")
     sessionMakeMultimodalInput.inputs.jointFusion = False
 
-
-    normalizeT1 = pe.Node(Function(function=NormalizeZeroOne,
-                                    input_names=['inputVolume', 'outputVolumeFilename'],
-                                    output_names=['outputVolume']),
-                           name="normalizeT1")
-    JointFusionWF.connect(inputsSpec, 'subj_t1_image',
-                          normalizeT1, 'inputVolume')
-    normalizeT1.inputs.outputVolumeFilename = 'subject_t1_normalized.nii.gz'
-
-    #JointFusionWF.connect(inputsSpec, 'subj_t1_image', sessionMakeMultimodalInput, 'inFN1')
-    JointFusionWF.connect(normalizeT1, 'outputVolume', sessionMakeMultimodalInput, 'inFN1')
+    JointFusionWF.connect(inputsSpec, 'subj_t1_image', sessionMakeMultimodalInput, 'inFN1')
     """
     T2 resample to T1 average image
     :: BRAINSABC changed its behavior to retain image's original spacing & origin
@@ -202,19 +192,7 @@ def CreateJointFusionWorkflow(WFname, onlyT1, master_config, runFixFusionLabelMa
 
         JointFusionWF.connect(inputsSpec, 'subj_t1_image', subjectT2Resample, 'referenceVolume')
         JointFusionWF.connect(inputsSpec, 'subj_t2_image', subjectT2Resample, 'inputVolume')
-        """
-        normalize t2 to [0,1]
-        """
-        normalizeT2 = pe.Node(Function(function=NormalizeZeroOne,
-                                        input_names=['inputVolume', 'outputVolumeFilename'],
-                                        output_names=['outputVolume']),
-                               name="normalizeT2")
-        JointFusionWF.connect(subjectT2Resample, 'outputVolume',
-                              normalizeT2, 'inputVolume')
-        normalizeT2.inputs.outputVolumeFilename = 'subject_t2_normalized.nii.gz'
-
-        JointFusionWF.connect(normalizeT2, 'outputVolume', sessionMakeMultimodalInput, 'inFN2')
-        #JointFusionWF.connect(subjectT2Resample, 'outputVolume', sessionMakeMultimodalInput, 'inFN2')
+        JointFusionWF.connect(subjectT2Resample, 'outputVolume', sessionMakeMultimodalInput, 'inFN2')
     else:
         pass
 
@@ -253,7 +231,9 @@ def CreateJointFusionWorkflow(WFname, onlyT1, master_config, runFixFusionLabelMa
                                                                   fields=['t1','t2','label','lmks','regisration_mask']),
                                                                   name='jointFusionAtlasInput'+jointFusion_atlas_subject)
         jointFusionAtlases[jointFusion_atlas_subject].inputs.t1 = jointFusionAtlasDict[jointFusion_atlas_subject]['t1']
-        jointFusionAtlases[jointFusion_atlas_subject].inputs.t2 = jointFusionAtlasDict[jointFusion_atlas_subject]['t2']
+        if (not onlyT1):
+          jointFusionAtlases[jointFusion_atlas_subject].inputs.t2 = jointFusionAtlasDict[jointFusion_atlas_subject]['t2']
+
         jointFusionAtlases[jointFusion_atlas_subject].inputs.label = jointFusionAtlasDict[jointFusion_atlas_subject]['label']
         jointFusionAtlases[jointFusion_atlas_subject].inputs.lmks = jointFusionAtlasDict[jointFusion_atlas_subject]['lmks']
         jointFusionAtlases[jointFusion_atlas_subject].inputs.regisration_mask = jointFusionAtlasDict[jointFusion_atlas_subject]['regisration_mask']
@@ -420,7 +400,10 @@ def CreateJointFusionWorkflow(WFname, onlyT1, master_config, runFixFusionLabelMa
     jointFusion.inputs.num_threads = -1
     jointFusion.inputs.dimension=3
     jointFusion.inputs.search_radius=[3]
-    jointFusion.inputs.modalities=n_modality
+    if jointFusion  == 'allModalities':
+        jointFusion.inputs.modalities=n_modality
+    else:
+        jointFusion.inputs.modalities=1
     #jointFusion.inputs.method='Joint[0.1,2]'
     if 'intensityoutputjointfusion' in master_config['components']:
         jointFusion.inputs.out_intensity_fusion_name_format='JointFusion_HDAtlas20_2016_intensity_%d.nii.gz'
@@ -472,8 +455,8 @@ def CreateJointFusionWorkflow(WFname, onlyT1, master_config, runFixFusionLabelMa
                                              output_names=['outFNs']),
                                     run_without_submitting=True, name="sessionMakeMultimodalInputJF")
         sessionMakeMultimodalInputJF.inputs.jointFusion = True
-        JointFusionWF.connect(normalizeT1, 'outputVolume', sessionMakeMultimodalInputJF, 'inFN1')
-        JointFusionWF.connect(normalizeT2, 'outputVolume', sessionMakeMultimodalInputJF, 'inFN2')
+        JointFusionWF.connect(inputsSpec, 'subj_t1_image', sessionMakeMultimodalInputJF, 'inFN1')
+        JointFusionWF.connect(inputsSpec, 'subj_t2_image', sessionMakeMultimodalInputJF, 'inFN2')
         JointFusionWF.connect(sessionMakeMultimodalInputJF, 'outFNs', jointFusion,'target_image')
     else:
         "*** HACK JointFusion only uses T1"
