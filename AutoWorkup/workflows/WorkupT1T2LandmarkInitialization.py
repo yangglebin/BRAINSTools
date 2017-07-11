@@ -63,9 +63,10 @@ def CreateLandmarkInitializeWorkflow(WFname, master_config, InterpolationMode, P
     many_cpu_BCD_options_dictionary = {'qsub_args': modify_qsub_args(CLUSTER_QUEUE_LONG,4,2,4), 'overwrite': True}
     BCD.plugin_args = many_cpu_BCD_options_dictionary
     ##  Use program default BCD.inputs.inputTemplateModel = T1ACPCModelFile
-    # BCD.inputs.outputVolume =   "BCD_OUT" + "_ACPC_InPlace.nii.gz"                #$# T1AcpcImageList
-    BCD.inputs.outputTransform = "BCD" + "_Original2ACPC_transform.h5"
+    BCD.inputs.outputVolume =   "BCD_OUT" + "_ACPC_InPlace.nii.gz"                #$# T1AcpcImageList
     BCD.inputs.outputResampledVolume = "BCD" + "_ACPC.nii.gz"
+
+    BCD.inputs.outputTransform = "BCD" + "_Original2ACPC_transform.h5"
     BCD.inputs.outputLandmarksInInputSpace = "BCD" + "_Original.fcsv"
     BCD.inputs.outputLandmarksInACPCAlignedSpace = "BCD" + "_ACPC_Landmarks.fcsv"
     BCD.inputs.writeBranded2DImage = "BCD"+"_Branded2DQCimage.png"
@@ -129,7 +130,8 @@ def CreateLandmarkInitializeWorkflow(WFname, master_config, InterpolationMode, P
 
         landmarkInitializeWF.connect(inputsSpec, 'atlasVolume', ResampleFromAtlas, 'inputVolume')
         landmarkInitializeWF.connect(BLI, 'outputTransformFilename', ResampleFromAtlas, 'warpTransform')
-        landmarkInitializeWF.connect(BCD, 'outputResampledVolume', ResampleFromAtlas, 'referenceVolume')
+        #landmarkInitializeWF.connect(BCD, 'outputResampledVolume', ResampleFromAtlas, 'referenceVolume')
+        landmarkInitializeWF.connect(BCD, 'outputVolume', ResampleFromAtlas, 'referenceVolume')
 
     BROIAUTO = pe.Node(interface=BRAINSROIAuto(), name="BROIAuto_cropped")
     many_cpu_BROIAUTO_options_dictionary = {'qsub_args': modify_qsub_args(CLUSTER_QUEUE_LONG,4,2,4), 'overwrite': True}
@@ -137,11 +139,13 @@ def CreateLandmarkInitializeWorkflow(WFname, master_config, InterpolationMode, P
     BROIAUTO.inputs.outputVolume = "Cropped_BCD_ACPC_Aligned.nii.gz"
     BROIAUTO.inputs.ROIAutoDilateSize = 10
     BROIAUTO.inputs.cropOutput = True
-    landmarkInitializeWF.connect(BCD, 'outputResampledVolume', BROIAUTO, 'inputVolume')
+    #landmarkInitializeWF.connect(BCD, 'outputResampledVolume', BROIAUTO, 'inputVolume')
+    landmarkInitializeWF.connect(BCD, 'outputVolume', BROIAUTO, 'inputVolume')
 
     landmarkInitializeWF.connect(BROIAUTO, 'outputVolume', outputsSpec, 'outputResampledCroppedVolume')
     landmarkInitializeWF.connect(BCD, 'outputLandmarksInACPCAlignedSpace', outputsSpec, 'outputLandmarksInACPCAlignedSpace')
-    landmarkInitializeWF.connect(BCD, 'outputResampledVolume', outputsSpec, 'outputResampledVolume')
+    #landmarkInitializeWF.connect(BCD, 'outputResampledVolume', outputsSpec, 'outputResampledVolume')
+    landmarkInitializeWF.connect(BCD, 'outputVolume', outputsSpec, 'outputResampledVolume')
     landmarkInitializeWF.connect(BCD, 'outputLandmarksInInputSpace', outputsSpec, 'outputLandmarksInInputSpace')
     landmarkInitializeWF.connect(BCD, 'outputTransform', outputsSpec, 'outputTransform')
     landmarkInitializeWF.connect(BCD, 'outputMRML', outputsSpec, 'outputMRML')

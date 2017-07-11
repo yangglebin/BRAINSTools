@@ -9,6 +9,7 @@ from nipype.interfaces.utility import Function, IdentityInterface
 import nipype.pipeline.engine as pe  # pypeline engine
 
 
+
 # #######################################################
 # brainstem computation from white matter mask
 ########################################################
@@ -19,13 +20,20 @@ def brainStem(tissueLabelFilename,
     import os
     import SimpleITK as sitk
 
+    print( "tissueLabelFilename: {0}".format(tissueLabelFilename) )
+    print( "landmarkFilename: {0}".format(landmarkFilename) )
+    print( "brainStemFilename: {0}".format(brainStemFilename) )
+    print( "ouputTissuelLabelFilename: {0}".format(ouputTissuelLabelFilename) )
+
     def cropAndResampleInPlace(inputBrainLabelFilename,
                                physBB1, physBB2, thresholdUpper, thresholdLower,
                                outputImageFilename):
 
         brainLbl = sitk.ReadImage(inputBrainLabelFilename)
 
+        print( "physBB1: {0}".format(physBB1) )
         roiBBStart_index = brainLbl.TransformPhysicalPointToIndex(physBB1)
+        print( "physBB2: {0}".format(physBB2) )
         roiBBStop_index  = brainLbl.TransformPhysicalPointToIndex(physBB2)
         del(physBB1)
         del(physBB2)
@@ -101,8 +109,16 @@ def brainStem(tissueLabelFilename,
     fov1 = brainLbl.TransformIndexToPhysicalPoint([0,0,0])
     fov2 = brainLbl.TransformIndexToPhysicalPoint(brainLblMaxIndex)
 
+    print( "fov1: {0}".format(fov1))
+    print( "fov2: {0}".format(fov2))
+    print( "myLandmark['dens_axis'][2]: {0}".format(myLandmark['dens_axis'][2]))
+    print( "max: {0}".format(max(fov2[2], myLandmark['dens_axis'][2], fov1[2])))
     roiBBStart = [min(fov1[0],fov2[0]), min(fov1[1],fov2[1]) , min(fov1[2],fov2[2]) ]
-    roiBBStop  =  [max(fov1[0],fov2[0]), max(fov1[1],fov2[1]) , myLandmark['dens_axis'][2] ]
+    #roiBBStop  =  [max(fov1[0],fov2[0]), max(fov1[1],fov2[1]) , max(fov2[2], myLandmark['dens_axis'][2], fov1[2]) ]
+    import math
+    roiBBStop  =  [ math.floor(max(fov1[0],fov2[0])),
+                    math.floor(max(fov1[1],fov2[1])) ,
+                    math.ceil(myLandmark['dens_axis'][2]) ]
 
     noExtraBottomBrainStem = cropAndResampleInPlace(tissueLabelFilename, roiBBStart, roiBBStop, 0, 255,
                                                   brainStemFilename + "_InValid.nii.gz")
