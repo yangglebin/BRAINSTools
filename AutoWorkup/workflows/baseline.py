@@ -736,6 +736,7 @@ def generate_single_session_template_WF(projectid, subjectid, sessionid, onlyT1,
         output:
             - complete_brainlabels_seg.nii.gz Segmentation
         """
+        """
         myLocalBrainStemWF = CreateBrainstemWorkflow("BrainStem",
                                                      master_config['queue'],
                                                      "complete_brainlabels_seg.nii.gz")
@@ -748,6 +749,9 @@ def generate_single_session_template_WF(projectid, subjectid, sessionid, onlyT1,
 
         baw201.connect(myLocalBrainStemWF, 'outputspec.ouputTissuelLabelFilename', DataSink,
                        'TissueClassify.@complete_brainlabels_seg')
+        """
+        baw201.connect( BRAINSCreateLabelMapNode, 'cleanLabelVolume',
+                        DataSink, 'TissueClassify.@complete_brainlabels_seg' )
 
 
     ###########################
@@ -906,7 +910,9 @@ def generate_single_session_template_WF(projectid, subjectid, sessionid, onlyT1,
         WhiteMatterHemisphereNode.inputs.WM_LeftHemisphereFileName ="left_hemisphere_wm.nii.gz"
         WhiteMatterHemisphereNode.inputs.WM_RightHemisphereFileName ="right_hemisphere_wm.nii.gz"
 
-        baw201.connect(myLocalBrainStemWF,'outputspec.ouputTissuelLabelFilename',WhiteMatterHemisphereNode,'BRAINLABELSFile')
+        baw201.connect(BRAINSCreateLabelMapNode, 'cleanLabelVolume',
+                       WhiteMatterHemisphereNode,'BRAINLABELSFile')
+        #baw201.connect(myLocalBrainStemWF,'outputspec.ouputTissuelLabelFilename',WhiteMatterHemisphereNode,'BRAINLABELSFile')
         baw201.connect(BResample['hncma_atlas'],'outputVolume',WhiteMatterHemisphereNode,'HDCMARegisteredVentricleMaskFN')
         baw201.connect(BResample['template_leftHemisphere'],'outputVolume',WhiteMatterHemisphereNode,'LeftHemisphereMaskName')
         baw201.connect(BResample['template_rightHemisphere'],'outputVolume',WhiteMatterHemisphereNode,'RightHemisphereMaskName')
@@ -924,7 +930,9 @@ def generate_single_session_template_WF(projectid, subjectid, sessionid, onlyT1,
         myLocalJointFusion = CreateJointFusionWorkflow("JointFusion", onlyT1, master_config)
         baw201.connect(myLocalTCWF,'outputspec.t1_average',myLocalJointFusion,'inputspec.subj_t1_image')
         baw201.connect(myLocalTCWF,'outputspec.t2_average',myLocalJointFusion,'inputspec.subj_t2_image')
-        baw201.connect(myLocalBrainStemWF, 'outputspec.ouputTissuelLabelFilename',myLocalJointFusion,'inputspec.subj_fixed_head_labels')
+        #baw201.connect(myLocalBrainStemWF, 'outputspec.ouputTissuelLabelFilename',myLocalJointFusion,'inputspec.subj_fixed_head_labels')
+        baw201.connect(BRAINSCreateLabelMapNode, 'cleanLabelVolume',
+                myLocalJointFusion,'inputspec.subj_fixed_head_labels')
         baw201.connect(myLocalTCWF, 'outputspec.posteriorImages',myLocalJointFusion,'inputspec.subj_posteriors')
 
         baw201.connect(BResample['template_leftHemisphere'],'outputVolume',myLocalJointFusion,'inputspec.subj_left_hemisphere')
