@@ -6,7 +6,7 @@ DWIWorkFlow.py
 The purpose of this pipeline is to complete all the pre-processing steps needed to turn diffusion-weighted images into FA images that will be used to build a template diffusion tensor atlas for fiber tracking.
 
 Usage:
-  DWIWorkFlow.py --inputDWIScan DWISCAN --inputT2Scan T2SCAN --inputBrainLabelsMapImage BLMImage --program_paths PROGRAM_PATHS --python_aux_paths PYTHON_AUX_PATHS [--workflowCacheDir CACHEDIR] [--resultDir RESULTDIR]
+  DWIWorkFlow.py --inputDWIScan DWISCAN --inputT2Scan T2SCAN --inputBrainLabelsMapImage BLMImage --program_paths PROGRAM_PATHS --python_aux_paths PYTHON_AUX_PATHS [--workflowCacheDir CACHEDIR] [--resultDir RESULTDIR] [--useKoGESWF=<BOOL>]
   DWIWorkFlow.py -v | --version
   DWIWorkFlow.py -h | --help
 
@@ -20,12 +20,26 @@ Options:
   --python_aux_paths PYTHON_AUX_PATHS       Path to the AutoWorkup directory
   --workflowCacheDir CACHEDIR               Base directory that cache outputs of workflow will be written to (default: ./)
   --resultDir RESULTDIR                     Outputs of dataSink will be written to a sub directory under the resultDir named by input scan sessionID (default: CACHEDIR)
+  --useKoGESWF=BOOL                         Binary indication that will allow the KoGES data specific pipeline [default: False]
 """
 from __future__ import print_function
 
 
 #############################  UTILITY FUNCTIONS  #####################################
 # \/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/
+# manage Brain Label according to KogES Testing
+def ManageBrainLabel( inputLabel, outputLabelName):
+    import SimpleITK as sitk
+    import os
+    lblImg = sitk.ReadImage( inputLabel )
+    outLblImg = lblImg* sitk.Cast( (lblImg != 999) & (lblImg > 0),
+                                   lblImg.GetPixelID())
+    dilatedOutLblImg = sitk.BinaryDilate( outLblImg>0 )
+    #outFilename = "./test.nii.gz"
+    sitk.WriteImage(dilatedOutLblImg, outputLabelName)
+    outputVolume = os.path.realpath(outputLabelName)
+    return( outputVolume )
+
 # remove the skull from the T2 volume
 def ExtractBRAINFromHead(RawScan, BrainLabels):
     import os
@@ -41,7 +55,7 @@ def ExtractBRAINFromHead(RawScan, BrainLabels):
     rs.SetReferenceImage(labelsMap)
     resampledHead = rs.Execute(headImage)
 
-    label_mask = labelsMap > 0
+    label_mask = (labelsMap > 0) * (labelsMap!=999)
     brainImage = sitk.Cast(resampledHead, sitk.sitkInt16) * sitk.Cast(label_mask, sitk.sitkInt16)
     outputVolume = os.path.realpath('T2Stripped.nrrd')
     sitk.WriteImage(brainImage, outputVolume)
@@ -137,7 +151,7 @@ def GetRigidTransformInverse(inputTransform):
 #######################################################################################
 # \/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/
 
-def runMainWorkflow(DWI_scan, T2_scan, labelMap_image, BASE_DIR, dataSink_DIR):
+def runMainWorkflow(DWI_scan, T2_scan, labelMap_image, BASE_DIR, dataSink_DIR, useKoGESWF=False):
     print("Running the workflow ...")
 
     sessionID = os.path.basename(os.path.dirname(DWI_scan))
@@ -163,6 +177,17 @@ def runMainWorkflow(DWI_scan, T2_scan, labelMap_image, BASE_DIR, dataSink_DIR):
                                             'Lambda1Image', 'Lambda2Image', 'Lambda3Image',
                                             'ukfTracks', 'ukf2ndTracks']),
         name='outputsSpec')
+    # Step-1: Manage the Brain Label
+    # - remove label 999
+    # - dilate the label by one to be sure for the BRAINMASK (KoGES Data Analysis)
+    if useKoGESWF:
+        MakeBrainMask = pe.Node( interface=Function(function=ManageBrainLabel,
+                                                    input_names=['inputLabel', 'outputLabelName'],
+                                                    output_names=['outputVolume']),
+                                 name="MakeBrainMask")
+        DWIWorkflow.connect(inputsSpec, 'LabelMapVolume',
+                            MakeBrainMask, 'inputLabel')
+        MakeBrainMask.inputs.outputLabelName = "brainLabelMapFixed.nii.gz"
 
     # Step0: remove the skull from the T2 volume
     ExtractBRAINFromHeadNode = pe.Node(interface=Function(function=ExtractBRAINFromHead,
@@ -171,7 +196,10 @@ def runMainWorkflow(DWI_scan, T2_scan, labelMap_image, BASE_DIR, dataSink_DIR):
                                        name="ExtractBRAINFromHead")
 
     DWIWorkflow.connect(inputsSpec, 'T2Volume', ExtractBRAINFromHeadNode, 'RawScan')
-    DWIWorkflow.connect(inputsSpec, 'LabelMapVolume', ExtractBRAINFromHeadNode, 'BrainLabels')
+    if useKoGESWF:
+        DWIWorkflow.connect(MakeBrainMask, 'outputVolume', ExtractBRAINFromHeadNode, 'BrainLabels')
+    else:
+        DWIWorkflow.connect(inputsSpec, 'LabelMapVolume', ExtractBRAINFromHeadNode, 'BrainLabels')
 
     # Step1: extract B0 from DWI volume
     EXTRACT_B0 = pe.Node(interface=extractNrrdVectorIndex(), name="EXTRACT_B0")
@@ -259,8 +287,31 @@ def runMainWorkflow(DWI_scan, T2_scan, labelMap_image, BASE_DIR, dataSink_DIR):
     antsReg_B0ToTransformedT2 = pe.Node(interface=ants.Registration(), name="antsReg_B0ToTransformedT2")
     antsReg_B0ToTransformedT2.inputs.interpolation = "Linear"
     antsReg_B0ToTransformedT2.inputs.dimension = 3
+    #antsReg_B0ToTransformedT2.inputs.transform_parameters = [(0.25, 3x0)]
+    # SyN transform
     antsReg_B0ToTransformedT2.inputs.transforms = ["SyN"]
-    antsReg_B0ToTransformedT2.inputs.transform_parameters = [(0.25, 3.0, 0.0)]
+    antsReg_B0ToTransformedT2.inputs.transform_parameters = [(0.1, 3, 0.0)]
+    #antsReg_B0ToTransformedT2.iterables = ('transform_parameters',
+    #                                       [ [(0.1, 1, 0.0)],
+    #                                         [(0.1, 1.5, 0.0)],
+    #                                         [(0.1, 2, 0.0)],
+    #                                         [(0.1, 2.5, 0.0)],
+    #                                         [(0.1, 3, 0.0)],
+    #                                         [(0.1, 3.5, 0.0)],
+    #                                         [(0.05, 1, 0.0)],
+    #                                         [(0.05, 1.5, 0.0)],
+    #                                         [(0.05, 2, 0.0)],
+    #                                         [(0.05, 2.5, 0.0)],
+    #                                         [(0.05, 3, 0.0)] ] )
+
+    ### Affine Test
+    #antsReg_B0ToTransformedT2.inputs.transforms = ["Affine"]
+    #antsReg_B0ToTransformedT2.inputs.transform_parameters = [(0.1, 3, 0.0)]
+
+    ### BSpline
+    #antsReg_B0ToTransformedT2.inputs.transforms = ["BSpline"]
+    #antsReg_B0ToTransformedT2.inputs.transform_parameters = [(0.1,26,0.3)]
+
     antsReg_B0ToTransformedT2.inputs.metric = ['MI']
     antsReg_B0ToTransformedT2.inputs.sampling_strategy = [None]
     antsReg_B0ToTransformedT2.inputs.sampling_percentage = [1.0]
@@ -284,10 +335,12 @@ def runMainWorkflow(DWI_scan, T2_scan, labelMap_image, BASE_DIR, dataSink_DIR):
     antsReg_B0ToTransformedT2.inputs.num_threads = -1
     antsReg_B0ToTransformedT2.inputs.args = '--restrict-deformation 0x1x0'
 
-    DWIWorkflow.connect(ForceDCtoIDNode, ('outputVolume', pickFromList, 1), antsReg_B0ToTransformedT2, 'fixed_image')
-    DWIWorkflow.connect(ForceDCtoIDNode, ('outputVolume', pickFromList, 2), antsReg_B0ToTransformedT2,
-                        'fixed_image_mask')
-    DWIWorkflow.connect(ForceDCtoIDNode, ('outputVolume', pickFromList, 0), antsReg_B0ToTransformedT2, 'moving_image')
+    DWIWorkflow.connect(ForceDCtoIDNode, ('outputVolume', pickFromList, 1),
+                        antsReg_B0ToTransformedT2, 'fixed_image')
+    DWIWorkflow.connect(ForceDCtoIDNode, ('outputVolume', pickFromList, 2),
+                        antsReg_B0ToTransformedT2,'fixed_image_mask')
+    DWIWorkflow.connect(ForceDCtoIDNode, ('outputVolume', pickFromList, 0),
+                        antsReg_B0ToTransformedT2, 'moving_image')
 
     # Step8: Now, all necessary transforms are acquired. It's a time to
     #        transform input DWI image into T2 image space
@@ -409,7 +462,7 @@ def runMainWorkflow(DWI_scan, T2_scan, labelMap_image, BASE_DIR, dataSink_DIR):
     DWIWorkflow.connect(DTIProcess, 'lambda1_output', outputsSpec, 'Lambda1Image')
     DWIWorkflow.connect(DTIProcess, 'lambda2_output', outputsSpec, 'Lambda2Image')
     DWIWorkflow.connect(DTIProcess, 'lambda3_output', outputsSpec, 'Lambda3Image')
-    """
+
     # Step13: UKF Processing
     UKFNode = pe.Node(interface=UKFTractography(), name= "UKFRunRecordStates")
     UKFNode.inputs.tracts = "ukfTracts.vtk"
@@ -428,7 +481,6 @@ def runMainWorkflow(DWI_scan, T2_scan, labelMap_image, BASE_DIR, dataSink_DIR):
     DWIWorkflow.connect(DWIBRAINMASK, 'outputVolume', UKFNode, 'maskFile')
     DWIWorkflow.connect(UKFNode,'tracts',outputsSpec,'ukfTracks')
     #DWIWorkflow.connect(UKFNode,'tractsWithSecondTensor',outputsSpec,'ukf2ndTracks')
-    """
 
     ## Write all outputs with DataSink
     DWIDataSink = pe.Node(interface=nio.DataSink(), name='DWIDataSink')
@@ -449,7 +501,7 @@ def runMainWorkflow(DWI_scan, T2_scan, labelMap_image, BASE_DIR, dataSink_DIR):
     DWIWorkflow.connect(outputsSpec, 'Lambda2Image', DWIDataSink, 'Outputs.@Lambda2Image')
     DWIWorkflow.connect(outputsSpec, 'Lambda3Image', DWIDataSink, 'Outputs.@Lambda3Image')
 
-    DWIWorkflow.write_graph()
+    #DWIWorkflow.write_graph()
     DWIWorkflow.run()
 
 
@@ -489,6 +541,10 @@ if __name__ == '__main__':
     else:
         RESULTDIR = argv['--resultDir']
         assert os.path.exists(RESULTDIR), "Results directory is not found: %s" % RESULTDIR
+    if argv['--useKoGESWF']:
+        useKoGESWF=True;
+    else:
+        useKoGESWF=False;
 
     print('=' * 100)
 
@@ -519,6 +575,6 @@ if __name__ == '__main__':
     from nipype.interfaces.semtools import *
 
     #####################################################################################
-    exit = runMainWorkflow(DWISCAN, T2SCAN, LabelMapImage, CACHEDIR, RESULTDIR)
+    exit = runMainWorkflow(DWISCAN, T2SCAN, LabelMapImage, CACHEDIR, RESULTDIR, useKoGESWF)
 
     sys.exit(exit)

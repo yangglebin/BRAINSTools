@@ -97,6 +97,7 @@ def create_experiment_dir(dirname, name, suffix, verify=False):
     """ Construct directories given the base directory, the experiment name, and the suffix ['CACHE', 'Results'] """
     basename = name + '_' + suffix
     fullpath = os.path.join(dirname, basename)
+    fullpath = fullpath.encode('ascii','ignore')
     if verify:
         return validatePath(fullpath, False, True)
     else:
@@ -203,9 +204,13 @@ def parseFile(configFile, env, workphase):
     assert os.path.exists(configFile), "Configuration file could not be found: {0}".format(configFile)
     parser = ConfigParser(allow_no_value=True)  # Parse configuration file parser = ConfigParser()
     with io.open(configFile, "r", encoding='ascii') as configFID:
-        parser.read_file(configFID)
+        print( configFile )
+        print( configFID )
+        #parser.read_file(configFID)
+        parser.readfp(configFID)
+        print(parser.options(env))
     assert (parser.has_option(env, '_BUILD_DIR') or parser.has_option('DEFAULT', '_BUILD_DIR')
-            ), "BUILD_DIR option not in {0}".format(env)
+            ), "_BUILD_DIR option not in {0}".format(env)
     environment, cluster = parseEnvironment(parser, env)
     experiment = parseExperiment(parser, workphase)
     pipeline = parseNIPYPE(parser)

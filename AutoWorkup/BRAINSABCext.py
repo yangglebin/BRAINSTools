@@ -81,8 +81,9 @@ class BRAINSABCext(BRAINSABC):
         input_check = {'T1': ('outputT1AverageImage', 't1_average_BRAINSABC.nii.gz'),
                        'T2': ('outputT2AverageImage', 't2_average_BRAINSABC.nii.gz'),
                        'PD': ('outputPDAverageImage', 'pd_average_BRAINSABC.nii.gz'),
-                       'FL': ('outputFLAverageImage', 'fl_average_BRAINSABC.nii.gz')}
+                       'FLAIR': ('outputFLAverageImage', 'fl_average_BRAINSABC.nii.gz')}
         for key, values in list(input_check.items()):
+            print( key, values)
             if key in self.inputs.inputVolumeTypes:
                 outputs[values[0]] = os.path.abspath(values[1])
             else:

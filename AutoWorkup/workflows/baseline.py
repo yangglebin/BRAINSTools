@@ -354,7 +354,7 @@ def generate_single_session_template_WF(projectid, subjectid, sessionid, onlyT1,
     DataSinkLandmarks = pe.Node(name=dsName, interface=nio.DataSink())
     DataSinkLandmarks.overwrite = master_config['ds_overwrite']
     DataSinkLandmarks.inputs.container = '{0}/{1}/{2}'.format(projectid, subjectid, sessionid)
-    DataSinkLandmarks.inputs.base_directory = master_config['resultdir']
+    DataSinkLandmarks.inputs.base_directory = master_config['resultdir'].encode('ascii','ignore')
     del dsName
 
 

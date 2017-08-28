@@ -152,6 +152,8 @@ def CommonANTsRegistrationSettings(antsRegistrationNode,
         antsRegistrationNode.inputs.initial_moving_transform = initial_moving_transform
         if (invert_initial_moving_transform == True ):
             antsRegistrationNode.inputs.invert_initial_moving_transform = True
+        else:
+            antsRegistrationNode.inputs.invert_initial_moving_transform = False
 
     if output_transform_prefix is not None:
         antsRegistrationNode.inputs.output_transform_prefix = output_transform_prefix
@@ -211,7 +213,7 @@ def MakeOutFileList(T1List, T2List, PDList, FLList, OTHERList, postfix, postfixB
     imageTypeList = ["T1"] * len(T1List)
     imageTypeList.extend(["T2"] * len(T2List))
     imageTypeList.extend(["PD"] * len(PDList))
-    imageTypeList.extend(["FL"] * len(FLList))
+    imageTypeList.extend(["FLAIR"] * len(FLList))
     imageTypeList.extend(["OTHER"] * len(OTHERList))
 
     # make input raw images single list
@@ -244,13 +246,13 @@ def GenerateSeparateImageTypeList(inFileList, inTypeList):
     allListDict["T1"] = list()
     allListDict["T2"] = list()
     allListDict["PD"] = list()
-    allListDict["FL"] = list()
+    allListDict["FLAIR"] = list()
     allListDict["OTHER"] = list()
     T1List = list()
     for i in range(0, len(inFileList)):
         allListDict[inTypeList[i]].append(inFileList[i])
 
-    return allListDict["T1"], allListDict["T2"], allListDict["PD"], allListDict["FL"], allListDict["OTHER"]
+    return allListDict["T1"], allListDict["T2"], allListDict["PD"], allListDict["FLAIR"], allListDict["OTHER"]
 
 
 def add_dict(d1, d2, force=False):
