@@ -33,6 +33,7 @@ BRAINSCutDataHandler
   m_roiDataList(ITK_NULLPTR),
   m_roiIDsInOrder(),
   roiCount(0),
+  ROIRegistrationToSubject(true),
   registrationParser(ITK_NULLPTR),
   registrationImageTypeToUse(""),
   registrationID(""),
@@ -62,6 +63,7 @@ BRAINSCutDataHandler
   m_roiDataList(ITK_NULLPTR),
   m_roiIDsInOrder(),
   roiCount(0),
+  ROIRegistrationToSubject(true),
   registrationParser(ITK_NULLPTR),
   registrationImageTypeToUse(""),
   registrationID(""),
@@ -204,6 +206,9 @@ BRAINSCutDataHandler
 
   registrationID = std::string(
       registrationParser->GetAttribute<StringValue>("ID") );
+
+  ROIRegistrationToSubject = bool(
+          registrationParser->GetAttribute<BooleanValue>("ProbabilityMapRegistrationToSubject") );
 
   roiAutoDilateSize = registrationParser->GetAttribute<IntValue>("BRAINSROIAutoDilateSize");
 }
@@ -383,6 +388,14 @@ BRAINSCutDataHandler
     DisplacementFieldTransformType::Pointer dispXfrm = DisplacementFieldTransformType::New();
     dispXfrm->SetDisplacementField(deformation);
     genericTransform = dispXfrm.GetPointer();
+    }
+
+  if( !ROIRegistrationToSubject )
+    {
+    typedef itk::IdentityTransform< DeformationScalarType, DisplacementFieldType::ImageDimension>
+      IdentityTransformType;
+    IdentityTransformType::Pointer identityXfrm = IdentityTransformType::New();
+    genericTransform = identityXfrm.GetPointer();
     }
 
   WorkingImagePointer referenceImage =
